@@ -67,13 +67,13 @@ This project strictly follows Domain-Driven Design tactical patterns within a Mo
 backend/apps/crm/
 ├── __init__.py
 ├── admin.py               # Django admin configuration
-├── apps.py                # App configuration
+── apps.py                # App configuration
 ├── models.py              # Entities, Value Objects, Aggregates
 ├── repositories.py        # Repository classes (database abstraction)
-── services.py            # Domain Services (business logic)
+├── services.py            # Domain Services (business logic)
 ├── serializers.py         # DRF serializers (input/output validation)
 ├── views.py               # Application Services (HTTP handlers)
-├── urls.py                # Route registration
+── urls.py                # Route registration
 ├── events.py              # Domain Events (optional, for async workflows)
 ├── tasks.py               # Background tasks (Celery/Django-Q)
 ├── migrations/            # Database migrations
@@ -82,8 +82,74 @@ backend/apps/crm/
     ├── test_repositories.py
     ├── test_services.py
     └── test_views.py
-```
-#### Folder Structure for Frontend
+  ```
+
+### Prohibited Backend Practices
+
+❌ Do not put business logic in Views, Serializers, or Models (except basic model validation like clean()).
+
+❌ Do not import models from one Bounded Context directly into another. Use the shared core app or Domain Events for cross-context communication.
+
+❌ Do not place raw database queries (e.g., Lead.objects.filter(...)) inside Domain Services without going through a Repository.
+
+❌ Do not use Django's F expressions or raw SQL in Views — these belong in Repositories or Domain Services.
+
+### Next.js (App Router) Specifics
+
+Keep API route handlers (app/api/) thin. They should validate the request, call a service from the Django backend (via HTTP client), and return the response. Do not embed business logic.
+
+Use Server Actions for mutations (form submissions) when possible, but always delegate the heavy lifting to the Django backend. Server Actions should be a thin orchestration layer.
+
+### Route organization:
+
+app/page.tsx — Marketing Landing Page (/) (Public. Hero, social proof, benefits, FAQ, final CTA).
+
+app/search/ — Buyer Context (Auth-Gated).
+
+app/landlord/ — Landlord Context (Auth-Gated, Phase 2).
+
+app/builder/ — Builder Context (Coming Soon / Auth-Gated, Phase 3).
+
+app/dashboard/ — Agent/Admin dashboard (shared).
+
+app/login & app/signup — Authentication Gate.
+
+middleware.ts — Auth Gate enforcement (protects business routes, redirects unauthenticated guests).
+
+### Styling (Tailwind + shadcn/ui + CSS Variables + GSAP)
+
+Use CSS custom property tokens — no hardcoded hex values. All colors, gradients, and fonts must be defined in globals.css as --variable-name (per ui-context.md) and referenced via Tailwind's arbitrary value syntax.
+
+Typography: Use font-[var(--font-heading)] (Playfair Display) for all headings and font-[var(--font-body)] (Inter) for body text.
+
+Follow the border radius scale defined in ui-context.md. Do not add arbitrary rounded values.
+
+Use shadcn/ui components from components/ui/; do not re-implement buttons, dialogs, inputs, etc., from scratch. Extend them via className props when needed.
+
+Responsive first: Use Tailwind's responsive prefixes (sm:, md:, lg:) for all layout and spacing.
+
+Gradient Application: Apply bg-[var(--gradient-hero)] for the Hero section, bg-[var(--gradient-cta)] for primary buttons, and bg-[var(--gradient-accent)] for premium badges/testimonials.
+
+Animation Tokens: Define standard GSAP durations and easings in a shared lib/animations.ts file (e.g., duration: 0.6, ease: "power2.out") to ensure consistency across components.
+
+### API Routes (Next.js + Django)
+Validate and parse request input before any logic runs. Use DRF serializers on the Django side, and Zod schemas on the Next.js client side before sending the request.
+
+Enforce auth and ownership before any mutation. The Django backend must check the authenticated user's role and permissions (via JWT) before performing any write operation.
+
+Return consistent, predictable response shapes. Use a standard envelope like { "data": ..., "meta": { "page": 1, "total": 10 } } for lists. Error responses should follow: { "error": { "code": "VALIDATION_ERROR", "message": "...", "details": {} } }.
+
+Use HTTP status codes correctly: 200/201 for success, 400 for client errors, 401/403 for auth issues, 404 for not found, 500 for server errors.
+
+### Data and Storage
+Metadata belongs in the database. All structured information must be stored in PostgreSQL tables.
+Large generated content belongs in file or blob storage. Property images and documents must be stored in the file system or object store. The database shall store only the file path or URL.
+Do not store large content directly in the database. Avoid BYTEA or BLOB columns for images or files.
+All database migrations must be reversible. Ensure that data migrations are idempotent.
+Use indexes on frequently queried columns: properties.location, properties.price, concierge_leads.created_at
+
+# Frontend File Organisation
+```text
 app/
 ├── page.tsx                         # Marketing Landing Page (/)
 ├── layout.tsx                       # Root layout (fonts, metadata, global styles)
@@ -128,7 +194,7 @@ components/
 │   ├── LandlordRegistrationForm.tsx
 │   ├── PropertyIntakeForm.tsx
 │   └── AppointmentBooking.tsx
-├── builder/                         # Phase 3 (Optional)
+── builder/                         # Phase 3 (Optional)
 │   ├── ProductCatalog.tsx
 │   ├── CartSidebar.tsx
 │   └── CheckoutForm.tsx
@@ -150,68 +216,4 @@ types/
 ├── property.ts                      # Property-related types
 └── ...
 
-public/                              # Static assets (images, fonts, logo.svg)```
-
-### Prohibited Backend Practices
-
-❌ Do not put business logic in Views, Serializers, or Models (except basic model validation like clean()).
-
-❌ Do not import models from one Bounded Context directly into another. Use the shared core app or Domain Events for cross-context communication.
-
-❌ Do not place raw database queries (e.g., Lead.objects.filter(...)) inside Domain Services without going through a Repository.
-
-❌ Do not use Django's F expressions or raw SQL in Views — these belong in Repositories or Domain Services.
-
-### Next.js (App Router) Specifics
-
-Keep API route handlers (app/api/) thin. They should validate the request, call a service from the Django backend (via HTTP client), and return the response. Do not embed business logic.
-
-Use Server Actions for mutations (form submissions) when possible, but always delegate the heavy lifting to the Django backend. Server Actions should be a thin orchestration layer.
-
-### Route organization:
-
-app/page.tsx — Marketing Landing Page (/) (Public. Hero, social proof, benefits, FAQ, final CTA).
-
-app/search/ — Buyer Context (Auth-Gated).
-
-app/landlord/ — Landlord Context (Auth-Gated, Phase 2).
-
-app/builder/ — Builder Context (Coming Soon / Auth-Gated, Phase 3).
-
-app/dashboard/ — Agent/Admin dashboard (shared).
-
-app/login & app/signup — Authentication Gate.
-
-middleware.ts — Auth Gate enforcement (protects business routes, redirects unauthenticated guests).
-
-Styling (Tailwind + shadcn/ui + CSS Variables + GSAP)
-
-Use CSS custom property tokens — no hardcoded hex values. All colors, gradients, and fonts must be defined in globals.css as --variable-name (per ui-context.md) and referenced via Tailwind's arbitrary value syntax.
-
-Typography: Use font-[var(--font-heading)] (Playfair Display) for all headings and font-[var(--font-body)] (Inter) for body text.
-
-Follow the border radius scale defined in ui-context.md. Do not add arbitrary rounded values.
-
-Use shadcn/ui components from components/ui/; do not re-implement buttons, dialogs, inputs, etc., from scratch. Extend them via className props when needed.
-
-Responsive first: Use Tailwind's responsive prefixes (sm:, md:, lg:) for all layout and spacing.
-
-Gradient Application: Apply bg-[var(--gradient-hero)] for the Hero section, bg-[var(--gradient-cta)] for primary buttons, and bg-[var(--gradient-accent)] for premium badges/testimonials.
-
-Animation Tokens: Define standard GSAP durations and easings in a shared lib/animations.ts file (e.g., duration: 0.6, ease: "power2.out") to ensure consistency across components.
-
-### API Routes (Next.js + Django)
-Validate and parse request input before any logic runs. Use DRF serializers on the Django side, and Zod schemas on the Next.js client side before sending the request.
-
-Enforce auth and ownership before any mutation. The Django backend must check the authenticated user's role and permissions (via JWT) before performing any write operation.
-
-Return consistent, predictable response shapes. Use a standard envelope like { "data": ..., "meta": { "page": 1, "total": 10 } } for lists. Error responses should follow: { "error": { "code": "VALIDATION_ERROR", "message": "...", "details": {} } }.
-
-Use HTTP status codes correctly: 200/201 for success, 400 for client errors, 401/403 for auth issues, 404 for not found, 500 for server errors.
-
-### Data and Storage
-Metadata belongs in the database. All structured information must be stored in PostgreSQL tables.
-Large generated content belongs in file or blob storage. Property images and documents must be stored in the file system or object store. The database shall store only the file path or URL.
-Do not store large content directly in the database. Avoid BYTEA or BLOB columns for images or files.
-All database migrations must be reversible. Ensure that data migrations are idempotent.
-Use indexes on frequently queried columns: properties.location, properties.price, concierge_leads.created_at
+public/                              # Static assets (images, fonts, logo.svg)

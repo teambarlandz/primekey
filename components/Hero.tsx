@@ -51,8 +51,8 @@ export default function Hero() {
               />
             </div>
             <div>
-              <p className="hero__floating-card-title">Priya just rented a 2BHK</p>
-              <p className="hero__floating-card-sub">in Koramangala • 4 mins ago</p>
+              <p className="hero__floating-card-title">Chinedu just rented a 3-bedroom</p>
+              <p className="hero__floating-card-sub">apartment flat in Lekki</p>
             </div>
           </aside>
         </div>

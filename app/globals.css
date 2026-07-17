@@ -1,77 +1,140 @@
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  .theme {
-    --font-heading: var(--font-sans);
-    --font-sans: var(--font-sans)
-  }
   :root {
-        /* === PRIMEKEY CUSTOM BRAND TOKENS (ui-context.md) === */
-    --bg-base: #f8f6f2;
-    --bg-surface: #ffffff;
-    --bg-elevated: #f0ede8;
-    --text-primary: #1a1a1a;
-    --text-secondary: #4a4a4a;
-    --text-muted: #8a8a8a;
-    --accent-primary: #c73d2f;
-    --accent-hover: #a83226;
-    --accent-light: #fbe9e6;
-    --border-default: #e0dbd4;
-    --border-focus: #c73d2f;
-    --state-error: #d32f2f;
-    --state-success: #2e7d32;
-    --state-warning: #ed6c02;
-    --state-info: #0288d1;
-    --link-default: #c73d2f;
-    --link-hover: #a83226;
-    --shadow-default: 0 4px 12px rgba(0,0,0,0.08);
-    --shadow-elevated: 0 8px 24px rgba(0,0,0,0.12);
-    --overlay-backdrop: rgba(0,0,0,0.4);
+    /* ──────────────────────────────────────────────────────────────
+       PRIMEKEY HOMES: DEEP BLUE DESIGN SYSTEM
+       Source: ui-context.md
+       ────────────────────────────────────────────────────────────── */
+
+    /* Primary Color Palette */
+    --primary-deep: #192338;
+    --primary-medium: #31487A;
+    --primary-light: #8FB3E2;
+    --secondary-dark: #1E2E4F;
+
+    /* Backgrounds */
+    --bg-base: #D9E1F1;       /* Lavender - Page background */
+    --bg-surface: #FFFFFF;    /* White - Cards, forms, elevated surfaces */
+
+    /* Text Colors */
+    --text-primary: #192338;
+    --text-secondary: #1E2E4F;
+    --text-muted: #8FB3E2;
+
+    /* Borders */
+    --border-default: #D9E1F1;
+    --border-focus: #31487A;
+
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, #192338 0%, #31487A 100%);
+    --gradient-cta: linear-gradient(135deg, #31487A 0%, #8FB3E2 100%);
+    --gradient-accent: linear-gradient(135deg, #FBC2EB 0%, #78A3EB 100%);
+    --gradient-card-hover: linear-gradient(135deg, #1E2E4F 0%, #31487A 100%);
+
+    /* State Colors */
+    --state-success: #2E7D32;
+    --state-error: #D32F2F;
+    --state-warning: #ED6C02;
+    --state-info: #0288D1;
+
+    /* Shadows & Elevation */
+    --shadow-default: 0 4px 12px rgba(25, 35, 56, 0.08);
+    --shadow-elevated: 0 8px 24px rgba(25, 35, 56, 0.12);
+    --shadow-modal: 0 16px 48px rgba(25, 35, 56, 0.16);
+    --overlay-backdrop: rgba(25, 35, 56, 0.6);
+
+    /* Typography Fallbacks (Overridden by next/font in layout.tsx) */
+    --font-heading: 'Playfair Display', serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    /* ──────────────────────────────────────────────────────────────
+       shadcn/ui COMPATIBILITY MAPPING
+       Maps our Deep Blue tokens to shadcn's expected variables 
+       so we NEVER have to modify components/ui/* source code.
+       ────────────────────────────────────────────────────────────── */
+    --background: var(--bg-surface);
+    --foreground: var(--text-primary);
+    
+    --card: var(--bg-surface);
+    --card-foreground: var(--text-primary);
+    
+    --popover: var(--bg-surface);
+    --popover-foreground: var(--text-primary);
+    
+    --primary: var(--primary-medium);
+    --primary-foreground: #FFFFFF;
+    
+    --secondary: var(--bg-base);
+    --secondary-foreground: var(--primary-deep);
+    
+    --muted: var(--bg-base);
+    --muted-foreground: var(--text-muted);
+    
+    --accent: var(--primary-light);
+    --accent-foreground: var(--primary-deep);
+    
+    --destructive: var(--state-error);
+    --destructive-foreground: #FFFFFF;
+    
+    --border: var(--border-default);
+    --input: var(--border-default);
+    --ring: var(--border-focus);
+    
+    --radius: 0.5rem; /* 8px - Matches rounded-lg for cards/inputs per ui-context.md */
   }
-  .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0)
-  }
-  * {
-    @apply border-border outline-ring/50;
-  }
+
+  /* Base Body Styles */
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+
+  /* Smooth scrolling for anchor links */
   html {
-    @apply font-sans;
+    scroll-behavior: smooth;
+  }
+
+  /* Accessibility: Respect reduced motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────
+   CUSTOM UTILITY CLASSES
+   ────────────────────────────────────────────────────────────── */
+@layer utilities {
+  .text-gradient-cta {
+    background: var(--gradient-cta);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .bg-gradient-hero {
+    background: var(--gradient-hero);
+  }
+
+  .bg-gradient-cta {
+    background: var(--gradient-cta);
+  }
+
+  .bg-gradient-accent {
+    background: var(--gradient-accent);
   }
 }

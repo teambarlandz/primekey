@@ -1,6 +1,6 @@
 # Dependencies Reference
 
-This document lists all dependencies required for the self-hosted real estate platform project. Use this as a checklist to install everything manually before starting development.
+This document lists all dependencies required for the self-hosted real estate platform project for **Primekey Homes and Properties Ltd.** Use this as a checklist to install everything manually before starting development.
 
 ## System Requirements
 
