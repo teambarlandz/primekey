@@ -52,6 +52,7 @@ export default function Navbar() {
             <li><Link href="/list">List a Property</Link></li>
             <li><Link href="/builders">For Builders</Link></li>
             <li><Link href="/login">Login</Link></li>
+            <li><Link href="/signup">Signup</Link></li>
             <li><Link href="/contact" className="btn btn--primary">Talk to us</Link></li>
           </ul>
         </div>
