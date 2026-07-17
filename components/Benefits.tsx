@@ -31,7 +31,7 @@ const benefits: Benefit[] = [
     id: 4,
     icon: '📜',
     title: 'End-to-End Legal',
-    text: 'From agreement drafting to registration — our legal partners handle it all.',
+    text: 'From agreement drafting to registration — We handle it all.',
   },
 ];
 

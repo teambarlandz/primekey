@@ -1,4 +1,4 @@
-# NUI Context
+# User Flow
 
 
 ## The Navbar Global Entry Point: The Landing Page
@@ -635,7 +635,7 @@ The Django admin dashboard is organized by Bounded Context and shared modules:
 ---
 
 
-# Footer
+## Footer
 
 ┌─────────────────────────────────────────────────────────────┐
 │  COLUMN 1: BRAND + CONTACT          COLUMN 2: QUICK NAV     │

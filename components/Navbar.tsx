@@ -10,7 +10,7 @@ export default function Navbar() {
   return (
     <header className="site-header" role="banner">
       <nav className="navbar" aria-label="Primary">
-        <Link href="/" className="navbar__logo" aria-label="PropNest home">
+        <Link href="/" className="navbar__logo" aria-label="Primekey Homes">
           <Image
             src="/assets/logo.svg"
             alt="PropNest logo"
