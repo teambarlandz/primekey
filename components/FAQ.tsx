@@ -10,6 +10,9 @@ import { ANIMATION_TOKENS, prefersReducedMotion } from '@/lib/animations';
 // Register ScrollTrigger plugin
 gsap.registerPlugin(ScrollTrigger);
 
+// Exact Brand Navy
+const BRAND_COLOR = '#04164a';
+
 interface FAQItem {
   id: number;
   question: string;
@@ -53,13 +56,16 @@ const faqItems: FAQItem[] = [
 
 export default function FAQ() {
   useGSAP(() => {
-    // Exit early if user prefers reduced motion
-    if (prefersReducedMotion()) return;
+    // Respect reduced motion preference
+    if (prefersReducedMotion()) {
+      gsap.set('.faq-anim', { opacity: 1, y: 0 });
+      return;
+    }
 
     const ctx = gsap.context(() => {
-      // Staggered fade-up animation for the FAQ items
+      // Staggered fade-up animation on scroll
       gsap.fromTo('.faq-anim', 
-        { y: 30, opacity: 0 }, 
+        { y: 35, opacity: 0 }, 
         { 
           y: 0, 
           opacity: 1, 
@@ -79,46 +85,48 @@ export default function FAQ() {
   }, []);
 
   return (
-    <section className="faq-section py-16 md:py-24 bg-[var(--bg-surface)]" aria-labelledby="faq-heading">
-      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section className="faq-section py-16 md:py-24 bg-[#f3f0ff] relative overflow-hidden" aria-labelledby="faq-heading">
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
         
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
           
           {/* ──────────────────────────────────────────────────────────────
-              LEFT COLUMN: Intro & Fallback CTA
+              LEFT COLUMN: Intro & Contact Box
               ────────────────────────────────────────────────────────────── */}
-          <div className="lg:col-span-4 flex flex-col justify-between">
-            <div className="faq-anim mb-8 lg:mb-0">
-              <p className="text-sm font-semibold tracking-widest uppercase text-[var(--primary-medium)] font-[var(--font-body)] mb-4">
+          <div className="lg:col-span-4 flex flex-col justify-between space-y-8">
+            <div className="faq-anim opacity-0">
+              <p className="text-xs sm:text-sm font-semibold tracking-widest uppercase font-heading text-[#4a607a] mb-3">
                 FAQs
               </p>
-              <h2 id="faq-heading" className="text-3xl md:text-4xl font-bold text-[var(--primary-deep)] font-[var(--font-heading)] mb-6 leading-tight">
+              <h2 id="faq-heading" className="text-3xl md:text-4xl font-bold font-heading mb-4 leading-tight" style={{ color: BRAND_COLOR }}>
                 Questions? We've got answers.
               </h2>
-              <p className="text-lg text-[var(--text-secondary)] font-[var(--font-body)]">
+              <p className="text-lg text-[#4a607a] font-body leading-relaxed">
                 Can't find what you're looking for? Our team usually replies in under 5 minutes.
               </p>
             </div>
 
-            <div className="faq-anim bg-[var(--bg-base)] p-6 rounded-xl border border-[var(--border-default)]">
-              <p className="text-[var(--primary-deep)] font-semibold font-[var(--font-heading)] mb-4">
+            {/* Direct Contact Card */}
+            <div className="faq-anim opacity-0 bg-white/90 backdrop-blur-sm p-6 rounded-2xl border border-purple-100 shadow-md">
+              <p className="font-semibold font-heading mb-4 text-base" style={{ color: BRAND_COLOR }}>
                 Still unsure? Talk to a real human.
               </p>
-              <div className="flex flex-col sm:flex-row lg:flex-col gap-3">
+              <div className="flex flex-col gap-3">
                 <Link 
                   href="https://wa.me/2348000000000" 
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-primary)] font-medium font-[var(--font-body)] hover:bg-[var(--bg-base)] transition-colors"
+                  className="inline-flex items-center justify-center gap-2.5 px-4 py-3 rounded-full border border-emerald-200 bg-emerald-50/50 text-emerald-900 font-semibold font-heading text-sm hover:bg-emerald-100/70 transition-colors shadow-sm"
                 >
-                  <MessageCircle className="w-5 h-5 text-[var(--state-success)]" aria-hidden="true" />
+                  <MessageCircle className="w-4 h-4 text-emerald-600" aria-hidden="true" />
                   <span>Chat on WhatsApp</span>
                 </Link>
                 <Link 
                   href="tel:+2348000000000" 
-                  className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-primary)] font-medium font-[var(--font-body)] hover:bg-[var(--bg-base)] transition-colors"
+                  className="inline-flex items-center justify-center gap-2.5 px-4 py-3 rounded-full border border-purple-200/80 bg-purple-50/50 font-semibold font-heading text-sm hover:bg-purple-100/60 transition-colors shadow-sm"
+                  style={{ color: BRAND_COLOR }}
                 >
-                  <Phone className="w-5 h-5 text-[var(--primary-medium)]" aria-hidden="true" />
+                  <Phone className="w-4 h-4" aria-hidden="true" style={{ color: BRAND_COLOR }} />
                   <span>Call +234 800 000 0000</span>
                 </Link>
               </div>
@@ -126,29 +134,27 @@ export default function FAQ() {
           </div>
 
           {/* ──────────────────────────────────────────────────────────────
-              RIGHT COLUMN: Accordion
+              RIGHT COLUMN: FAQ Accordion List
               ────────────────────────────────────────────────────────────── */}
-          <div className="lg:col-span-8">
-            <div className="faq-anim divide-y divide-[var(--border-default)] border-y border-[var(--border-default)]">
-              {faqItems.map((item) => (
-                <details 
-                  key={item.id} 
-                  className="group py-6 cursor-pointer" 
-                  open={item.defaultOpen}
-                >
-                  <summary className="flex items-center justify-between text-lg font-semibold text-[var(--primary-deep)] font-[var(--font-heading)] list-none">
-                    {item.question}
-                    <ChevronDown 
-                      className="w-5 h-5 text-[var(--text-muted)] transition-transform duration-300 group-open:rotate-180" 
-                      aria-hidden="true" 
-                    />
-                  </summary>
-                  <div className="mt-4 pr-8 text-[var(--text-secondary)] font-[var(--font-body)] leading-relaxed">
-                    {item.answer}
-                  </div>
-                </details>
-              ))}
-            </div>
+          <div className="lg:col-span-8 space-y-4">
+            {faqItems.map((item) => (
+              <details 
+                key={item.id} 
+                className="faq-anim opacity-0 group bg-white/90 backdrop-blur-sm rounded-2xl border border-purple-100 shadow-sm p-6 transition-all duration-200 hover:shadow-md cursor-pointer" 
+                open={item.defaultOpen}
+              >
+                <summary className="flex items-center justify-between text-lg font-bold font-heading list-none select-none" style={{ color: BRAND_COLOR }}>
+                  <span>{item.question}</span>
+                  <ChevronDown 
+                    className="w-5 h-5 text-[#4a607a] transition-transform duration-300 group-open:rotate-180 flex-shrink-0 ml-4" 
+                    aria-hidden="true" 
+                  />
+                </summary>
+                <div className="mt-4 pt-3 border-t border-purple-100/60 text-[#4a607a] font-body leading-relaxed text-base">
+                  {item.answer}
+                </div>
+              </details>
+            ))}
           </div>
 
         </div>

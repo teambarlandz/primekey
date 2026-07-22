@@ -10,6 +10,9 @@ import { ANIMATION_TOKENS, prefersReducedMotion } from '@/lib/animations';
 // Register ScrollTrigger plugin
 gsap.registerPlugin(ScrollTrigger);
 
+// Exact Brand Navy
+const BRAND_COLOR = '#04164a';
+
 interface Testimonial {
   id: number;
   quote: string;
@@ -44,13 +47,16 @@ const testimonials: Testimonial[] = [
 
 export default function SocialProof() {
   useGSAP(() => {
-    // Exit early if user prefers reduced motion
-    if (prefersReducedMotion()) return;
+    // Respect reduced motion preference
+    if (prefersReducedMotion()) {
+      gsap.set('.sp-anim', { opacity: 1, y: 0 });
+      return;
+    }
 
     const ctx = gsap.context(() => {
       // Staggered fade-up animation for elements as they scroll into view
       gsap.fromTo('.sp-anim', 
-        { y: 40, opacity: 0 }, 
+        { y: 35, opacity: 0 }, 
         { 
           y: 0, 
           opacity: 1, 
@@ -59,8 +65,8 @@ export default function SocialProof() {
           ease: ANIMATION_TOKENS.ease,
           scrollTrigger: {
             trigger: '.social-proof',
-            start: 'top 80%', // Animation starts when the top of the section hits 80% of the viewport
-            toggleActions: 'play none none reverse', // Reverses animation when scrolling back up
+            start: 'top 80%',
+            toggleActions: 'play none none reverse',
           }
         }
       );
@@ -70,14 +76,14 @@ export default function SocialProof() {
   }, []);
 
   return (
-    <section className="social-proof py-16 md:py-24 bg-[var(--bg-base)]" aria-labelledby="sp-heading">
-      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section className="social-proof py-16 md:py-24 bg-[#f3f0ff] relative overflow-hidden" aria-labelledby="sp-heading">
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* ──────────────────────────────────────────────────────────────
             BRAND LOGO STRIP
             ────────────────────────────────────────────────────────────── */}
-        <div className="sp-anim text-center mb-12">
-          <p className="text-sm font-semibold tracking-widest uppercase text-[var(--text-muted)] font-[var(--font-body)] mb-8">
+        <div className="sp-anim opacity-0 text-center mb-12">
+          <p className="text-xs sm:text-sm font-semibold tracking-widest uppercase font-heading text-[#4a607a] mb-8">
             Trusted by leading brands & featured in
           </p>
           <ul className="flex flex-wrap justify-center items-center gap-8 md:gap-16" role="list">
@@ -98,34 +104,34 @@ export default function SocialProof() {
         {/* ─────────────────────────────────────────────────────────────
             KEY STATS
             ────────────────────────────────────────────────────────────── */}
-        <div className="sp-anim grid grid-cols-2 md:grid-cols-4 gap-8 mb-20 border-y border-[var(--border-default)] py-12">
+        <div className="sp-anim opacity-0 grid grid-cols-2 md:grid-cols-4 gap-8 mb-20 border-y border-purple-200/70 py-10">
           <div className="text-center">
-            <p className="text-4xl md:text-5xl font-bold text-[var(--primary-deep)] font-[var(--font-heading)] mb-2">10,000+</p>
-            <p className="text-sm md:text-base text-[var(--text-secondary)] font-[var(--font-body)]">Happy customers</p>
+            <p className="text-4xl md:text-5xl font-bold font-heading mb-1" style={{ color: BRAND_COLOR }}>10,000+</p>
+            <p className="text-sm md:text-base text-[#4a607a] font-body">Happy customers</p>
           </div>
           <div className="text-center">
-            <p className="text-4xl md:text-5xl font-bold text-[var(--primary-deep)] font-[var(--font-heading)] mb-2">42</p>
-            <p className="text-sm md:text-base text-[var(--text-secondary)] font-[var(--font-body)]">Cities covered</p>
+            <p className="text-4xl md:text-5xl font-bold font-heading mb-1" style={{ color: BRAND_COLOR }}>42</p>
+            <p className="text-sm md:text-base text-[#4a607a] font-body">Cities covered</p>
           </div>
           <div className="text-center">
-            <p className="text-4xl md:text-5xl font-bold text-[var(--primary-deep)] font-[var(--font-heading)] mb-2">₦85B+</p>
-            <p className="text-sm md:text-base text-[var(--text-secondary)] font-[var(--font-body)]">Property value transacted</p>
+            <p className="text-4xl md:text-5xl font-bold font-heading mb-1" style={{ color: BRAND_COLOR }}>₦85B+</p>
+            <p className="text-sm md:text-base text-[#4a607a] font-body">Transacted value</p>
           </div>
           <div className="text-center">
-            <p className="text-4xl md:text-5xl font-bold text-[var(--primary-deep)] font-[var(--font-heading)] mb-2">4.8★</p>
-            <p className="text-sm md:text-base text-[var(--text-secondary)] font-[var(--font-body)]">Average rating (3,400 reviews)</p>
+            <p className="text-4xl md:text-5xl font-bold font-heading mb-1" style={{ color: BRAND_COLOR }}>4.8★</p>
+            <p className="text-sm md:text-base text-[#4a607a] font-body">Average rating (3,400+)</p>
           </div>
         </div>
 
         {/* ──────────────────────────────────────────────────────────────
             TESTIMONIALS
             ────────────────────────────────────────────────────────────── */}
-        <div className="sp-anim">
+        <div className="sp-anim opacity-0">
           <div className="text-center mb-12">
-            <h2 id="sp-heading" className="text-3xl md:text-4xl font-bold text-[var(--primary-deep)] font-[var(--font-heading)] mb-4">
+            <h2 id="sp-heading" className="text-3xl md:text-4xl font-bold font-heading mb-3" style={{ color: BRAND_COLOR }}>
               Real stories. Real results.
             </h2>
-            <p className="text-lg text-[var(--text-secondary)] font-[var(--font-body)] max-w-2xl mx-auto">
+            <p className="text-lg text-[#4a607a] font-body max-w-2xl mx-auto">
               Don't just take our word for it. Here is what Nigerians across the country are saying about Primekey Homes.
             </p>
           </div>
@@ -134,31 +140,36 @@ export default function SocialProof() {
             {testimonials.map((testimonial) => (
               <article 
                 key={testimonial.id} 
-                className="bg-[var(--bg-surface)] p-8 rounded-xl shadow-[var(--shadow-default)] border border-[var(--border-default)] hover:shadow-[var(--shadow-elevated)] transition-shadow duration-300 flex flex-col"
+                className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-md border border-purple-100 hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
               >
-                {/* Rating Stars */}
-                <div className="flex gap-1 mb-6 text-[var(--state-warning)]" aria-label="Rated 5 out of 5">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-current" />
-                  ))}
-                </div>
+                <div>
+                  {/* Rating Stars */}
+                  <div className="flex gap-1 mb-6 text-amber-400" aria-label="Rated 5 out of 5">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="w-5 h-5 fill-current" />
+                    ))}
+                  </div>
 
-                {/* Quote Icon & Text */}
-                <div className="relative mb-6 flex-grow">
-                  <Quote className="absolute -top-2 -left-2 w-8 h-8 text-[var(--primary-light)] opacity-30" aria-hidden="true" />
-                  <blockquote className="text-[var(--text-secondary)] font-[var(--font-body)] leading-relaxed italic pl-4">
-                    "{testimonial.quote}"
-                  </blockquote>
+                  {/* Quote Icon & Text */}
+                  <div className="relative mb-6">
+                    <Quote className="absolute -top-2 -left-2 w-8 h-8 text-purple-300 opacity-40" aria-hidden="true" />
+                    <blockquote className="text-[#22376e] font-body leading-relaxed italic pl-4">
+                      "{testimonial.quote}"
+                    </blockquote>
+                  </div>
                 </div>
 
                 {/* Author Info */}
-                <footer className="flex items-center gap-4 pt-6 border-t border-[var(--border-default)]">
-                  <div className="flex-shrink-0 w-12 h-12 rounded-full bg-[var(--gradient-accent)] flex items-center justify-center text-white font-bold font-[var(--font-body)] text-lg shadow-sm">
+                <footer className="flex items-center gap-4 pt-6 border-t border-purple-100/80 mt-auto">
+                  <div 
+                    className="flex-shrink-0 w-11 h-11 rounded-full text-white font-bold font-heading text-sm flex items-center justify-center shadow-sm"
+                    style={{ backgroundColor: BRAND_COLOR }}
+                  >
                     {testimonial.initials}
                   </div>
                   <div>
-                    <p className="font-semibold text-[var(--primary-deep)] font-[var(--font-body)]">{testimonial.name}</p>
-                    <p className="text-sm text-[var(--text-muted)] font-[var(--font-body)]">{testimonial.role}</p>
+                    <p className="font-semibold font-heading text-sm" style={{ color: BRAND_COLOR }}>{testimonial.name}</p>
+                    <p className="text-xs text-[#4a607a] font-body">{testimonial.role}</p>
                   </div>
                 </footer>
               </article>

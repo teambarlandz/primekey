@@ -6,29 +6,37 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ANIMATION_TOKENS, prefersReducedMotion } from '@/lib/animations';
 
+// Exact Brand Navy
+const BRAND_COLOR = '#04164a';
+
 export default function Hero() {
   useGSAP(() => {
-    // Exit early if user prefers reduced motion
-    if (prefersReducedMotion()) return;
+    // Respect reduced motion preference
+    if (prefersReducedMotion()) {
+      gsap.set('.hero-anim, .hero__floating-card', { opacity: 1, y: 0, scale: 1 });
+      return;
+    }
 
     const ctx = gsap.context(() => {
-      // Staggered entrance for main content elements
-      const tl = gsap.timeline({ defaults: { ease: ANIMATION_TOKENS.ease, duration: ANIMATION_TOKENS.duration } });
+      // Staggered entrance for hero elements
+      const tl = gsap.timeline({ 
+        defaults: { ease: ANIMATION_TOKENS.ease, duration: ANIMATION_TOKENS.duration } 
+      });
       
       tl.fromTo('.hero-anim', 
         { y: 30, opacity: 0 }, 
         { y: 0, opacity: 1, stagger: ANIMATION_TOKENS.stagger }
       );
       
-      // Floating card gets a slight delay and a subtle bounce effect
+      // Floating card bounce entrance
       gsap.fromTo('.hero__floating-card', 
-        { y: 20, opacity: 0, scale: 0.95 }, 
+        { y: 25, opacity: 0, scale: 0.95 }, 
         { 
           y: 0, 
           opacity: 1, 
           scale: 1, 
           duration: ANIMATION_TOKENS.duration, 
-          delay: 0.8, 
+          delay: 0.6, 
           ease: ANIMATION_TOKENS.bounceEase 
         }
       );
@@ -39,37 +47,61 @@ export default function Hero() {
 
   return (
     <section 
-      className="hero pt-24 lg:pt-32 pb-16 lg:pb-24 bg-[var(--gradient-hero)] text-white overflow-hidden" 
+      className="relative pt-12 pb-16 lg:pt-20 lg:pb-28 bg-[#f3f0ff] overflow-hidden" 
       aria-labelledby="hero-headline"
     >
-      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+      {/* Background Soft Glow Accents */}
+      <div 
+        className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-200/40 rounded-full blur-3xl pointer-events-none" 
+        aria-hidden="true"
+      />
+
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center relative z-10">
         
         {/* ─────────────────────────────────────────────────────────────
             LEFT: Content & CTAs
             ───────────────────────────────────────────────────────────── */}
         <div className="hero__content space-y-6">
-          <p className="hero__preheadline hero-anim text-sm font-semibold tracking-widest uppercase text-[var(--primary-light)] font-[var(--font-body)]">
-            Trusted by 10,000+ homeowners across Lagos, Abuja & Port Harcourt
-          </p>
+          {/* Preheadline Pill Badge */}
+          <div className="hero-anim opacity-0 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-100/80 border border-purple-200/60 shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-[#04164a] animate-pulse" />
+            <p 
+              className="text-xs sm:text-sm font-semibold tracking-wider uppercase font-heading"
+              style={{ color: BRAND_COLOR }}
+            >
+              Trusted across Lagos, Abuja & Port Harcourt
+            </p>
+          </div>
           
-          <h1 id="hero-headline" className="hero__headline hero-anim text-4xl md:text-5xl lg:text-6xl font-bold font-[var(--font-heading)] leading-tight">
-            Find your next home — <span className="text-[var(--primary-light)]">without the hassle.</span>
+          {/* Main Headline (Poppins) */}
+          <h1 
+            id="hero-headline" 
+            className="hero-anim opacity-0 text-4xl sm:text-5xl lg:text-6xl font-bold font-heading leading-[1.15] tracking-tight"
+            style={{ color: BRAND_COLOR }}
+          >
+            Find your next home —{' '}
+            <span className="italic font-normal font-body opacity-90">without the hassle.</span>
           </h1>
           
-          <p className="hero__subheadline hero-anim text-lg md:text-xl text-[var(--bg-base)] font-[var(--font-body)] max-w-lg">
+          {/* Subheadline (Lora) */}
+          <p className="hero-anim opacity-0 text-lg md:text-xl text-[#4a607a] font-body max-w-lg leading-relaxed">
             Buy, rent, or list verified properties in minutes — with zero brokerage and full legal support.
           </p>
 
-          <div className="hero__ctas hero-anim flex flex-col sm:flex-row gap-4 pt-2">
+          {/* Action Buttons */}
+          <div className="hero-anim opacity-0 flex flex-col sm:flex-row gap-4 pt-2">
             <Link 
               href="/search" 
-              className="btn btn--primary btn--lg inline-flex items-center justify-center px-8 py-4 rounded-lg bg-[var(--gradient-cta)] text-white font-semibold font-[var(--font-body)] hover:opacity-90 transition-opacity shadow-[var(--shadow-elevated)]"
+              className="inline-flex items-center justify-center px-8 py-4 rounded-full text-white font-semibold font-heading text-sm transition-all duration-200 shadow-md hover:shadow-lg hover:opacity-95 transform hover:-translate-y-0.5"
+              style={{ backgroundColor: BRAND_COLOR }}
             >
               Browse properties
             </Link>
+            
             <Link 
               href="/demo" 
-              className="btn btn--ghost btn--lg inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg border border-white/30 text-white font-semibold font-[var(--font-body)] hover:bg-white/10 transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-white/80 hover:bg-white border border-purple-200/80 font-semibold font-heading text-sm transition-all duration-200 shadow-sm"
+              style={{ color: BRAND_COLOR }}
             >
               <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M8 5v14l11-7z"/>
@@ -78,38 +110,53 @@ export default function Hero() {
             </Link>
           </div>
 
-          <ul className="hero__trust hero-anim flex flex-wrap gap-x-6 gap-y-2 text-[var(--bg-base)]/90 font-[var(--font-body)] pt-4" role="list">
-            <li className="flex items-center gap-2">✓ Verified listings only</li>
-            <li className="flex items-center gap-2">✓ Zero brokerage</li>
-            <li className="flex items-center gap-2">✓ Legal support included</li>
+          {/* Trust Points */}
+          <ul className="hero-anim opacity-0 flex flex-wrap gap-x-6 gap-y-2 text-sm text-[#4a607a] font-body pt-2" role="list">
+            <li className="flex items-center gap-2">
+              <span className="font-bold" style={{ color: BRAND_COLOR }}>✓</span> Verified listings only
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="font-bold" style={{ color: BRAND_COLOR }}>✓</span> Zero brokerage
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="font-bold" style={{ color: BRAND_COLOR }}>✓</span> Legal support included
+            </li>
           </ul>
         </div>
 
         {/* ──────────────────────────────────────────────────────────────
             RIGHT: Media & Floating Card
             ────────────────────────────────────────────────────────────── */}
-        <div className="hero__media relative mt-8 lg:mt-0">
-          <div className="hero-anim relative rounded-2xl overflow-hidden shadow-[var(--shadow-elevated)]">
+        <div className="hero__media relative mt-4 lg:mt-0 pb-6 pr-2 sm:pr-6">
+          <div className="hero-anim opacity-0 relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white/60">
             <Image
               src="/assets/hero-primekey-homes.jpg"
               alt="Modern luxury residence in Lagos, Ogun, and Delta with contemporary architecture"
               width={720}
               height={560}
-              className="hero__image w-full h-auto object-cover"
+              className="w-full h-auto object-cover rounded-2xl"
               priority
             />
           </div>
 
-          {/* Floating Transaction Card */}
-          <aside className="hero__floating-card absolute -bottom-6 -left-6 md:-left-12 bg-[var(--bg-surface)] p-4 rounded-xl shadow-[var(--shadow-modal)] flex items-center gap-4 max-w-xs border border-[var(--border-default)]">
-            <div className="hero__floating-card-avatar flex-shrink-0 w-10 h-10 rounded-full bg-[var(--gradient-accent)] flex items-center justify-center text-white font-bold font-[var(--font-body)]">
+          {/* Floating Transaction Notification */}
+          <aside 
+            className="hero__floating-card opacity-0 absolute bottom-0 left-2 sm:-left-6 bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-xl flex items-center gap-4 max-w-xs border border-purple-100 z-20"
+          >
+            <div 
+              className="flex-shrink-0 w-11 h-11 rounded-full text-white font-bold font-heading flex items-center justify-center shadow-sm"
+              style={{ backgroundColor: BRAND_COLOR }}
+            >
               C
             </div>
             <div>
-              <p className="hero__floating-card-title text-sm font-semibold text-[var(--text-primary)] font-[var(--font-body)]">
-                Chinedu just rented a 3-bedroom flat
+              <p 
+                className="text-xs sm:text-sm font-semibold font-heading leading-snug"
+                style={{ color: BRAND_COLOR }}
+              >
+                Chinedu just rented a 3-bed flat
               </p>
-              <p className="hero__floating-card-sub text-xs text-[var(--text-muted)] font-[var(--font-body)]">
+              <p className="text-xs text-[#4a607a] font-body mt-0.5">
                 in Lekki • 4 mins ago
               </p>
             </div>

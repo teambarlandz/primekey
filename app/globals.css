@@ -5,89 +5,81 @@
 @layer base {
   :root {
     /* ──────────────────────────────────────────────────────────────
-       PRIMEKEY HOMES: DEEP BLUE DESIGN SYSTEM
-       Source: ui-context.md
+       PRIMEKEY HOMES: BRAND & DESIGN SYSTEM TOKENS
+       Exact Brand Navy: #04164a
        ────────────────────────────────────────────────────────────── */
 
-    /* Primary Color Palette */
-    --primary-deep: #192338;
-    --primary-medium: #31487A;
-    --primary-light: #8FB3E2;
-    --secondary-dark: #1E2E4F;
+    /* Primary Color Palette (Hex) */
+    --primary-deep: #04164a;     /* Exact SVG Logo Navy */
+    --primary-medium: #1d326f;   /* Mid Navy for hover states */
+    --primary-light: #8FB3E2;    /* Light Accent Blue */
+    --secondary-dark: #0d2054;
 
     /* Backgrounds */
-    --bg-base: #D9E1F1;       /* Lavender - Page background */
-    --bg-surface: #FFFFFF;    /* White - Cards, forms, elevated surfaces */
+    --bg-base: #f3f0ff;          /* Soft Lavender - Page background */
+    --bg-surface: #ffffff;       /* White - Elevated cards/modals */
 
-    /* Text Colors */
-    --text-primary: #192338;
-    --text-secondary: #1E2E4F;
-    --text-muted: #8FB3E2;
+    /* Text Colors (High Contrast - WCAG AA Compliant) */
+    --text-primary: #04164a;
+    --text-secondary: #22376e;
+    --text-muted: #4a607a;       /* Fixed: Darker blue-gray for legibility */
 
     /* Borders */
-    --border-default: #D9E1F1;
-    --border-focus: #31487A;
+    --border-default: #e4e0f5;
+    --border-focus: #1d326f;
 
     /* Gradients */
-    --gradient-hero: linear-gradient(135deg, #192338 0%, #31487A 100%);
-    --gradient-cta: linear-gradient(135deg, #31487A 0%, #8FB3E2 100%);
+    --gradient-hero: linear-gradient(135deg, #04164a 0%, #1d326f 100%);
+    --gradient-cta: linear-gradient(135deg, #04164a 0%, #31487A 100%);
     --gradient-accent: linear-gradient(135deg, #FBC2EB 0%, #78A3EB 100%);
-    --gradient-card-hover: linear-gradient(135deg, #1E2E4F 0%, #31487A 100%);
 
     /* State Colors */
-    --state-success: #2E7D32;
-    --state-error: #D32F2F;
-    --state-warning: #ED6C02;
-    --state-info: #0288D1;
+    --state-success: #1b5e20;
+    --state-error: #c62828;
+    --state-warning: #e65100;
+    --state-info: #0277bd;
 
-    /* Shadows & Elevation */
-    --shadow-default: 0 4px 12px rgba(25, 35, 56, 0.08);
-    --shadow-elevated: 0 8px 24px rgba(25, 35, 56, 0.12);
-    --shadow-modal: 0 16px 48px rgba(25, 35, 56, 0.16);
-    --overlay-backdrop: rgba(25, 35, 56, 0.6);
-
-    /* Typography Fallbacks (Overridden by next/font in layout.tsx) */
-    --font-heading: 'Playfair Display', serif;
-    --font-body: 'Inter', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    /* Typography System (Updated to Poppins & Lora) */
+    --font-heading: 'Poppins', sans-serif;
+    --font-body: 'Lora', serif;
 
     /* ──────────────────────────────────────────────────────────────
-       shadcn/ui COMPATIBILITY MAPPING
-       Maps our Deep Blue tokens to shadcn's expected variables 
-       so we NEVER have to modify components/ui/* source code.
+       shadcn/ui HSL COMPATIBILITY BLOCK
+       Raw HSL values (deg % %) allowing Tailwind opacity modifiers 
+       like bg-primary/80, text-muted/50 to work smoothly.
        ────────────────────────────────────────────────────────────── */
-    --background: var(--bg-surface);
-    --foreground: var(--text-primary);
-    
-    --card: var(--bg-surface);
-    --card-foreground: var(--text-primary);
-    
-    --popover: var(--bg-surface);
-    --popover-foreground: var(--text-primary);
-    
-    --primary: var(--primary-medium);
-    --primary-foreground: #FFFFFF;
-    
-    --secondary: var(--bg-base);
-    --secondary-foreground: var(--primary-deep);
-    
-    --muted: var(--bg-base);
-    --muted-foreground: var(--text-muted);
-    
-    --accent: var(--primary-light);
-    --accent-foreground: var(--primary-deep);
-    
-    --destructive: var(--state-error);
-    --destructive-foreground: #FFFFFF;
-    
-    --border: var(--border-default);
-    --input: var(--border-default);
-    --ring: var(--border-focus);
-    
-    --radius: 0.5rem; /* 8px - Matches rounded-lg for cards/inputs per ui-context.md */
+    --background: 0 0% 100%;             /* #ffffff */
+    --foreground: 225 90% 15%;           /* #04164a */
+
+    --card: 0 0% 100%;                   /* #ffffff */
+    --card-foreground: 225 90% 15%;      /* #04164a */
+
+    --popover: 0 0% 100%;                /* #ffffff */
+    --popover-foreground: 225 90% 15%;   /* #04164a */
+
+    --primary: 225 90% 15%;              /* #04164a */
+    --primary-foreground: 0 0% 100%;     /* #ffffff */
+
+    --secondary: 255 60% 97%;            /* #f3f0ff (Lavender) */
+    --secondary-foreground: 225 90% 15%; /* #04164a */
+
+    --muted: 255 40% 95%;                /* Soft Lavender muted bg */
+    --muted-foreground: 213 25% 38%;     /* #4a607a - Accessible high contrast */
+
+    --accent: 215 58% 72%;               /* #8FB3E2 */
+    --accent-foreground: 225 90% 15%;    /* #04164a */
+
+    --destructive: 0 72% 47%;            /* #c62828 */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 252 45% 92%;               /* #e4e0f5 */
+    --input: 252 45% 92%;
+    --ring: 225 90% 15%;
+
+    --radius: 0.5rem;                    /* 8px radius */
   }
 
-  /* Base Body Styles */
+  /* Base Body Defaults */
   body {
     background-color: var(--bg-base);
     color: var(--text-primary);
@@ -96,12 +88,17 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Smooth scrolling for anchor links */
+  /* Headings default to Poppins */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+
+  /* Smooth scrolling for page anchors */
   html {
     scroll-behavior: smooth;
   }
 
-  /* Accessibility: Respect reduced motion preferences */
+  /* Accessibility: Respect user reduced motion preferences */
   @media (prefers-reduced-motion: reduce) {
     html {
       scroll-behavior: auto;
@@ -119,6 +116,14 @@
    CUSTOM UTILITY CLASSES
    ────────────────────────────────────────────────────────────── */
 @layer utilities {
+  .font-heading {
+    font-family: var(--font-heading);
+  }
+
+  .font-body {
+    font-family: var(--font-body);
+  }
+
   .text-gradient-cta {
     background: var(--gradient-cta);
     -webkit-background-clip: text;

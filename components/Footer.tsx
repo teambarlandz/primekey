@@ -1,88 +1,122 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { Phone, MessageCircle, Mail, MapPin, Facebook, Instagram, Linkedin, Twitter } from 'lucide-react';
+
+// Exact Brand Navy
+const BRAND_COLOR = '#04164a';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
     <footer 
-      className="bg-[var(--primary-deep)] text-[var(--primary-light)] pt-16 pb-8 font-[var(--font-body)]" 
+      className="bg-[#f3f0ff] border-t border-purple-200/80 pt-16 pb-8 font-body text-[#4a607a]" 
       role="contentinfo"
     >
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 lg:gap-8 mb-12">
+        {/* ──────────────────────────────────────────────────────────────
+            3-COLUMN GRID LAYOUT (Matches .md Wireframe)
+            ────────────────────────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 lg:gap-16 mb-12">
           
           {/* ──────────────────────────────────────────────────────────────
-              COLUMN 1: BRAND + DIRECT CONTACT
+              COLUMN 1: BRAND + CONTACT & SOCIALS
               ────────────────────────────────────────────────────────────── */}
           <div className="space-y-6">
-            <Link href="/" aria-label="Primekey Homes home" className="inline-block">
-              <Image
-                src="/assets/logo.png"
-                alt="Primekey Homes and Properties Ltd."
-                width={140}
-                height={40}
-                // brightness-0 invert ensures the logo is visible on the dark background
-                className="h-10 w-auto brightness-0 invert" 
+            <Link href="/" aria-label="Primekey Homes home" className="flex items-center gap-3 group">
+              <Image 
+                src="/assets/logo.svg" 
+                alt="Primekey Logo Icon"
+                width={214}
+                height={111}
+                className="w-9 h-auto"
+                priority
               />
+              <span 
+                className="font-heading text-2xl font-bold tracking-tight"
+                style={{ color: BRAND_COLOR }}
+              >
+                Primekey
+              </span>
             </Link>
             
-            <p className="text-sm leading-relaxed max-w-xs">
+            <p className="text-sm leading-relaxed max-w-xs text-[#4a607a]">
               Your trusted partner in Nigerian real estate — buying, renting, and managing properties with confidence.
             </p>
             
-            <address className="not-italic space-y-3 text-sm">
+            <address className="not-italic space-y-3 text-sm text-[#22376e]">
               <a 
                 href="tel:+2348000000000" 
-                className="flex items-center gap-3 hover:text-white transition-colors"
+                className="flex items-center gap-3 hover:opacity-80 transition-opacity"
               >
-                <Phone className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+                <Phone className="w-4 h-4 flex-shrink-0" aria-hidden="true" style={{ color: BRAND_COLOR }} />
                 <span>+234 800 000 0000</span>
               </a>
               <a 
                 href="https://wa.me/2348000000000" 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="flex items-center gap-3 hover:text-white transition-colors"
+                className="flex items-center gap-3 hover:opacity-80 transition-opacity"
               >
-                <MessageCircle className="w-4 h-4 text-[var(--state-success)] flex-shrink-0" aria-hidden="true" />
-                <span>WhatsApp Us</span>
+                <MessageCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" aria-hidden="true" />
+                <span className="font-semibold text-emerald-800">WhatsApp Us</span>
               </a>
               <a 
                 href="mailto:hello@primekeyhomes.com" 
-                className="flex items-center gap-3 hover:text-white transition-colors"
+                className="flex items-center gap-3 hover:opacity-80 transition-opacity"
               >
-                <Mail className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+                <Mail className="w-4 h-4 flex-shrink-0" aria-hidden="true" style={{ color: BRAND_COLOR }} />
                 <span>hello@primekeyhomes.com</span>
               </a>
-              <div className="flex items-start gap-3">
-                <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" aria-hidden="true" />
+              <div className="flex items-start gap-3 text-[#4a607a]">
+                <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" aria-hidden="true" style={{ color: BRAND_COLOR }} />
                 <span>Lagos, Nigeria</span>
               </div>
             </address>
 
             {/* Social Icons */}
-            <ul className="flex gap-4 pt-2" role="list" aria-label="Social media">
+            <ul className="flex gap-4 pt-2" role="list" aria-label="Social media links">
               <li>
-                <a href="#" aria-label="Facebook" className="hover:text-white transition-colors">
-                  <Facebook className="w-5 h-5" />
+                <a 
+                  href="#" 
+                  aria-label="Facebook" 
+                  className="w-9 h-9 rounded-full bg-white/80 border border-purple-200/60 flex items-center justify-center hover:bg-white transition-colors shadow-sm"
+                  style={{ color: BRAND_COLOR }}
+                >
+                  <Facebook className="w-4 h-4" />
                 </a>
               </li>
               <li>
-                <a href="#" aria-label="Instagram" className="hover:text-white transition-colors">
-                  <Instagram className="w-5 h-5" />
+                <a 
+                  href="#" 
+                  aria-label="Instagram" 
+                  className="w-9 h-9 rounded-full bg-white/80 border border-purple-200/60 flex items-center justify-center hover:bg-white transition-colors shadow-sm"
+                  style={{ color: BRAND_COLOR }}
+                >
+                  <Instagram className="w-4 h-4" />
                 </a>
               </li>
               <li>
-                <a href="#" aria-label="LinkedIn" className="hover:text-white transition-colors">
-                  <Linkedin className="w-5 h-5" />
+                <a 
+                  href="#" 
+                  aria-label="LinkedIn" 
+                  className="w-9 h-9 rounded-full bg-white/80 border border-purple-200/60 flex items-center justify-center hover:bg-white transition-colors shadow-sm"
+                  style={{ color: BRAND_COLOR }}
+                >
+                  <Linkedin className="w-4 h-4" />
                 </a>
               </li>
               <li>
-                <a href="#" aria-label="Twitter / X" className="hover:text-white transition-colors">
-                  <Twitter className="w-5 h-5" />
+                <a 
+                  href="#" 
+                  aria-label="Twitter / X" 
+                  className="w-9 h-9 rounded-full bg-white/80 border border-purple-200/60 flex items-center justify-center hover:bg-white transition-colors shadow-sm"
+                  style={{ color: BRAND_COLOR }}
+                >
+                  <Twitter className="w-4 h-4" />
                 </a>
               </li>
             </ul>
@@ -92,15 +126,38 @@ export default function Footer() {
               COLUMN 2: QUICK NAVIGATION
               ────────────────────────────────────────────────────────────── */}
           <nav className="space-y-6" aria-label="Footer navigation">
-            <h4 className="text-lg font-semibold text-white font-[var(--font-heading)]">
-              Explore
+            <h4 
+              className="text-base font-bold font-heading uppercase tracking-wider"
+              style={{ color: BRAND_COLOR }}
+            >
+              Quick Navigation
             </h4>
-            <ul className="space-y-3 text-sm" role="list">
-              <li><Link href="/search" className="hover:text-white transition-colors">Buy / Rent a Property</Link></li>
-              <li><Link href="/landlord" className="hover:text-white transition-colors">List a Property</Link></li>
-              <li><Link href="/about" className="hover:text-white transition-colors">About Us</Link></li>
-              <li><Link href="/faq" className="hover:text-white transition-colors">FAQ</Link></li>
-              <li><Link href="/contact" className="hover:text-white transition-colors">Contact Us</Link></li>
+            <ul className="space-y-3 text-sm font-body" role="list">
+              <li>
+                <Link href="/search" className="hover:underline transition-all" style={{ color: BRAND_COLOR }}>
+                  Buy / Rent a Property
+                </Link>
+              </li>
+              <li>
+                <Link href="/landlord" className="hover:underline transition-all" style={{ color: BRAND_COLOR }}>
+                  List a Property
+                </Link>
+              </li>
+              <li>
+                <Link href="/about" className="hover:underline transition-all" style={{ color: BRAND_COLOR }}>
+                  About Us
+                </Link>
+              </li>
+              <li>
+                <Link href="/faq" className="hover:underline transition-all" style={{ color: BRAND_COLOR }}>
+                  FAQ
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="hover:underline transition-all" style={{ color: BRAND_COLOR }}>
+                  Contact Us
+                </Link>
+              </li>
             </ul>
           </nav>
 
@@ -108,14 +165,33 @@ export default function Footer() {
               COLUMN 3: LEGAL & TRUST
               ────────────────────────────────────────────────────────────── */}
           <div className="space-y-6">
-            <h4 className="text-lg font-semibold text-white font-[var(--font-heading)]">
-              Legal & Compliance
+            <h4 
+              className="text-base font-bold font-heading uppercase tracking-wider"
+              style={{ color: BRAND_COLOR }}
+            >
+              Legal & Trust
             </h4>
-            <ul className="space-y-3 text-sm" role="list">
-              <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="hover:text-white transition-colors">Terms &amp; Conditions</Link></li>
-              <li><Link href="/ndpr" className="hover:text-white transition-colors">NDPR Compliance</Link></li>
-              <li><Link href="/cookies" className="hover:text-white transition-colors">Cookie Policy</Link></li>
+            <ul className="space-y-3 text-sm font-body" role="list">
+              <li>
+                <Link href="/privacy" className="hover:underline transition-all" style={{ color: BRAND_COLOR }}>
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms" className="hover:underline transition-all" style={{ color: BRAND_COLOR }}>
+                  Terms &amp; Conditions
+                </Link>
+              </li>
+              <li>
+                <Link href="/ndpr" className="hover:underline transition-all" style={{ color: BRAND_COLOR }}>
+                  NDPR Compliance Notice
+                </Link>
+              </li>
+              <li>
+                <Link href="/cookies" className="hover:underline transition-all" style={{ color: BRAND_COLOR }}>
+                  Cookie Policy
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -124,7 +200,7 @@ export default function Footer() {
         {/* ─────────────────────────────────────────────────────────────
             COPYRIGHT ROW
             ────────────────────────────────────────────────────────────── */}
-        <div className="border-t border-[var(--primary-medium)]/30 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-[var(--primary-light)]/80">
+        <div className="border-t border-purple-200/80 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-body text-[#4a607a]">
           <p className="text-center md:text-left">
             © {currentYear} Primekey Homes and Properties Ltd. All rights reserved.
           </p>

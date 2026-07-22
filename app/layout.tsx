@@ -1,27 +1,24 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display, JetBrains_Mono } from "next/font/google";
+import { Poppins, Lora } from "next/font/google";
 import "./globals.css";
 
 // ──────────────────────────────────────────────────────────────
 // FONT CONFIGURATION
-// Maps Google Fonts to the CSS variables defined in globals.css
+// Maps Poppins and Lora to CSS variables defined in globals.css
 // ──────────────────────────────────────────────────────────────
 
-const inter = Inter({
+const poppins = Poppins({
   subsets: ["latin"],
-  variable: "--font-body",
-  display: "swap",
-});
-
-const playfair = Playfair_Display({
-  subsets: ["latin"],
+  weight: ["600", "700"],
   variable: "--font-heading",
   display: "swap",
 });
 
-const jetbrainsMono = JetBrains_Mono({
+const lora = Lora({
   subsets: ["latin"],
-  variable: "--font-mono",
+  weight: ["400", "500", "600"],
+  style: ["normal", "italic"],
+  variable: "--font-body",
   display: "swap",
 });
 
@@ -56,13 +53,9 @@ export default function RootLayout({
   return (
     <html 
       lang="en" 
-      className={`${inter.variable} ${playfair.variable} ${jetbrainsMono.variable}`}
+      className={`${poppins.variable} ${lora.variable}`}
     >
-      {/* 
-        We apply inter.className to the body so Inter is the default fallback, 
-        while the CSS variables remain globally accessible via the html class.
-      */}
-      <body className={`${inter.className} antialiased`}>
+      <body className={`${lora.className} antialiased`}>
         {children}
       </body>
     </html>

@@ -2,84 +2,98 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { Poppins, Lora } from 'next/font/google';
+
+// Google Fonts Setup
+const poppins = Poppins({ 
+  subsets: ['latin'], 
+  weight: ['700'] 
+});
+
+const lora = Lora({ 
+  subsets: ['latin'], 
+  weight: ['400', '600'],
+  style: ['normal', 'italic']
+});
+
+// Deep Navy color from logo SVG
+const BRAND_COLOR = '#04164a';
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-
-  useEffect(() => {
-    // Check user's motion preference
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    
-    if (prefersReducedMotion) {
-      // If user prefers reduced motion, skip the animation and set as solid immediately
-      setIsScrolled(true);
-      return;
-    }
-
-    const handleScroll = () => {
-      // Trigger opacity/shadow change after 50px scroll
-      setIsScrolled(window.scrollY > 50);
-    };
-
-    // Passive listener for better scroll performance
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    
-    // Initial check in case page loads already scrolled
-    handleScroll();
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
 
   return (
-    <header 
-      className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 ease-in-out ${
-        isScrolled 
-          ? 'bg-[var(--bg-surface)] shadow-[var(--shadow-elevated)] py-3' 
-          : 'bg-transparent py-5'
-      }`}
-      role="banner"
-    >
+    // Lavender semi-transparent background with blur (#f3f0ff = soft lavender)
+    <header className="sticky top-0 z-50 w-full bg-[#f3f0ff]/85 backdrop-blur-md border-b border-purple-100/60 py-4 sm:py-5 transition-all" role="banner">
       <nav 
-        className="container mx-auto flex items-center max-w-7xl px-4 sm:px-6 lg:px-8" 
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between" 
         aria-label="Primary"
       >
         {/* ──────────────────────────────────────────────────────────────
-            LEFT: Logo (Takes up 1/3 of the flex container, aligned left)
+            LEFT: Clean Logo (No white badge) + Brand Name (Poppins Bold)
             ───────────────────────────────────────────────────────────── */}
-        <div className="flex-1 flex justify-start">
-          <Link href="/" className="navbar__logo" aria-label="Primekey Homes home">
-            <Image
-              src="/assets/logo.png"
-              alt="Primekey Homes logo"
-              width={140}
-              height={40}
-              className="navbar__logo-img"
+        <div className="flex items-center">
+          <Link href="/" className="flex items-center gap-3 group" aria-label="Primekey Homes home">
+            {/* Logo image sitting cleanly on the navbar */}
+            <Image 
+              src="/assets/logo.svg" 
+              alt="Primekey Logo Icon"
+              width={214}
+              height={111}
+              className="w-9 h-auto"
               priority
             />
+        
+            {/* Poppins Bold */}
+            <span 
+              className={`${poppins.className} text-2xl sm:text-3xl font-bold tracking-tight`}
+              style={{ color: BRAND_COLOR }}
+            >
+              Primekey
+            </span>
           </Link>
         </div>
 
         {/* ──────────────────────────────────────────────────────────────
-            MIDDLE: Desktop Navigation (Takes up 1/3, perfectly centered)
+            MIDDLE: Navigation Links (Lora Regular)
             ────────────────────────────────────────────────────────────── */}
-        <div className="hidden lg:flex flex-1 justify-center">
-          <ul className="flex items-center gap-8 font-[var(--font-body)] text-[var(--text-primary)]" role="list">
+        <div className="hidden md:flex items-center space-x-8">
+          <ul className={`flex items-center gap-8 text-base ${lora.className}`} role="list">
+            <li className="relative flex flex-col items-center">
+              {/* Active Indicator Bar matching logo color */}
+              <span 
+                className="absolute -top-3 w-4 h-0.5 rounded-full" 
+                style={{ backgroundColor: BRAND_COLOR }}
+              />
+              <Link href="/" className="font-semibold" style={{ color: BRAND_COLOR }}>
+                Home
+              </Link>
+            </li>
             <li>
-              <Link href="/search" className="navbar__link hover:text-[var(--primary-medium)] transition-colors duration-200 font-medium">
+              <Link 
+                href="/search" 
+                className="opacity-80 hover:opacity-100 transition-opacity duration-200"
+                style={{ color: BRAND_COLOR }}
+              >
                 Buy/Rent a Property
               </Link>
             </li>
             <li>
-              <Link href="/landlord" className="navbar__link hover:text-[var(--primary-medium)] transition-colors duration-200 font-medium">
+              <Link 
+                href="/landlord" 
+                className="opacity-80 hover:opacity-100 transition-opacity duration-200"
+                style={{ color: BRAND_COLOR }}
+              >
                 List a Property
               </Link>
             </li>
             <li>
-              <Link href="/builder" className="navbar__link hover:text-[var(--primary-medium)] transition-colors duration-200 font-medium">
+              <Link 
+                href="/builder" 
+                className="opacity-80 hover:opacity-100 transition-opacity duration-200"
+                style={{ color: BRAND_COLOR }}
+              >
                 For Builders
               </Link>
             </li>
@@ -87,22 +101,24 @@ export default function Navbar() {
         </div>
 
         {/* ──────────────────────────────────────────────────────────────
-            RIGHT: Actions & Mobile Toggle (Takes up 1/3, aligned right)
+            RIGHT: Actions (Lora Regular)
             ────────────────────────────────────────────────────────────── */}
-        <div className="flex-1 flex justify-end items-center gap-4">
+        <div className="flex items-center gap-5">
           {/* Desktop Actions */}
-          <div className="hidden lg:flex items-center gap-4 font-[var(--font-body)]">
+          <div className="hidden md:flex items-center gap-6">
             <Link 
               href="/login" 
-              className="text-[var(--text-primary)] hover:text-[var(--primary-medium)] transition-colors duration-200 font-medium"
+              className={`text-base opacity-90 hover:opacity-100 transition-opacity duration-200 ${lora.className}`}
+              style={{ color: BRAND_COLOR }}
             >
               Login
             </Link>
+            
+            {/* CTA Button in Lora */}
             <Link 
               href="/contact" 
-              className={`btn btn--primary btn--sm transition-all duration-300 ${
-                isScrolled ? 'opacity-100' : 'opacity-90 hover:opacity-100'
-              }`}
+              className={`text-sm font-semibold text-white px-6 py-2.5 rounded-full transition-all duration-200 shadow-sm hover:opacity-95 ${lora.className}`}
+              style={{ backgroundColor: BRAND_COLOR }}
             >
               Talk to us
             </Link>
@@ -110,7 +126,8 @@ export default function Navbar() {
 
           {/* Mobile Menu Toggle */}
           <button
-            className="lg:hidden p-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)] rounded-md"
+            className="md:hidden p-2 focus:outline-none focus:ring-2 rounded-lg"
+            style={{ color: BRAND_COLOR }}
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-menu"
@@ -128,23 +145,47 @@ export default function Navbar() {
       </nav>
       
       {/* ──────────────────────────────────────────────────────────────
-          MOBILE MENU DROPDOWN
+          MOBILE MENU DROPDOWN (Matching Lavender Tint)
           ────────────────────────────────────────────────────────────── */}
       {mobileMenuOpen && (
         <div 
           id="mobile-menu" 
-          className="lg:hidden absolute top-full left-0 right-0 bg-[var(--bg-surface)] shadow-[var(--shadow-elevated)] border-t border-[var(--border-default)]"
+          className="md:hidden absolute top-full left-0 right-0 bg-[#f3f0ff]/95 backdrop-blur-md shadow-lg border-t border-purple-100 z-50"
         >
-          <div className="container mx-auto px-4 py-6 space-y-4 font-[var(--font-body)]">
-            <ul className="space-y-4 text-lg" role="list">
-              <li><Link href="/search" className="block text-[var(--text-primary)] hover:text-[var(--primary-medium)]" onClick={() => setMobileMenuOpen(false)}>Buy/Rent a Property</Link></li>
-              <li><Link href="/landlord" className="block text-[var(--text-primary)] hover:text-[var(--primary-medium)]" onClick={() => setMobileMenuOpen(false)}>List a Property</Link></li>
-              <li><Link href="/builder" className="block text-[var(--text-primary)] hover:text-[var(--primary-medium)]" onClick={() => setMobileMenuOpen(false)}>For Builders</Link></li>
-              <li className="pt-4 border-t border-[var(--border-default)]">
-                <Link href="/login" className="block text-[var(--text-primary)] hover:text-[var(--primary-medium)]" onClick={() => setMobileMenuOpen(false)}>Login</Link>
+          <div className="px-6 py-6 space-y-4">
+            <ul className={`space-y-4 text-base ${lora.className}`} role="list">
+              <li>
+                <Link href="/" className="block font-semibold" style={{ color: BRAND_COLOR }} onClick={() => setMobileMenuOpen(false)}>
+                  Home
+                </Link>
               </li>
               <li>
-                <Link href="/contact" className="btn btn--primary w-full text-center" onClick={() => setMobileMenuOpen(false)}>Talk to us</Link>
+                <Link href="/search" className="block opacity-80" style={{ color: BRAND_COLOR }} onClick={() => setMobileMenuOpen(false)}>
+                  Buy/Rent a Property
+                </Link>
+              </li>
+              <li>
+                <Link href="/landlord" className="block opacity-80" style={{ color: BRAND_COLOR }} onClick={() => setMobileMenuOpen(false)}>
+                  List a Property
+                </Link>
+              </li>
+              <li>
+                <Link href="/builder" className="block opacity-80" style={{ color: BRAND_COLOR }} onClick={() => setMobileMenuOpen(false)}>
+                  For Builders
+                </Link>
+              </li>
+              <li className="pt-4 border-t border-purple-200/50 flex flex-col gap-3">
+                <Link href="/login" className="block text-center py-2" style={{ color: BRAND_COLOR }} onClick={() => setMobileMenuOpen(false)}>
+                  Login
+                </Link>
+                <Link 
+                  href="/contact" 
+                  className={`block text-center text-sm font-semibold text-white py-3 rounded-full ${lora.className}`}
+                  style={{ backgroundColor: BRAND_COLOR }}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Talk to us
+                </Link>
               </li>
             </ul>
           </div>
