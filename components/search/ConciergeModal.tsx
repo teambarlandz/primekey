@@ -1,0 +1,221 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { conciergeFormSchema, ConciergeFormValues } from '@/lib/validations/conciergeSchema';
+import { SearchFilterValues } from '@/lib/validations/searchSchema';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Sparkles, CheckCircle, Clock, ShieldCheck, Phone, User, MapPin } from 'lucide-react';
+
+interface ConciergeModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  initialFilters?: SearchFilterValues;
+}
+
+export const ConciergeModal: React.FC<ConciergeModalProps> = ({
+  isOpen,
+  onClose,
+  initialFilters,
+}) => {
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<ConciergeFormValues>({
+    resolver: zodResolver(conciergeFormSchema),
+    defaultValues: {
+      fullName: '',
+      phone: '',
+      email: '',
+      preferredLocation: initialFilters?.location || '',
+      propertyType: initialFilters?.propertyType || 'any',
+      budgetMin: initialFilters?.minPrice || 0,
+      budgetMax: initialFilters?.maxPrice || 500000000,
+      bedrooms: initialFilters?.bedrooms || 'any',
+      ndprConsent: false,
+    },
+  });
+
+  // Pre-fill location/budget when filters update
+  useEffect(() => {
+    if (initialFilters) {
+      if (initialFilters.location) setValue('preferredLocation', initialFilters.location);
+      if (initialFilters.propertyType) setValue('propertyType', initialFilters.propertyType);
+      if (initialFilters.minPrice) setValue('budgetMin', initialFilters.minPrice);
+      if (initialFilters.maxPrice) setValue('budgetMax', initialFilters.maxPrice);
+      if (initialFilters.bedrooms) setValue('bedrooms', initialFilters.bedrooms);
+    }
+  }, [initialFilters, setValue]);
+
+  const onSubmit = async (data: ConciergeFormValues) => {
+    setIsSubmitting(true);
+    try {
+      // API integration point: POST /api/submit-concierge
+      console.log('Submitting Concierge Lead:', data);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setIsSubmitted(true);
+    } catch (err) {
+      console.error('Submission failed:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleClose = () => {
+    setIsSubmitted(false);
+    reset();
+    onClose();
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent className="bg-white border-slate-200 max-w-lg p-6 rounded-2xl">
+        {!isSubmitted ? (
+          <div className="space-y-5">
+            <DialogHeader className="text-left space-y-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f3f0ff] text-[#04164a] text-xs font-heading font-semibold">
+                <Sparkles className="w-3.5 h-3.5" /> 2-Week Concierge Service
+              </div>
+              <DialogTitle className="font-heading text-2xl font-bold text-[#04164a]">
+                We'll Find Your Property
+              </DialogTitle>
+              <DialogDescription className="font-body text-slate-600 text-sm">
+                No matching listings currently available. Register with our luxury concierge team, and we will source verified matches across Nigeria within 14 days.
+              </DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 font-body">
+              {/* Target Location */}
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-[#04164a]">Target Location</label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+                  <Input
+                    {...register('preferredLocation')}
+                    placeholder="e.g. Lekki Phase 1, Maitama, GRA Abeokuta"
+                    className="pl-9 h-10 border-slate-200 text-xs rounded-xl"
+                  />
+                </div>
+                {errors.preferredLocation && (
+                  <p className="text-[11px] text-rose-600">{errors.preferredLocation.message}</p>
+                )}
+              </div>
+
+              {/* Full Name & Phone */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-[#04164a]">Full Name</label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+                    <Input
+                      {...register('fullName')}
+                      placeholder="John Doe"
+                      className="pl-9 h-10 border-slate-200 text-xs rounded-xl"
+                    />
+                  </div>
+                  {errors.fullName && (
+                    <p className="text-[11px] text-rose-600">{errors.fullName.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-[#04164a]">Phone Number</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+                    <Input
+                      {...register('phone')}
+                      placeholder="08012345678"
+                      className="pl-9 h-10 border-slate-200 text-xs rounded-xl"
+                    />
+                  </div>
+                  {errors.phone && (
+                    <p className="text-[11px] text-rose-600">{errors.phone.message}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Email Address */}
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-[#04164a]">Email Address (Optional)</label>
+                <Input
+                  {...register('email')}
+                  placeholder="john@example.com"
+                  className="h-10 border-slate-200 text-xs rounded-xl"
+                />
+                {errors.email && (
+                  <p className="text-[11px] text-rose-600">{errors.email.message}</p>
+                )}
+              </div>
+
+              {/* NDPR Consent Checkbox */}
+              <div className="pt-2">
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    id="ndprConsent"
+                    checked={watch('ndprConsent')}
+                    onCheckedChange={(checked) => setValue('ndprConsent', checked === true)}
+                    className="mt-0.5 border-slate-300 data-[state=checked]:bg-[#04164a]"
+                  />
+                  <label htmlFor="ndprConsent" className="text-[11px] text-slate-600 leading-tight">
+                    I consent to Primekey Homes processing my contact information under the Nigeria Data Protection Act (NDPR) for concierge property sourcing.
+                  </label>
+                </div>
+                {errors.ndprConsent && (
+                  <p className="text-[11px] text-rose-600 mt-1">{errors.ndprConsent.message}</p>
+                )}
+              </div>
+
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-[#04164a] hover:bg-[#04164a]/90 text-white font-heading h-11 rounded-xl text-sm"
+              >
+                {isSubmitting ? 'Registering Request...' : 'Activate Concierge Sourcing'}
+              </Button>
+            </form>
+          </div>
+        ) : (
+          /* Confirmation View */
+          <div className="py-6 text-center space-y-4">
+            <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+              <CheckCircle className="w-8 h-8" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-heading text-2xl font-bold text-[#04164a]">Concierge Activated!</h3>
+              <p className="font-body text-slate-600 text-xs md:text-sm">
+                Your request has been prioritized in our SLA queue. A dedicated Primekey agent will reach out to you within <strong className="text-[#04164a]">2 hours</strong>.
+              </p>
+            </div>
+            <div className="bg-[#f3f0ff] p-3 rounded-xl flex items-center justify-center gap-2 text-xs text-[#04164a] font-body">
+              <Clock className="w-4 h-4 shrink-0" />
+              <span>2-Hour Agent Response SLA Active</span>
+            </div>
+            <Button
+              onClick={handleClose}
+              className="bg-[#04164a] text-white font-heading text-xs px-6 py-2.5 rounded-xl"
+            >
+              Back to Search
+            </Button>
+          </div>
+        )}
+
+        <div className="border-t border-slate-100 pt-3 text-[10px] text-slate-400 flex items-center gap-1 justify-center">
+          <ShieldCheck className="w-3 h-3 text-emerald-600" />
+          <span>Primekey Homes & Properties Ltd · NDPR Certified Lead Engine</span>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};

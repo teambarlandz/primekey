@@ -1,8 +1,8 @@
-// File: /home/primekey/app/page.tsx
-import * as entry from '../../../app/page.js'
+// File: /home/primekey/app/search/page.tsx
+import * as entry from '../../../../app/search/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
-type TEntry = typeof import('../../../app/page.js')
+type TEntry = typeof import('../../../../app/search/page.js')
 
 // Check that the entry is a valid entry
 checkFields<Diff<{
