@@ -1,70 +1,109 @@
 'use client';
 
-import React from 'react';
-import { MapPin, Search } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Search, MapPin, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
 interface SearchBarProps {
   value: string;
-  onChange: (value: string) => void;
+  onChange: (val: string) => void;
   onSearch: () => void;
+  onSelectSuggestion: (loc: string) => void;
 }
 
-const POPULAR_LOCATIONS = [
+const SUGGESTED_LOCATIONS = [
   'Lekki Phase 1',
   'Ikoyi',
   'Victoria Island',
-  'Ikeja GRA',
-  'Maitama, Abuja',
-  'Wuse II, Abuja',
-  'Port Harcourt GRA',
+  'Maitama',
+  'Banana Island',
+  'Epe',
   'Abeokuta',
-  'Warri',
 ];
 
-export const SearchBar: React.FC<SearchBarProps> = ({ value, onChange, onSearch }) => {
+export const SearchBar: React.FC<SearchBarProps> = ({
+  value,
+  onChange,
+  onSearch,
+  onSelectSuggestion,
+}) => {
+  const [isFocused, setIsFocused] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  // Close suggestions dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setIsFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredSuggestions = SUGGESTED_LOCATIONS.filter((loc) =>
+    loc.toLowerCase().includes((value || '').toLowerCase())
+  );
+
   return (
-    <div className="w-full space-y-3">
-      <div className="relative flex items-center shadow-sm rounded-xl overflow-hidden bg-white border border-slate-200 focus-within:border-[#04164a] focus-within:ring-2 focus-within:ring-[#04164a]/20 transition-all">
-        <MapPin className="absolute left-4 w-5 h-5 text-[#04164a]/60 pointer-events-none" />
+    <div ref={wrapperRef} className="relative space-y-3 font-body">
+      <div className="relative flex items-center">
+        <MapPin className="absolute left-4 w-5 h-5 text-[#04164a]" />
         <Input
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && onSearch()}
-          placeholder="Enter city, neighborhood, or landmark (e.g. Abeokuta, Port Harcourt GRA, Lekki)..."
-          className="w-full pl-12 pr-28 py-6 border-0 focus-visible:ring-0 font-body text-slate-800 placeholder:text-slate-400 text-sm md:text-base"
+          onFocus={() => setIsFocused(true)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              setIsFocused(false);
+              onSearch();
+            }
+          }}
+          placeholder="Search location (e.g. Lekki, Ikoyi, Maitama)..."
+          className="pl-12 pr-24 py-6 text-sm md:text-base rounded-2xl border-slate-200 bg-slate-50/50 focus-visible:ring-[#04164a] shadow-xs"
         />
+        {value && (
+          <button
+            type="button"
+            onClick={() => onChange('')}
+            className="absolute right-20 text-slate-400 hover:text-slate-600 p-1"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
         <Button
-          onClick={onSearch}
-          className="absolute right-2 bg-[#04164a] hover:bg-[#04164a]/90 text-white font-heading px-5 py-2.5 rounded-lg flex items-center gap-2 transition-all"
+          onClick={() => {
+            setIsFocused(false);
+            onSearch();
+          }}
+          className="absolute right-2 bg-[#04164a] hover:bg-[#04164a]/90 text-white px-5 py-2.5 rounded-xl font-heading text-xs md:text-sm h-10"
         >
-          <Search className="w-4 h-4" />
-          <span className="hidden sm:inline">Search</span>
+          <Search className="w-4 h-4 mr-1.5" /> Search
         </Button>
       </div>
 
-      {/* Quick Location Pill Tags */}
-      <div className="flex items-center gap-2 flex-wrap text-xs font-body">
-        <span className="text-slate-500 font-medium mr-1">Popular:</span>
-        {POPULAR_LOCATIONS.map((loc) => (
-          <button
-            key={loc}
-            type="button"
-            onClick={() => {
-              onChange(loc);
-              onSearch();
-            }}
-            className={`px-3 py-1 rounded-full border transition-all ${
-              value === loc
-                ? 'bg-[#04164a] text-white border-[#04164a]'
-                : 'bg-white/80 text-slate-700 border-slate-200 hover:border-[#04164a] hover:text-[#04164a]'
-            }`}
-          >
-            {loc}
-          </button>
-        ))}
+      {/* Suggested Locations Dropdown & Quick Tags */}
+      <div className="space-y-1.5">
+        <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+          Popular Destinations:
+        </span>
+        <div className="flex flex-wrap gap-1.5">
+          {filteredSuggestions.map((loc) => (
+            <button
+              key={loc}
+              type="button"
+              onClick={() => {
+                setIsFocused(false);
+                onSelectSuggestion(loc); // Instantly updates and filters grid
+              }}
+              className="text-xs bg-slate-100 hover:bg-[#04164a] hover:text-white text-slate-600 px-3 py-1.5 rounded-full transition-colors font-medium flex items-center gap-1 shadow-2xs"
+            >
+              <MapPin className="w-3 h-3 opacity-70" /> {loc}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

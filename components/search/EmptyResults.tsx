@@ -1,37 +1,59 @@
 'use client';
 
 import React from 'react';
-import { SearchX, Sparkles, ArrowRight } from 'lucide-react';
+import { Sparkles, ArrowLeft, Building2, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface EmptyResultsProps {
+  location: string;
   onOpenConcierge: () => void;
-  location?: string;
+  onResetSearch: () => void;
 }
 
-export const EmptyResults: React.FC<EmptyResultsProps> = ({ onOpenConcierge, location }) => {
+export const EmptyResults: React.FC<EmptyResultsProps> = ({
+  location,
+  onOpenConcierge,
+  onResetSearch,
+}) => {
+  const displayLocation = location.trim() || 'this location';
+
   return (
-    <div className="bg-white/80 backdrop-blur-md rounded-2xl border border-slate-200 p-8 md:p-12 text-center space-y-5 max-w-2xl mx-auto my-8">
-      <div className="w-16 h-16 bg-[#f3f0ff] text-[#04164a] rounded-full flex items-center justify-center mx-auto">
-        <SearchX className="w-8 h-8" />
+    <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-slate-200/80 p-8 md:p-12 text-center max-w-2xl mx-auto my-12 shadow-sm space-y-6">
+      {/* Icon Badge */}
+      <div className="w-16 h-16 bg-[#04164a]/5 rounded-2xl flex items-center justify-center mx-auto text-[#04164a] shadow-xs">
+        <Building2 className="w-8 h-8" />
       </div>
 
-      <div className="space-y-2">
-        <h3 className="font-heading text-xl md:text-2xl font-bold text-[#04164a]">
-          No Properties Found {location ? `in "${location}"` : ''}
+      {/* Message Title & Contextual Explanation */}
+      <div className="space-y-3">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold">
+          <MapPin className="w-3.5 h-3.5" /> Sourcing Available in {displayLocation}
+        </div>
+        <h3 className="font-heading text-2xl md:text-3xl font-bold text-[#04164a]">
+          No instant public listings in {displayLocation} yet
         </h3>
-        <p className="font-body text-slate-600 text-xs md:text-sm max-w-md mx-auto">
-          We couldn't find active listings matching your exact criteria right now. Don't worry—our 2-Week Concierge team can source unlisted inventory for you.
+        <p className="font-body text-slate-600 text-sm md:text-base leading-relaxed max-w-lg mx-auto">
+          We don't list properties in {displayLocation} publicly to protect our clients' privacy, or we are currently expanding our inventory there. Let our dedicated Concierge Desk manually source verified properties matching your exact specifications within 24 hours.
         </p>
       </div>
 
-      <div className="pt-2">
+      {/* Action Buttons */}
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
+        {/* Safe Back Navigation */}
+        <Button
+          variant="outline"
+          onClick={onResetSearch}
+          className="w-full sm:w-auto font-heading text-xs md:text-sm border-slate-200 text-slate-700 hover:bg-slate-50 px-6 py-2.5 rounded-xl flex items-center gap-2"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to All Properties
+        </Button>
+
+        {/* Concierge Trigger */}
         <Button
           onClick={onOpenConcierge}
-          className="bg-[#04164a] hover:bg-[#04164a]/90 text-white font-heading text-sm px-6 py-3 rounded-xl inline-flex items-center gap-2 shadow-md hover:shadow-lg transition-all"
+          className="w-full sm:w-auto bg-[#04164a] hover:bg-[#04164a]/90 text-white font-heading text-xs md:text-sm px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-xs"
         >
-          <Sparkles className="w-4 h-4" /> Activate 2-Week Concierge
-          <ArrowRight className="w-4 h-4" />
+          <Sparkles className="w-4 h-4 text-amber-400" /> Request Concierge Match
         </Button>
       </div>
     </div>

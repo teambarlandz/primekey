@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { SearchBar } from '@/components/search/SearchBar';
 import { FilterDropdown } from '@/components/search/FilterDropdown';
 import { PriceRange } from '@/components/search/PriceRange';
@@ -10,8 +11,9 @@ import { ConciergeModal } from '@/components/search/ConciergeModal';
 import { AuthInterceptSheet } from '@/components/auth/AuthInterceptSheet';
 import { SearchFilterValues } from '@/lib/validations/searchSchema';
 import { Property } from '@/types/property';
-import { Filter, RotateCcw } from 'lucide-react';
+import { Filter, RotateCcw, Search, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 const MOCK_PROPERTIES: Property[] = [
   {
@@ -89,17 +91,45 @@ export default function SearchPage() {
   const [isConciergeOpen, setIsConciergeOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState('');
+  const [isScrolled, setIsScrolled] = useState(false);
 
-  const handleSearchExecute = () => {
-    // Safe string check with fallback
-    const targetLocation = filters.location?.toLowerCase() || '';
+  // Detect scroll to transform header search bar
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 160) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const executeSearch = (locationQuery: string) => {
+    const targetLocation = locationQuery.toLowerCase().trim();
 
     if (targetLocation.includes('abeokuta')) {
-      setProperties([]); // Trigger zero state for demo
-      setIsConciergeOpen(true);
+      setProperties([]);
+    } else if (targetLocation) {
+      const filtered = MOCK_PROPERTIES.filter(
+        (p) =>
+          p.location.toLowerCase().includes(targetLocation) ||
+          p.city.toLowerCase().includes(targetLocation)
+      );
+      setProperties(filtered.length > 0 ? filtered : MOCK_PROPERTIES);
     } else {
       setProperties(MOCK_PROPERTIES);
     }
+  };
+
+  const handleSearchExecute = () => {
+    executeSearch(filters.location || '');
+  };
+
+  const handleLocationSelect = (loc: string) => {
+    setFilters((prev) => ({ ...prev, location: loc }));
+    executeSearch(loc);
   };
 
   const handleReset = () => {
@@ -119,10 +149,59 @@ export default function SearchPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f3f0ff] py-8 px-4 md:px-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <main className="min-h-screen bg-[#f3f0ff] pb-16">
+      {/* Sticky Brand Header with Scroll Mini-Search */}
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs transition-all duration-300">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between gap-4">
+          
+          {/* Company Brand Logo & Name */}
+          <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
+            <div className="w-9 h-9 rounded-xl bg-[#04164a] flex items-center justify-center text-white font-heading font-bold shadow-sm transition-transform group-hover:scale-105">
+              PK
+            </div>
+            <span className="font-heading font-bold text-xl text-[#04164a] tracking-tight">
+              PrimeKey
+            </span>
+          </Link>
+
+          {/* Scroll-triggered Mini Search Bar */}
+          <div
+            className={`transition-all duration-300 flex-1 max-w-md mx-4 ${
+              isScrolled ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'
+            } hidden md:flex items-center`}
+          >
+            <div className="relative w-full">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                value={filters.location || ''}
+                onChange={(e) => {
+                  setFilters((prev) => ({ ...prev, location: e.target.value }));
+                  executeSearch(e.target.value);
+                }}
+                placeholder="Search location (e.g., Lekki, Ikoyi, Abuja)..."
+                className="pl-10 pr-4 py-2 h-9 text-xs rounded-full border-slate-200 bg-slate-50 focus-visible:ring-[#04164a]"
+              />
+            </div>
+          </div>
+
+          {/* Action Right */}
+          <div className="flex items-center gap-3 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsConciergeOpen(true)}
+              className="hidden sm:flex items-center gap-1.5 text-xs border-[#04164a]/20 text-[#04164a] hover:bg-[#04164a]/5 rounded-xl font-heading"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" /> Concierge Match
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content Container */}
+      <div className="max-w-7xl mx-auto px-4 md:px-8 pt-8 space-y-6">
         <div className="space-y-2">
-          <h1 className="font-heading text-3xl md:text-5xl font-bold text-[#04164a]">
+          <h1 className="font-heading text-3xl md:text-4xl font-bold text-[#04164a]">
             Discover Premium Properties
           </h1>
           <p className="font-body text-slate-600 text-sm md:text-base">
@@ -130,12 +209,13 @@ export default function SearchPage() {
           </p>
         </div>
 
-        {/* Filter Panel */}
+        {/* Hero Filter Panel */}
         <div className="bg-white/90 backdrop-blur-md p-5 md:p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
           <SearchBar
             value={filters.location || ''}
             onChange={(loc) => setFilters((prev) => ({ ...prev, location: loc }))}
             onSearch={handleSearchExecute}
+            onSelectSuggestion={handleLocationSelect}
           />
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 pt-2 border-t border-slate-100">
@@ -191,6 +271,7 @@ export default function SearchPage() {
           <EmptyResults
             location={filters.location || ''}
             onOpenConcierge={() => setIsConciergeOpen(true)}
+            onResetSearch={handleReset}
           />
         )}
 
