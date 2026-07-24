@@ -20,6 +20,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AuthInterceptSheet } from '@/components/auth/AuthInterceptSheet';
+import { PropertyMap } from '@/components/map/PropertyMap';
 
 // Extended Property Interface for Detail View
 interface PropertyDetail {
@@ -42,6 +43,10 @@ interface PropertyDetail {
   isVerified: boolean;
   agentName: string;
   agentPhone: string;
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
 }
 
 // Mock Data representing a realistic luxury listing
@@ -78,6 +83,10 @@ const MOCK_PROPERTY_DETAIL: PropertyDetail = {
   isVerified: true,
   agentName: 'Adebayo Ogunlesi',
   agentPhone: '+234 802 345 6789',
+  coordinates: {
+    lat: 6.4474,
+    lng: 3.4723,
+  },
 };
 
 export default function PropertyDetailPage({ params }: { params: { id: string } }) {
@@ -269,6 +278,13 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
                 ))}
               </div>
             </div>
+
+            {/* Map Integration & Neighborhood Analytics Module */}
+            <PropertyMap
+              title={property.title}
+              location={`${property.location}, ${property.city}`}
+              coordinates={property.coordinates}
+            />
 
           </div>
 
