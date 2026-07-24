@@ -15,12 +15,13 @@ import {
   FileCheck,
   CheckCircle2,
   ChevronLeft,
-  Sparkles,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AuthInterceptSheet } from '@/components/auth/AuthInterceptSheet';
 import { PropertyMap } from '@/components/map/PropertyMap';
+import { InspectionBookingModal } from '@/components/booking/InspectionBookingModal';
+import { BookingSchemaType } from '@/lib/validations/bookingSchema';
 
 // Extended Property Interface for Detail View
 interface PropertyDetail {
@@ -36,7 +37,7 @@ interface PropertyDetail {
   bathrooms: number;
   toilets: number;
   landSize?: string;
-  titleDocument: string; // e.g., "Certificate of Occupancy (C of O)", "Governor's Consent"
+  titleDocument: string;
   description: string;
   features: string[];
   images: string[];
@@ -93,6 +94,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const property = MOCK_PROPERTY_DETAIL;
   const [selectedImage, setSelectedImage] = useState(0);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState('');
   const [isFavorited, setIsFavorited] = useState(false);
 
@@ -108,15 +110,19 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     setIsAuthOpen(true);
   };
 
+  const handleBookingSuccess = (data: BookingSchemaType) => {
+    console.log('Inspection tour scheduled successfully:', data);
+  };
+
   return (
-    <main className="min-h-screen bg-[#f3f0ff] py-8 px-4 md:px-8 font-body">
+    <main className="min-h-screen bg-secondary/40 py-8 px-4 md:px-8 font-body">
       <div className="max-w-7xl mx-auto space-y-6">
         
         {/* Navigation & Header Controls */}
         <div className="flex items-center justify-between">
           <Link
             href="/search"
-            className="inline-flex items-center gap-1.5 text-xs font-heading font-semibold text-[#04164a] hover:underline"
+            className="inline-flex items-center gap-1.5 text-xs font-heading font-semibold text-primary hover:underline"
           >
             <ChevronLeft className="w-4 h-4" /> Back to Search Results
           </Link>
@@ -125,7 +131,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
               variant="outline"
               size="sm"
               onClick={() => handleProtectedAction('Save to Favorites')}
-              className="bg-white border-slate-200 text-slate-700 hover:text-rose-600 rounded-xl"
+              className="bg-background border-border text-foreground hover:text-rose-600 rounded-xl"
             >
               <Heart className={`w-4 h-4 ${isFavorited ? 'fill-rose-600 text-rose-600' : ''}`} />
               <span className="hidden sm:inline">Save</span>
@@ -134,7 +140,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
               variant="outline"
               size="sm"
               onClick={() => navigator.clipboard?.writeText(window.location.href)}
-              className="bg-white border-slate-200 text-slate-700 rounded-xl"
+              className="bg-background border-border text-foreground rounded-xl"
             >
               <Share2 className="w-4 h-4" />
               <span className="hidden sm:inline">Share</span>
@@ -144,7 +150,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
 
         {/* Gallery Section */}
         <div className="space-y-3">
-          <div className="relative w-full h-[380px] md:h-[500px] bg-slate-200 rounded-2xl overflow-hidden shadow-sm">
+          <div className="relative w-full h-[380px] md:h-[500px] bg-muted rounded-2xl overflow-hidden shadow-xs">
             <Image
               src={property.images[selectedImage]}
               alt={property.title}
@@ -153,7 +159,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
               className="object-cover transition-all duration-300"
             />
             <div className="absolute top-4 left-4 flex gap-2">
-              <Badge className="bg-[#04164a] text-white font-heading text-xs px-3 py-1 uppercase">
+              <Badge className="bg-primary text-primary-foreground font-heading text-xs px-3 py-1 uppercase">
                 For {property.category}
               </Badge>
               {property.isVerified && (
@@ -171,7 +177,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
                 key={idx}
                 onClick={() => setSelectedImage(idx)}
                 className={`relative w-24 h-20 rounded-xl overflow-hidden shrink-0 border-2 transition-all ${
-                  selectedImage === idx ? 'border-[#04164a] scale-95' : 'border-transparent opacity-70 hover:opacity-100'
+                  selectedImage === idx ? 'border-primary scale-95' : 'border-transparent opacity-70 hover:opacity-100'
                 }`}
               >
                 <Image src={img} alt="Thumbnail" fill className="object-cover" />
@@ -187,91 +193,60 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
           <div className="lg:col-span-2 space-y-6">
             
             {/* Title & Price */}
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 space-y-3">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-100 pb-4">
-                <h1 className="font-heading text-2xl md:text-3xl font-bold text-[#04164a]">
+            <div className="bg-background p-6 rounded-2xl border border-border space-y-3">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-border/60 pb-4">
+                <h1 className="font-heading text-2xl md:text-3xl font-bold text-primary">
                   {property.title}
                 </h1>
-                <div className="text-2xl font-heading font-extrabold text-[#04164a]">
+                <div className="text-2xl font-heading font-extrabold text-primary">
                   {formatPrice(property.price, property.category)}
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5 text-xs text-slate-600">
-                <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
                 <span>{property.location}, {property.city}, {property.state}</span>
-              </div>
-            </div>
-
-            {/* Visual Interior Highlights */}
-            <div className="space-y-3">
-              <h3 className="font-heading text-lg font-bold text-[#04164a] flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-[#04164a]" /> Interior & Architectural Finish
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="relative h-48 rounded-xl overflow-hidden">
-                    <Image
-                      src="image_agent_tag_8652070550013213110"
-                      alt="Luxurious Master Bedroom Interior"
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <p className="text-xs text-slate-600 font-medium text-center">Spacious En-suite Master Bedroom</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="relative h-48 rounded-xl overflow-hidden">
-                    <Image
-                      src="image_agent_tag_8652070550013212851"
-                      alt="Modern Fitted Chef Kitchen"
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <p className="text-xs text-slate-600 font-medium text-center">Fully Fitted Chef Kitchen & Breakfast Bar</p>
-                </div>
               </div>
             </div>
 
             {/* Quick Specs Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="bg-white p-4 rounded-xl border border-slate-200 text-center space-y-1">
-                <Bed className="w-5 h-5 text-[#04164a] mx-auto" />
-                <span className="block font-heading text-sm font-bold text-[#04164a]">{property.bedrooms} Beds</span>
-                <span className="block text-[11px] text-slate-500">All En-Suite</span>
+              <div className="bg-background p-4 rounded-xl border border-border text-center space-y-1">
+                <Bed className="w-5 h-5 text-primary mx-auto" />
+                <span className="block font-heading text-sm font-bold text-primary">{property.bedrooms} Beds</span>
+                <span className="block text-[11px] text-muted-foreground">All En-Suite</span>
               </div>
-              <div className="bg-white p-4 rounded-xl border border-slate-200 text-center space-y-1">
-                <Bath className="w-5 h-5 text-[#04164a] mx-auto" />
-                <span className="block font-heading text-sm font-bold text-[#04164a]">{property.bathrooms} Baths</span>
-                <span className="block text-[11px] text-slate-500">+ Visitor's Toilet</span>
+              <div className="bg-background p-4 rounded-xl border border-border text-center space-y-1">
+                <Bath className="w-5 h-5 text-primary mx-auto" />
+                <span className="block font-heading text-sm font-bold text-primary">{property.bathrooms} Baths</span>
+                <span className="block text-[11px] text-muted-foreground">+ Visitor's Toilet</span>
               </div>
-              <div className="bg-white p-4 rounded-xl border border-slate-200 text-center space-y-1">
+              <div className="bg-background p-4 rounded-xl border border-border text-center space-y-1">
                 <FileCheck className="w-5 h-5 text-emerald-600 mx-auto" />
-                <span className="block font-heading text-sm font-bold text-[#04164a]">Title Doc</span>
+                <span className="block font-heading text-sm font-bold text-primary">Title Doc</span>
                 <span className="block text-[11px] text-emerald-700 font-semibold">{property.titleDocument}</span>
               </div>
-              <div className="bg-white p-4 rounded-xl border border-slate-200 text-center space-y-1">
-                <ShieldCheck className="w-5 h-5 text-[#04164a] mx-auto" />
-                <span className="block font-heading text-sm font-bold text-[#04164a]">{property.landSize || 'N/A'}</span>
-                <span className="block text-[11px] text-slate-500">Land Footprint</span>
+              <div className="bg-background p-4 rounded-xl border border-border text-center space-y-1">
+                <ShieldCheck className="w-5 h-5 text-primary mx-auto" />
+                <span className="block font-heading text-sm font-bold text-primary">{property.landSize || 'N/A'}</span>
+                <span className="block text-[11px] text-muted-foreground">Land Footprint</span>
               </div>
             </div>
 
             {/* Description */}
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 space-y-3">
-              <h2 className="font-heading text-lg font-bold text-[#04164a]">About This Property</h2>
-              <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line">
+            <div className="bg-background p-6 rounded-2xl border border-border space-y-3">
+              <h2 className="font-heading text-lg font-bold text-primary">About This Property</h2>
+              <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-line">
                 {property.description}
               </p>
             </div>
 
             {/* Features Checklist */}
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 space-y-4">
-              <h2 className="font-heading text-lg font-bold text-[#04164a]">Property Amenities</h2>
+            <div className="bg-background p-6 rounded-2xl border border-border space-y-4">
+              <h2 className="font-heading text-lg font-bold text-primary">Property Amenities</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {property.features.map((feature, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-xs text-slate-700">
+                  <div key={idx} className="flex items-center gap-2 text-xs text-foreground">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                     <span>{feature}</span>
                   </div>
@@ -279,7 +254,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
               </div>
             </div>
 
-            {/* Map Integration & Neighborhood Analytics Module */}
+            {/* Map Integration Module */}
             <PropertyMap
               title={property.title}
               location={`${property.location}, ${property.city}`}
@@ -290,19 +265,19 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
 
           {/* Right Column: Sticky Inspection Booking Sidebar */}
           <div className="space-y-6">
-            <div className="sticky top-6 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
+            <div className="sticky top-6 bg-background p-6 rounded-2xl border border-border shadow-xs space-y-5">
               
               <div className="space-y-1">
-                <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Listing Price</span>
-                <div className="text-2xl font-heading font-extrabold text-[#04164a]">
+                <span className="text-xs text-muted-foreground uppercase tracking-wider block font-semibold">Listing Price</span>
+                <div className="text-2xl font-heading font-extrabold text-primary">
                   {formatPrice(property.price, property.category)}
                 </div>
               </div>
 
-              <div className="border-t border-slate-100 pt-4 space-y-3">
+              <div className="border-t border-border/60 pt-4 space-y-3">
                 <Button
-                  onClick={() => handleProtectedAction('Book Physical Tour')}
-                  className="w-full bg-[#04164a] hover:bg-[#04164a]/90 text-white font-heading h-12 rounded-xl text-sm flex items-center justify-center gap-2 shadow-sm"
+                  onClick={() => setIsBookingOpen(true)}
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-heading h-12 rounded-xl text-sm flex items-center justify-center gap-2 shadow-xs"
                 >
                   <Calendar className="w-4 h-4" /> Book Physical Inspection
                 </Button>
@@ -310,20 +285,20 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
                 <Button
                   variant="outline"
                   onClick={() => handleProtectedAction('Contact Agent Directly')}
-                  className="w-full border-[#04164a] text-[#04164a] hover:bg-[#f3f0ff] font-heading h-12 rounded-xl text-sm flex items-center justify-center gap-2"
+                  className="w-full border-primary text-primary hover:bg-secondary font-heading h-12 rounded-xl text-sm flex items-center justify-center gap-2"
                 >
                   <Phone className="w-4 h-4" /> Contact Managing Agent
                 </Button>
               </div>
 
               {/* Agent Representative Card */}
-              <div className="border-t border-slate-100 pt-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#f3f0ff] text-[#04164a] font-heading font-bold flex items-center justify-center text-sm">
+              <div className="border-t border-border/60 pt-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-secondary text-primary font-heading font-bold flex items-center justify-center text-sm">
                   AO
                 </div>
                 <div>
-                  <h4 className="font-heading text-xs font-bold text-[#04164a]">{property.agentName}</h4>
-                  <p className="text-[11px] text-slate-500">Primekey Verified Representative</p>
+                  <h4 className="font-heading text-xs font-bold text-primary">{property.agentName}</h4>
+                  <p className="text-[11px] text-muted-foreground">Primekey Verified Representative</p>
                 </div>
               </div>
 
@@ -338,6 +313,15 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
           onClose={() => setIsAuthOpen(false)}
           pendingActionName={pendingAction}
           onSuccess={() => console.log('Action authenticated & executed on Detail Page!')}
+        />
+
+        {/* Unit 2.1: Inspection Booking Modal */}
+        <InspectionBookingModal
+          isOpen={isBookingOpen}
+          onClose={() => setIsBookingOpen(false)}
+          propertyTitle={property.title}
+          propertyLocation={`${property.location}, ${property.city}`}
+          onBookingSuccess={handleBookingSuccess}
         />
 
       </div>
