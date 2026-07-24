@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, MapPin, X } from 'lucide-react';
+import { Search, MapPin, X, SlidersHorizontal } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
@@ -31,7 +31,6 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   const [isFocused, setIsFocused] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // Close suggestions dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
@@ -61,14 +60,14 @@ export const SearchBar: React.FC<SearchBarProps> = ({
               onSearch();
             }
           }}
-          placeholder="Search location (e.g. Lekki, Ikoyi, Maitama)..."
-          className="pl-12 pr-24 py-6 text-sm md:text-base rounded-2xl border-slate-200 bg-slate-50/50 focus-visible:ring-[#04164a] shadow-xs"
+          placeholder="Search location (e.g. Lekki, Ikoyi, Abeokuta, Warri)..."
+          className="pl-12 pr-28 py-6 text-sm md:text-base rounded-2xl border-slate-200 bg-slate-50/50 focus-visible:ring-[#04164a] shadow-xs"
         />
         {value && (
           <button
             type="button"
             onClick={() => onChange('')}
-            className="absolute right-20 text-slate-400 hover:text-slate-600 p-1"
+            className="absolute right-24 text-slate-400 hover:text-slate-600 p-1"
           >
             <X className="w-4 h-4" />
           </button>
@@ -78,13 +77,12 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             setIsFocused(false);
             onSearch();
           }}
-          className="absolute right-2 bg-[#04164a] hover:bg-[#04164a]/90 text-white px-5 py-2.5 rounded-xl font-heading text-xs md:text-sm h-10"
+          className="absolute right-2 bg-[#04164a] hover:bg-[#04164a]/90 text-white px-4 py-2.5 rounded-xl font-heading text-xs md:text-sm h-10 flex items-center gap-1.5"
         >
-          <Search className="w-4 h-4 mr-1.5" /> Search
+          <Search className="w-4 h-4" /> Search
         </Button>
       </div>
 
-      {/* Suggested Locations Dropdown & Quick Tags */}
       <div className="space-y-1.5">
         <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
           Popular Destinations:
@@ -96,7 +94,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
               type="button"
               onClick={() => {
                 setIsFocused(false);
-                onSelectSuggestion(loc); // Instantly updates and filters grid
+                onSelectSuggestion(loc);
               }}
               className="text-xs bg-slate-100 hover:bg-[#04164a] hover:text-white text-slate-600 px-3 py-1.5 rounded-full transition-colors font-medium flex items-center gap-1 shadow-2xs"
             >

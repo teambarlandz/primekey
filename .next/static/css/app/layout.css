@@ -1159,8 +1159,8 @@ video {
 .right-2 {
   right: 0.5rem;
 }
-.right-20 {
-  right: 5rem;
+.right-24 {
+  right: 6rem;
 }
 .right-3 {
   right: 0.75rem;
@@ -1246,10 +1246,6 @@ video {
   margin-top: 3rem;
   margin-bottom: 3rem;
 }
-.my-2 {
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
-}
 .-mb-4 {
   margin-bottom: -1rem;
 }
@@ -1285,9 +1281,6 @@ video {
 }
 .ml-4 {
   margin-left: 1rem;
-}
-.mr-1\.5 {
-  margin-right: 0.375rem;
 }
 .mt-0\.5 {
   margin-top: 0.125rem;
@@ -1613,6 +1606,11 @@ video {
 }
 .list-none {
   list-style-type: none;
+}
+.appearance-none {
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
 }
 .auto-rows-min {
   grid-auto-rows: min-content;
@@ -2074,10 +2072,6 @@ video {
   padding-left: 1rem;
   padding-right: 1rem;
 }
-.px-5 {
-  padding-left: 1.25rem;
-  padding-right: 1.25rem;
-}
 .px-6 {
   padding-left: 1.5rem;
   padding-right: 1.5rem;
@@ -2166,8 +2160,8 @@ video {
 .pr-2 {
   padding-right: 0.5rem;
 }
-.pr-24 {
-  padding-right: 6rem;
+.pr-28 {
+  padding-right: 7rem;
 }
 .pr-4 {
   padding-right: 1rem;
@@ -2416,6 +2410,9 @@ video {
 .antialiased {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+.accent-\[\#04164a\] {
+  accent-color: #04164a;
 }
 .opacity-0 {
   opacity: 0;

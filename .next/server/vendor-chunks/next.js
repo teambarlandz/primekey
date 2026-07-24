@@ -30,6 +30,26 @@ eval("// Exports\nmodule.exports = {\n\t\"style\": {\"fontFamily\":\"'__Poppins_
 
 /***/ }),
 
+/***/ "(ssr)/./node_modules/next/font/google/target.css?{\"path\":\"components/Navbar.tsx\",\"import\":\"Lora\",\"arguments\":[{\"subsets\":[\"latin\"],\"weight\":[\"400\",\"600\"],\"style\":[\"normal\",\"italic\"]}],\"variableName\":\"lora\"}":
+/*!****************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/next/font/google/target.css?{"path":"components/Navbar.tsx","import":"Lora","arguments":[{"subsets":["latin"],"weight":["400","600"],"style":["normal","italic"]}],"variableName":"lora"} ***!
+  \****************************************************************************************************************************************************************************************************************/
+/***/ ((module) => {
+
+eval("// Exports\nmodule.exports = {\n\t\"style\": {\"fontFamily\":\"'__Lora_af140c', '__Lora_Fallback_af140c'\"},\n\t\"className\": \"__className_af140c\"\n};\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiKHNzcikvLi9ub2RlX21vZHVsZXMvbmV4dC9mb250L2dvb2dsZS90YXJnZXQuY3NzP3tcInBhdGhcIjpcImNvbXBvbmVudHMvTmF2YmFyLnRzeFwiLFwiaW1wb3J0XCI6XCJMb3JhXCIsXCJhcmd1bWVudHNcIjpbe1wic3Vic2V0c1wiOltcImxhdGluXCJdLFwid2VpZ2h0XCI6W1wiNDAwXCIsXCI2MDBcIl0sXCJzdHlsZVwiOltcIm5vcm1hbFwiLFwiaXRhbGljXCJdfV0sXCJ2YXJpYWJsZU5hbWVcIjpcImxvcmFcIn0iLCJtYXBwaW5ncyI6IkFBQUE7QUFDQTtBQUNBLFdBQVcseURBQXlEO0FBQ3BFO0FBQ0EiLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9wcmltZWtleS8uL25vZGVfbW9kdWxlcy9uZXh0L2ZvbnQvZ29vZ2xlL3RhcmdldC5jc3M/NDA3OCJdLCJzb3VyY2VzQ29udGVudCI6WyIvLyBFeHBvcnRzXG5tb2R1bGUuZXhwb3J0cyA9IHtcblx0XCJzdHlsZVwiOiB7XCJmb250RmFtaWx5XCI6XCInX19Mb3JhX2FmMTQwYycsICdfX0xvcmFfRmFsbGJhY2tfYWYxNDBjJ1wifSxcblx0XCJjbGFzc05hbWVcIjogXCJfX2NsYXNzTmFtZV9hZjE0MGNcIlxufTtcbiJdLCJuYW1lcyI6W10sInNvdXJjZVJvb3QiOiIifQ==\n//# sourceURL=webpack-internal:///(ssr)/./node_modules/next/font/google/target.css?{\"path\":\"components/Navbar.tsx\",\"import\":\"Lora\",\"arguments\":[{\"subsets\":[\"latin\"],\"weight\":[\"400\",\"600\"],\"style\":[\"normal\",\"italic\"]}],\"variableName\":\"lora\"}\n");
+
+/***/ }),
+
+/***/ "(ssr)/./node_modules/next/font/google/target.css?{\"path\":\"components/Navbar.tsx\",\"import\":\"Poppins\",\"arguments\":[{\"subsets\":[\"latin\"],\"weight\":[\"700\"]}],\"variableName\":\"poppins\"}":
+/*!************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/next/font/google/target.css?{"path":"components/Navbar.tsx","import":"Poppins","arguments":[{"subsets":["latin"],"weight":["700"]}],"variableName":"poppins"} ***!
+  \************************************************************************************************************************************************************************************/
+/***/ ((module) => {
+
+eval("// Exports\nmodule.exports = {\n\t\"style\": {\"fontFamily\":\"'__Poppins_b4dd1b', '__Poppins_Fallback_b4dd1b'\",\"fontWeight\":700,\"fontStyle\":\"normal\"},\n\t\"className\": \"__className_b4dd1b\"\n};\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiKHNzcikvLi9ub2RlX21vZHVsZXMvbmV4dC9mb250L2dvb2dsZS90YXJnZXQuY3NzP3tcInBhdGhcIjpcImNvbXBvbmVudHMvTmF2YmFyLnRzeFwiLFwiaW1wb3J0XCI6XCJQb3BwaW5zXCIsXCJhcmd1bWVudHNcIjpbe1wic3Vic2V0c1wiOltcImxhdGluXCJdLFwid2VpZ2h0XCI6W1wiNzAwXCJdfV0sXCJ2YXJpYWJsZU5hbWVcIjpcInBvcHBpbnNcIn0iLCJtYXBwaW5ncyI6IkFBQUE7QUFDQTtBQUNBLFdBQVcscUdBQXFHO0FBQ2hIO0FBQ0EiLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9wcmltZWtleS8uL25vZGVfbW9kdWxlcy9uZXh0L2ZvbnQvZ29vZ2xlL3RhcmdldC5jc3M/MmFkOCJdLCJzb3VyY2VzQ29udGVudCI6WyIvLyBFeHBvcnRzXG5tb2R1bGUuZXhwb3J0cyA9IHtcblx0XCJzdHlsZVwiOiB7XCJmb250RmFtaWx5XCI6XCInX19Qb3BwaW5zX2I0ZGQxYicsICdfX1BvcHBpbnNfRmFsbGJhY2tfYjRkZDFiJ1wiLFwiZm9udFdlaWdodFwiOjcwMCxcImZvbnRTdHlsZVwiOlwibm9ybWFsXCJ9LFxuXHRcImNsYXNzTmFtZVwiOiBcIl9fY2xhc3NOYW1lX2I0ZGQxYlwiXG59O1xuIl0sIm5hbWVzIjpbXSwic291cmNlUm9vdCI6IiJ9\n//# sourceURL=webpack-internal:///(ssr)/./node_modules/next/font/google/target.css?{\"path\":\"components/Navbar.tsx\",\"import\":\"Poppins\",\"arguments\":[{\"subsets\":[\"latin\"],\"weight\":[\"700\"]}],\"variableName\":\"poppins\"}\n");
+
+/***/ }),
+
 /***/ "(ssr)/./node_modules/next/dist/api/image.js":
 /*!*********************************************!*\
   !*** ./node_modules/next/dist/api/image.js ***!

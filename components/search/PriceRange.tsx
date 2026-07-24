@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Banknote } from 'lucide-react';
-import { Slider } from '@/components/ui/slider';
+import { SlidersHorizontal } from 'lucide-react';
 
 interface PriceRangeProps {
   minPrice: number;
@@ -10,51 +9,39 @@ interface PriceRangeProps {
   onChange: (min: number, max: number) => void;
 }
 
-const MAX_LIMIT = 500000000; // ₦500 Million
-
-export const PriceRange: React.FC<PriceRangeProps> = ({
-  minPrice,
-  maxPrice,
-  onChange,
-}) => {
-  const formatNaira = (amount: number) => {
-    if (amount >= 1000000000) return `₦${(amount / 1000000000).toFixed(1)}B`;
-    if (amount >= 1000000) return `₦${(amount / 1000000).toFixed(0)}M`;
-    if (amount >= 1000) return `₦${(amount / 1000).toFixed(0)}k`;
-    return `₦${amount}`;
-  };
-
-  const handleSliderChange = (val: number | readonly number[]) => {
-    if (Array.isArray(val)) {
-      const min = val[0] ?? 0;
-      const max = val[1] ?? MAX_LIMIT;
-      onChange(min, max);
-    }
+export const PriceRange: React.FC<PriceRangeProps> = ({ minPrice, maxPrice, onChange }) => {
+  const formatNaira = (val: number) => {
+    if (val >= 1000000000) return `₦${(val / 1000000000).toFixed(1)}B`;
+    if (val >= 1000000) return `₦${(val / 1000000).toFixed(0)}M`;
+    return `₦${val.toLocaleString()}`;
   };
 
   return (
-    <div className="space-y-3 font-body">
-      <div className="flex items-center justify-between text-xs">
-        <label className="font-semibold text-[#04164a] flex items-center gap-1.5">
-          <Banknote className="w-3.5 h-3.5" /> Budget Range
-        </label>
-        <span className="font-bold text-[#04164a]">
-          {formatNaira(minPrice)} - {maxPrice >= MAX_LIMIT ? `${formatNaira(MAX_LIMIT)}+` : formatNaira(maxPrice)}
+    <div className="space-y-2 font-body">
+      <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+        <span className="flex items-center gap-1">
+          <SlidersHorizontal className="w-3.5 h-3.5 text-[#04164a]" /> Max Price Filter
+        </span>
+        <span className="text-[#04164a] font-bold bg-[#04164a]/5 px-2.5 py-1 rounded-md">
+          Up to {formatNaira(maxPrice)}
         </span>
       </div>
 
-      <Slider
-        value={[minPrice, maxPrice]}
-        min={0}
-        max={MAX_LIMIT}
-        step={5000000} // ₦5 Million increments
-        onValueChange={handleSliderChange}
-        className="my-2"
+      {/* Active Range Slider */}
+      <input
+        type="range"
+        min={10000000}
+        max={1500000000}
+        step={10000000}
+        value={maxPrice}
+        onChange={(e) => onChange(minPrice, Number(e.target.value))}
+        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#04164a]"
       />
 
-      <div className="flex justify-between text-[11px] text-slate-400">
-        <span>₦0</span>
-        <span>₦500M+</span>
+      <div className="flex justify-between text-[11px] text-slate-400 font-medium">
+        <span>₦10M</span>
+        <span>₦500M</span>
+        <span>₦1.5B+</span>
       </div>
     </div>
   );

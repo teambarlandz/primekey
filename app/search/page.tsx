@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { SearchBar } from '@/components/search/SearchBar';
 import { FilterDropdown } from '@/components/search/FilterDropdown';
 import { PriceRange } from '@/components/search/PriceRange';
@@ -14,6 +15,8 @@ import { Property } from '@/types/property';
 import { Filter, RotateCcw, Search, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+
+const BRAND_COLOR = '#04164a';
 
 const MOCK_PROPERTIES: Property[] = [
   {
@@ -83,7 +86,7 @@ export default function SearchPage() {
     location: '',
     propertyType: 'any',
     minPrice: 0,
-    maxPrice: 500000000,
+    maxPrice: 1500000000,
     bedrooms: 'any',
   });
 
@@ -93,53 +96,54 @@ export default function SearchPage() {
   const [pendingAction, setPendingAction] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // Detect scroll to transform header search bar
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 160) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
+      setIsScrolled(window.scrollY > 160);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const executeSearch = (locationQuery: string) => {
+  const executeSearch = (locationQuery: string, currentFilters = filters) => {
     const targetLocation = locationQuery.toLowerCase().trim();
 
-    if (targetLocation.includes('abeokuta')) {
-      setProperties([]);
-    } else if (targetLocation) {
-      const filtered = MOCK_PROPERTIES.filter(
-        (p) =>
-          p.location.toLowerCase().includes(targetLocation) ||
-          p.city.toLowerCase().includes(targetLocation)
-      );
-      setProperties(filtered.length > 0 ? filtered : MOCK_PROPERTIES);
-    } else {
-      setProperties(MOCK_PROPERTIES);
-    }
+    let filtered = MOCK_PROPERTIES.filter((p) => {
+      const matchesLocation =
+        !targetLocation ||
+        p.location.toLowerCase().includes(targetLocation) ||
+        p.city.toLowerCase().includes(targetLocation) ||
+        p.state.toLowerCase().includes(targetLocation);
+
+      const matchesPrice = p.price <= currentFilters.maxPrice;
+      const matchesType =
+        currentFilters.propertyType === 'any' || p.propertyType === currentFilters.propertyType;
+      const matchesBeds =
+        currentFilters.bedrooms === 'any' || p.bedrooms >= Number(currentFilters.bedrooms);
+
+      return matchesLocation && matchesPrice && matchesType && matchesBeds;
+    });
+
+    setProperties(filtered);
   };
 
   const handleSearchExecute = () => {
-    executeSearch(filters.location || '');
+    executeSearch(filters.location || '', filters);
   };
 
   const handleLocationSelect = (loc: string) => {
     setFilters((prev) => ({ ...prev, location: loc }));
-    executeSearch(loc);
+    executeSearch(loc, filters);
   };
 
   const handleReset = () => {
-    setFilters({
+    const resetVals: SearchFilterValues = {
       location: '',
       propertyType: 'any',
       minPrice: 0,
-      maxPrice: 500000000,
+      maxPrice: 1500000000,
       bedrooms: 'any',
-    });
+    };
+    setFilters(resetVals);
     setProperties(MOCK_PROPERTIES);
   };
 
@@ -150,38 +154,60 @@ export default function SearchPage() {
 
   return (
     <main className="min-h-screen bg-[#f3f0ff] pb-16">
-      {/* Sticky Brand Header with Scroll Mini-Search */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between gap-4">
+      {/* Sticky Brand Header with Scroll Mini-Search & Quick Filters */}
+      <header className="sticky top-0 z-50 bg-[#f3f0ff]/95 backdrop-blur-md border-b border-purple-100/60 shadow-xs transition-all duration-300">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 h-20 flex items-center justify-between gap-4">
           
-          {/* Company Brand Logo & Name */}
-          <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-            <div className="w-9 h-9 rounded-xl bg-[#04164a] flex items-center justify-center text-white font-heading font-bold shadow-sm transition-transform group-hover:scale-105">
-              PK
-            </div>
-            <span className="font-heading font-bold text-xl text-[#04164a] tracking-tight">
-              PrimeKey
+          {/* Real Company Logo & Name from Navbar */}
+          <Link href="/" className="flex items-center gap-3 shrink-0 group">
+            <Image 
+              src="/assets/logo.svg" 
+              alt="Primekey Logo Icon"
+              width={214}
+              height={111}
+              className="w-9 h-auto transition-transform group-hover:scale-105"
+              priority
+            />
+            <span 
+              className="text-2xl font-bold tracking-tight font-heading"
+              style={{ color: BRAND_COLOR }}
+            >
+              Primekey
             </span>
           </Link>
 
-          {/* Scroll-triggered Mini Search Bar */}
+          {/* Scroll-triggered Mini Search Bar + Quick Filters */}
           <div
-            className={`transition-all duration-300 flex-1 max-w-md mx-4 ${
+            className={`transition-all duration-300 flex-1 max-w-2xl mx-4 ${
               isScrolled ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'
-            } hidden md:flex items-center`}
+            } hidden md:flex items-center gap-2`}
           >
-            <div className="relative w-full">
+            <div className="relative flex-1">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
                 value={filters.location || ''}
                 onChange={(e) => {
                   setFilters((prev) => ({ ...prev, location: e.target.value }));
-                  executeSearch(e.target.value);
+                  executeSearch(e.target.value, filters);
                 }}
-                placeholder="Search location (e.g., Lekki, Ikoyi, Abuja)..."
-                className="pl-10 pr-4 py-2 h-9 text-xs rounded-full border-slate-200 bg-slate-50 focus-visible:ring-[#04164a]"
+                placeholder="Search location (e.g., Lekki, Ikoyi)..."
+                className="pl-10 pr-4 py-2 h-10 text-xs rounded-full border-slate-200 bg-white shadow-2xs focus-visible:ring-[#04164a]"
               />
             </div>
+            <select
+              value={filters.propertyType}
+              onChange={(e) => {
+                const val = e.target.value as any;
+                setFilters((prev) => ({ ...prev, propertyType: val }));
+                executeSearch(filters.location || '', { ...filters, propertyType: val });
+              }}
+              className="h-10 px-3 bg-white border border-slate-200 rounded-full text-xs text-slate-700 font-medium focus:outline-none"
+            >
+              <option value="any">All Property Types</option>
+              <option value="fully_detached_duplex">Detached Duplex</option>
+              <option value="flat">Serviced Flat</option>
+              <option value="mansion">Mansion</option>
+            </select>
           </div>
 
           {/* Action Right */}
@@ -223,15 +249,24 @@ export default function SearchPage() {
               <FilterDropdown
                 propertyType={filters.propertyType}
                 bedrooms={filters.bedrooms}
-                onPropertyTypeChange={(type) => setFilters((prev) => ({ ...prev, propertyType: type as any }))}
-                onBedroomsChange={(beds) => setFilters((prev) => ({ ...prev, bedrooms: beds }))}
+                onPropertyTypeChange={(type) => {
+                  setFilters((prev) => ({ ...prev, propertyType: type as any }));
+                  executeSearch(filters.location || '', { ...filters, propertyType: type as any });
+                }}
+                onBedroomsChange={(beds) => {
+                  setFilters((prev) => ({ ...prev, bedrooms: beds }));
+                  executeSearch(filters.location || '', { ...filters, bedrooms: beds });
+                }}
               />
             </div>
             <div>
               <PriceRange
                 minPrice={filters.minPrice}
                 maxPrice={filters.maxPrice}
-                onChange={(min, max) => setFilters((prev) => ({ ...prev, minPrice: min, maxPrice: max }))}
+                onChange={(min, max) => {
+                  setFilters((prev) => ({ ...prev, minPrice: min, maxPrice: max }));
+                  executeSearch(filters.location || '', { ...filters, minPrice: min, maxPrice: max });
+                }}
               />
             </div>
           </div>
