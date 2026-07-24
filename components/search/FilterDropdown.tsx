@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Home, Bed } from 'lucide-react';
+import { Home, Bed, Ban } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -25,6 +25,8 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
   onPropertyTypeChange,
   onBedroomsChange,
 }) => {
+  const isLandOrCommercial = propertyType === 'land' || propertyType === 'commercial';
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {/* Property Type Dropdown */}
@@ -34,7 +36,14 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
         </label>
         <Select
           value={propertyType}
-          onValueChange={(val: string | null) => onPropertyTypeChange(val ?? 'any')}
+          onValueChange={(val: string | null) => {
+            const newType = val ?? 'any';
+            onPropertyTypeChange(newType);
+            // If switched to land or commercial, automatically clear bedrooms
+            if (newType === 'land' || newType === 'commercial') {
+              onBedroomsChange('any');
+            }
+          }}
         >
           <SelectTrigger className="w-full bg-white border-slate-200 font-body text-slate-800 rounded-xl focus:ring-[#04164a]/20 h-11">
             <SelectValue placeholder="All Property Types" />
@@ -88,17 +97,19 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
         </Select>
       </div>
 
-      {/* Bedroom Count Dropdown */}
+      {/* Bedroom Count Dropdown (Context Aware) */}
       <div className="space-y-1.5">
         <label className="font-body text-xs font-semibold text-[#04164a] flex items-center gap-1.5">
-          <Bed className="w-3.5 h-3.5" /> Bedrooms
+          {isLandOrCommercial ? <Ban className="w-3.5 h-3.5 text-slate-400" /> : <Bed className="w-3.5 h-3.5" />} 
+          Bedrooms
         </label>
         <Select
-          value={bedrooms}
+          value={isLandOrCommercial ? 'any' : bedrooms}
+          disabled={isLandOrCommercial}
           onValueChange={(val: string | null) => onBedroomsChange(val ?? 'any')}
         >
-          <SelectTrigger className="w-full bg-white border-slate-200 font-body text-slate-800 rounded-xl focus:ring-[#04164a]/20 h-11">
-            <SelectValue placeholder="Any Bedrooms" />
+          <SelectTrigger className={`w-full border-slate-200 font-body rounded-xl focus:ring-[#04164a]/20 h-11 ${isLandOrCommercial ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-white text-slate-800'}`}>
+            <SelectValue placeholder={isLandOrCommercial ? "N/A for Land/Commercial" : "Any Bedrooms"} />
           </SelectTrigger>
           <SelectContent className="bg-white border-slate-200 font-body">
             <SelectItem value="any">Any Bedrooms / Self-Contain</SelectItem>
@@ -106,7 +117,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
             <SelectItem value="2">2 Bedrooms</SelectItem>
             <SelectItem value="3">3 Bedrooms</SelectItem>
             <SelectItem value="4">4 Bedrooms</SelectItem>
-            <SelectItem value="5+">5+ Bedrooms</SelectItem>
+            <SelectItem value="5">5+ Bedrooms</SelectItem>
           </SelectContent>
         </Select>
       </div>

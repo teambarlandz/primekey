@@ -104,35 +104,53 @@ export default function SearchPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const executeSearch = (locationQuery: string, currentFilters = filters) => {
-    const targetLocation = locationQuery.toLowerCase().trim();
+  // Multi-layer cumulative filter engine (handles dual-price bounds & context bedrooms)
+  const executeSearch = (updatedFilters: SearchFilterValues) => {
+    const targetLocation = (updatedFilters.location || '').toLowerCase().trim();
 
     let filtered = MOCK_PROPERTIES.filter((p) => {
+      // 1. Location filter layer
       const matchesLocation =
         !targetLocation ||
         p.location.toLowerCase().includes(targetLocation) ||
         p.city.toLowerCase().includes(targetLocation) ||
         p.state.toLowerCase().includes(targetLocation);
 
-      const matchesPrice = p.price <= currentFilters.maxPrice;
-      const matchesType =
-        currentFilters.propertyType === 'any' || p.propertyType === currentFilters.propertyType;
-      const matchesBeds =
-        currentFilters.bedrooms === 'any' || p.bedrooms >= Number(currentFilters.bedrooms);
+      // 2. Dual-thumb Price filter layer (Min and Max boundary)
+      const matchesPrice = p.price >= updatedFilters.minPrice && p.price <= updatedFilters.maxPrice;
 
+      // 3. Property Type filter layer
+      const matchesType =
+        updatedFilters.propertyType === 'any' || p.propertyType === updatedFilters.propertyType;
+
+      // 4. Bedrooms filter layer (Exact match or 5+ threshold)
+      const matchesBeds =
+        updatedFilters.bedrooms === 'any' ||
+        (updatedFilters.bedrooms === '5'
+          ? p.bedrooms >= 5
+          : p.bedrooms === Number(updatedFilters.bedrooms));
+
+      // Must pass ALL active filter criteria simultaneously
       return matchesLocation && matchesPrice && matchesType && matchesBeds;
     });
 
     setProperties(filtered);
   };
 
+  const handleFilterChange = (newPartialFilters: Partial<SearchFilterValues>) => {
+    setFilters((prev) => {
+      const next = { ...prev, ...newPartialFilters };
+      executeSearch(next);
+      return next;
+    });
+  };
+
   const handleSearchExecute = () => {
-    executeSearch(filters.location || '', filters);
+    executeSearch(filters);
   };
 
   const handleLocationSelect = (loc: string) => {
-    setFilters((prev) => ({ ...prev, location: loc }));
-    executeSearch(loc, filters);
+    handleFilterChange({ location: loc });
   };
 
   const handleReset = () => {
@@ -186,21 +204,14 @@ export default function SearchPage() {
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
                 value={filters.location || ''}
-                onChange={(e) => {
-                  setFilters((prev) => ({ ...prev, location: e.target.value }));
-                  executeSearch(e.target.value, filters);
-                }}
+                onChange={(e) => handleFilterChange({ location: e.target.value })}
                 placeholder="Search location (e.g., Lekki, Ikoyi)..."
                 className="pl-10 pr-4 py-2 h-10 text-xs rounded-full border-slate-200 bg-white shadow-2xs focus-visible:ring-[#04164a]"
               />
             </div>
             <select
               value={filters.propertyType}
-              onChange={(e) => {
-                const val = e.target.value as any;
-                setFilters((prev) => ({ ...prev, propertyType: val }));
-                executeSearch(filters.location || '', { ...filters, propertyType: val });
-              }}
+              onChange={(e) => handleFilterChange({ propertyType: e.target.value as any })}
               className="h-10 px-3 bg-white border border-slate-200 rounded-full text-xs text-slate-700 font-medium focus:outline-none"
             >
               <option value="any">All Property Types</option>
@@ -239,7 +250,7 @@ export default function SearchPage() {
         <div className="bg-white/90 backdrop-blur-md p-5 md:p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
           <SearchBar
             value={filters.location || ''}
-            onChange={(loc) => setFilters((prev) => ({ ...prev, location: loc }))}
+            onChange={(loc) => handleFilterChange({ location: loc })}
             onSearch={handleSearchExecute}
             onSelectSuggestion={handleLocationSelect}
           />
@@ -249,24 +260,15 @@ export default function SearchPage() {
               <FilterDropdown
                 propertyType={filters.propertyType}
                 bedrooms={filters.bedrooms}
-                onPropertyTypeChange={(type) => {
-                  setFilters((prev) => ({ ...prev, propertyType: type as any }));
-                  executeSearch(filters.location || '', { ...filters, propertyType: type as any });
-                }}
-                onBedroomsChange={(beds) => {
-                  setFilters((prev) => ({ ...prev, bedrooms: beds }));
-                  executeSearch(filters.location || '', { ...filters, bedrooms: beds });
-                }}
+                onPropertyTypeChange={(type) => handleFilterChange({ propertyType: type as any })}
+                onBedroomsChange={(beds) => handleFilterChange({ bedrooms: beds })}
               />
             </div>
             <div>
               <PriceRange
                 minPrice={filters.minPrice}
                 maxPrice={filters.maxPrice}
-                onChange={(min, max) => {
-                  setFilters((prev) => ({ ...prev, minPrice: min, maxPrice: max }));
-                  executeSearch(filters.location || '', { ...filters, minPrice: min, maxPrice: max });
-                }}
+                onChange={(min, max) => handleFilterChange({ minPrice: min, maxPrice: max })}
               />
             </div>
           </div>
