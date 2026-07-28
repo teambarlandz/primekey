@@ -42,30 +42,35 @@ export const ConciergeModal: React.FC<ConciergeModalProps> = ({
       email: '',
       preferredLocation: initialFilters?.location || '',
       propertyType: initialFilters?.propertyType || 'any',
-      budgetMin: initialFilters?.minPrice || 0,
-      budgetMax: initialFilters?.maxPrice || 500000000,
-      bedrooms: initialFilters?.bedrooms || 'any',
+      budgetMin: initialFilters?.minPrice ?? 0,
+      budgetMax: initialFilters?.maxPrice ?? 500000000,
+      bedrooms: initialFilters?.bedrooms ?? 'any',
       ndprConsent: false,
     },
   });
 
-  // Pre-fill location/budget when filters update
+  // Safely sync initialFilters when modal opens or filters change
   useEffect(() => {
-    if (initialFilters) {
-      if (initialFilters.location) setValue('preferredLocation', initialFilters.location);
-      if (initialFilters.propertyType) setValue('propertyType', initialFilters.propertyType);
-      if (initialFilters.minPrice) setValue('budgetMin', initialFilters.minPrice);
-      if (initialFilters.maxPrice) setValue('budgetMax', initialFilters.maxPrice);
-      if (initialFilters.bedrooms) setValue('bedrooms', initialFilters.bedrooms);
+    if (isOpen) {
+      reset({
+        fullName: watch('fullName') || '',
+        phone: watch('phone') || '',
+        email: watch('email') || '',
+        preferredLocation: initialFilters?.location || watch('preferredLocation') || '',
+        propertyType: initialFilters?.propertyType || 'any',
+        budgetMin: typeof initialFilters?.minPrice === 'number' ? initialFilters.minPrice : 0,
+        budgetMax: typeof initialFilters?.maxPrice === 'number' ? initialFilters.maxPrice : 500000000,
+        bedrooms: initialFilters?.bedrooms ?? 'any',
+        ndprConsent: watch('ndprConsent') || false,
+      });
     }
-  }, [initialFilters, setValue]);
+  }, [initialFilters, isOpen, reset]);
 
   const onSubmit = async (data: ConciergeFormValues) => {
     setIsSubmitting(true);
     setApiError(null);
 
     try {
-      // POST to Django REST Framework API via wrapper
       const response = await submitConciergeLead(data);
 
       if (response.success) {
@@ -91,22 +96,22 @@ export const ConciergeModal: React.FC<ConciergeModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="bg-white border-slate-200 max-w-lg p-6 rounded-2xl">
+      <DialogContent className="bg-white border-slate-200 max-w-lg w-[95vw] sm:w-full p-5 sm:p-6 rounded-2xl max-h-[90vh] overflow-y-auto">
         {!isSubmitted ? (
           <div className="space-y-5">
             <DialogHeader className="text-left space-y-2">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f3f0ff] text-[#04164a] text-xs font-heading font-semibold">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f3f0ff] text-[#04164a] text-xs font-heading font-semibold w-fit">
                 <Sparkles className="w-3.5 h-3.5" /> 2-Week Concierge Service
               </div>
-              <DialogTitle className="font-heading text-2xl font-bold text-[#04164a]">
+              <DialogTitle className="font-heading text-xl sm:text-2xl font-bold text-[#04164a]">
                 We'll Find Your Property
               </DialogTitle>
-              <DialogDescription className="font-body text-slate-600 text-sm">
+              <DialogDescription className="font-body text-slate-600 text-xs sm:text-sm">
                 No matching listings currently available. Register with our luxury concierge team, and we will source verified matches across Nigeria within 14 days.
               </DialogDescription>
             </DialogHeader>
 
-            {/* Display Backend Error Banner if API fails */}
+            {/* Display Backend Error Banner */}
             {apiError && (
               <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2 text-rose-700 text-xs font-body">
                 <AlertCircle className="w-4 h-4 shrink-0" />
@@ -114,15 +119,16 @@ export const ConciergeModal: React.FC<ConciergeModalProps> = ({
               </div>
             )}
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 font-body">
-              {/* Hidden fields for un-rendered schema fields */}
-              <input type="hidden" {...register('propertyType')} />
-              <input type="hidden" {...register('budgetMin', { valueAsNumber: true })} />
-              <input type="hidden" {...register('budgetMax', { valueAsNumber: true })} />
-              <input type="hidden" {...register('bedrooms')} />
-              {/* Hidden input for NDPR consent to satisfy react-hook-form registration */}
-              <input type="hidden" {...register('ndprConsent')} />
-
+            <form
+              onSubmit={handleSubmit(
+                onSubmit,
+                (validationErrors) => {
+                  console.log('❌ Form validation errors:', validationErrors);
+                  console.log('📋 Current watch values:', watch());
+                }
+              )}
+              className="space-y-4 font-body"
+            >
               {/* Target Location */}
               <div className="space-y-1">
                 <label htmlFor="preferredLocation" className="text-xs font-semibold text-[#04164a]">
@@ -207,12 +213,12 @@ export const ConciergeModal: React.FC<ConciergeModalProps> = ({
                   <Checkbox
                     id="ndprConsent"
                     onCheckedChange={(checked) => {
-                      setValue('ndprConsent', checked === true, { shouldValidate: true });
+                      setValue('ndprConsent', checked === true, { shouldValidate: true, shouldDirty: true });
                     }}
                     checked={watch('ndprConsent')}
                     className="mt-0.5 border-slate-300 data-[state=checked]:bg-[#04164a]"
                   />
-                  <label htmlFor="ndprConsent" className="text-[11px] text-slate-600 leading-tight">
+                  <label htmlFor="ndprConsent" className="text-[11px] text-slate-600 leading-tight cursor-pointer">
                     I consent to Primekey Homes processing my contact information under the Nigeria Data Protection Act (NDPR) for concierge property sourcing.
                   </label>
                 </div>
@@ -225,7 +231,7 @@ export const ConciergeModal: React.FC<ConciergeModalProps> = ({
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-[#04164a] hover:bg-[#04164a]/90 text-white font-heading h-11 rounded-xl text-sm disabled:opacity-50"
+                className="w-full bg-[#04164a] hover:bg-[#04164a]/90 text-white font-heading h-11 rounded-xl text-sm disabled:opacity-50 mt-2"
               >
                 {isSubmitting ? 'Registering Request...' : 'Activate Concierge Sourcing'}
               </Button>

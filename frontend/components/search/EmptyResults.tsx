@@ -33,7 +33,7 @@ export const EmptyResults: React.FC<EmptyResultsProps> = ({
           No instant public listings in {displayLocation} yet
         </h3>
         <p className="font-body text-slate-600 text-sm md:text-base leading-relaxed max-w-lg mx-auto">
-          We are currently expanding our inventory to { displayLocation }. Let our dedicated Concierge Desk manually source verified properties matching your exact specifications within 96 hours.
+          We are currently expanding our inventory to { displayLocation }. Let our dedicated Concierge Desk manually source verified properties matching your exact specifications within 14 days.
         </p>
       </div>
 

@@ -3,93 +3,86 @@ from django.db import models
 
 
 class ConciergeLead(models.Model):
-    """
-    Tracks leads generated from the 2-Week Concierge matching service
-    when user searches return empty results.
-    """
+    PROPERTY_TYPES = [
+        ('any', 'Any Property Type'),
+        ('flat_apartment', 'Flat / Apartment'),
+        ('house_duplex', 'House / Duplex'),
+        ('land', 'Land'),
+        ('commercial', 'Commercial Space'),
+    ]
 
     STATUS_CHOICES = [
-        ("new", "New"),
-        ("assigned", "Assigned"),
-        ("contacted", "Contacted"),
-        ("tour_scheduled", "Tour Scheduled"),
-        ("closed_won", "Closed Won"),
-        ("closed_lost", "Closed Lost"),
+        ('active_sla_queue', 'Active SLA Queue'),
+        ('assigned', 'Assigned to Agent'),
+        ('contacted', 'Contacted'),
+        ('closed_won', 'Closed (Matched)'),
+        ('closed_lost', 'Closed (Unmatched)'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    full_name = models.CharField(max_length=100)
-    phone = models.CharField(
-        max_length=20
-    )  # Standardized Nigerian format (+234/080...)
-    email = models.EmailField(blank=True, null=True)
-    preferred_location = models.CharField(max_length=150)
-    property_type = models.CharField(max_length=50)
-    budget_min = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
-    budget_max = models.DecimalField(max_digits=12, decimal_places=2)
-    bedrooms = models.CharField(max_length=20, default="any")
 
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="new")
-    lead_score = models.IntegerField(default=0)
+    # Contact Information
+    full_name = models.CharField(max_length=150, verbose_name="Full Name")
+    phone = models.CharField(max_length=20, db_index=True, verbose_name="Phone Number")
+    email = models.EmailField(blank=True, null=True, verbose_name="Email Address")
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    # Property Sourcing Preferences
+    preferred_location = models.CharField(max_length=255, verbose_name="Target Location")
+    property_type = models.CharField(
+        max_length=50,
+        choices=PROPERTY_TYPES,
+        default='any'
+    )
+    budget_min = models.BigIntegerField(default=0, verbose_name="Min Budget (NGN)")
+    budget_max = models.BigIntegerField(default=500000000, verbose_name="Max Budget (NGN)")
+    bedrooms = models.CharField(
+        max_length=20,
+        default='any',
+        verbose_name="Bedrooms"
+    )
+
+    # Legal & NDPR Compliance
+    ndpr_consent = models.BooleanField(
+        default=False,
+        verbose_name="NDPR Privacy Consent Given"
+    )
+    consent_timestamp = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="NDPR Consent Timestamp"
+    )
+
+    # Lead Tracking & SLA Management
+    status = models.CharField(
+        max_length=30,
+        choices=STATUS_CHOICES,
+        default='active_sla_queue',
+        db_index=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = "concierge_leads"
-        ordering = ["-created_at"]
+        ordering = ['-created_at']
+        verbose_name = "Concierge Lead"
+        verbose_name_plural = "Concierge Leads"
+        indexes = [
+            models.Index(fields=['status', 'created_at']),
+        ]
 
     def __str__(self):
-        return f"{self.full_name} - {self.preferred_location} ({self.property_type})"
+        return f"{self.full_name} - {self.preferred_location} ({self.phone})"
 
 
 class ConsentLog(models.Model):
     """
-    Immutable audit log for NDPR data processing consent tracking.
+    NDPR Compliance Audit Trail for lead consent capture.
     """
-
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    lead = models.ForeignKey(
-        ConciergeLead,
-        on_delete=models.CASCADE,
-        related_name="consent_logs",
-        null=True,
-        blank=True,
-    )
-    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    lead = models.ForeignKey(ConciergeLead, on_delete=models.CASCADE, related_name='consent_logs')
+    ip_address = models.GenericIPAddressField(blank=True, null=True)
     user_agent = models.TextField(blank=True, null=True)
-    consent_given = models.BooleanField(default=False)
-    terms_version = models.CharField(max_length=20, default="1.0")
+    consent_text = models.TextField(default="I consent to Primekey Homes processing my contact information under NDPR.")
     created_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        db_table = "consent_logs"
-        ordering = ["-created_at"]
-
     def __str__(self):
-        status = "Granted" if self.consent_given else "Denied"
-        return f"NDPR Consent {status} - {self.created_at}"
-
-
-class LeadScore(models.Model):
-    """
-    Tracks scoring parameters and SLA tracking metadata for incoming leads.
-    """
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    lead = models.OneToOneField(
-        ConciergeLead, on_delete=models.CASCADE, related_name="scoring_details"
-    )
-    budget_score = models.IntegerField(default=0)
-    timeline_score = models.IntegerField(default=0)
-    completeness_score = models.IntegerField(default=0)
-    total_score = models.IntegerField(default=0)
-    sla_breached = models.BooleanField(default=False)
-    alert_sent_at = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = "lead_scores"
-
-    def __str__(self):
-        return f"Score: {self.total_score} for Lead {self.lead_id}"
+        return f"NDPR Consent Log for Lead: {self.lead.id} at {self.created_at}"
