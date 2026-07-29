@@ -1,7 +1,3 @@
-# Code Standards
-
-Here is the fully detailed, comprehensive **code-standards.md** file. It covers all directory structures, architecture rules, state management, form standards, typing, animation rules, and UI conventions without omitting any detail, so you can safely overwrite your existing file.
-```markdown
 # Code Standards & Guidelines
 
 This document outlines the software engineering standards, structural architecture, design system conventions, and coding patterns for the Primekey Homes codebase. All human developers and AI agents must strictly adhere to these standards to maintain codebase consistency, scalability, and quality.
@@ -47,7 +43,7 @@ primekey-homes/
 ├── postcss.config.mjs            # PostCSS plugin configurations
 ├── tailwind.config.ts            # Tailwind theme, color, and plugin settings
 ├── tsconfig.json                 # TypeScript compiler & alias path configuration
-├──types/property.ts              # Property Types Definition
+├── types/property.ts             # Property Types Definition
 ├── app/                          # Next.js App Router Pages & Layouts
 │   ├── favicon.ico               # Site favicon icon
 │   ├── globals.css               # Global CSS styles & Tailwind variable declarations
@@ -113,21 +109,34 @@ primekey-homes/
 │
 └── lib/                          # Core Utilities, Configs, & Validation Schemas
     ├── utils.ts                  # Standard shadcn `cn()` class merging utility
-    ├── api-client.ts             # Axios / Fetch client wrapper for backend API calls
+    ├── api/                      # API Layer (contract-first)
+    │   ├── contracts.ts          # TypeScript interfaces (single source of truth)
+    │   ├── config.ts             # Base URL, auth helpers, retry config
+    │   ├── client.ts             # ApiClient class with fetch, retry, interceptors
+    │   └── index.ts              # Re-exports
+    ├── hooks/                    # SWR Data Fetching Hooks
+    │   ├── useProperties.ts      # Property search with caching & revalidation
+    │   ├── useProperty.ts        # Property detail fetching
+    │   └── useConcierge.ts       # Mutation hook with optimistic updates
     ├── animations.ts             # GSAP animation timeline builders & accessibility checks
     └── validations/              # Zod Schema Definitions
         ├── searchSchema.ts       # Search filter parameter validation schema
         ├── conciergeSchema.ts    # Concierge lead capture validation schema
         └── landlordSchema.ts     # Landlord registration & intake validation schema
-
 ```
+
+---
+
 ## 💻 3. React & TypeScript Coding Conventions
+
 ### 3.1 Strict Client Directive Rules
- * Append 'use client'; **only** at the very top of files that utilize browser events, DOM references (useRef), React hooks (useState, useEffect), form controllers, or GSAP animation triggers.
- * Keep server components as default wherever possible to preserve SEO performance and reduce initial JavaScript payload size.
+* Append `'use client';` **only** at the very top of files that utilize browser events, DOM references (`useRef`), React hooks (`useState`, `useEffect`), form controllers, or GSAP animation triggers.
+* Keep server components as default wherever possible to preserve SEO performance and reduce initial JavaScript payload size.
+
 ### 3.2 Component Declaration & Structure
- * Use named functional components or explicit export standards.
- * Always explicitly type component props using TypeScript interface or type aliases. Never use any.
+* Use named functional components or explicit export standards.
+* Always explicitly type component props using TypeScript interface or type aliases. Never use `any`.
+
 ```tsx
 'use client';
 
@@ -166,35 +175,142 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
     </div>
   );
 };
-
 ```
-## 📝 4. Form Handling & Zod Validation Standards
-### 4.1 Form Principles
- * **State Engine:** All interactive forms must utilize react-hook-form paired with @hookform/resolvers/zod.
- * **Component Rendering:** Forms must strictly render using shadcn/ui wrappers (<Form>, <FormField>, <FormItem>, <FormLabel>, <FormControl>, <FormMessage>).
- * **Validation Schemas:** Every form schema must be located inside lib/validations/ and export a reusable TypeScript type via z.infer.
-### 4.2 Standard Validation Schema Example (lib/validations/searchSchema.ts)
+
+---
+
+## 🌐 4. API Layer & Data Fetching Standards
+
+### 4.1 Contract-First API Design
+* **Single Source of Truth**: All request/response types defined in `lib/api/contracts.ts`
+* **Validation Parity**: Frontend Zod schemas (`lib/validations/`) mirror backend DRF serializers 1:1
+* **Versioned Endpoints**: All APIs under `/api/v1/` with 6-month deprecation window for breaking changes
+
+### 4.2 Centralized API Client (`lib/api/client.ts`)
+```typescript
+// Usage
+import { api } from '@/lib/api';
+
+const properties = await api.searchProperties({ location: 'Lekki' });
+const lead = await api.submitConciergeLead({ fullName: 'John', phone: '08012345678', ... });
+```
+
+**Features:**
+- Generic `request<T>()` with typed responses
+- Automatic retry with exponential backoff (3 attempts)
+- Rate limit handling (429 → retry after `Retry-After` header)
+- Auth token interceptor (Bearer token from secure storage)
+- Request timing logs in development
+- Standardized `ApiError` with `status`, `fieldErrors`, `code`
+
+### 4.3 Data Fetching with SWR (`lib/hooks/`)
+```typescript
+// Query hooks
+const { data, error, isLoading, isValidating } = useProperties(filters);
+const { data } = useProperty(id);
+
+// Mutation hooks (optimistic updates)
+const { form, submit, state, error, reset } = useConcierge(initialFilters);
+await form.handleSubmit(submit);
+```
+
+**SWR Configuration Standards:**
+- `dedupingInterval: 2000` - prevent duplicate requests
+- `revalidateOnFocus: true` - fresh data on window focus
+- `revalidateOnReconnect: true` - fresh data on network restore
+- `keepPreviousData: true` - smooth pagination transitions
+- `mutate(key)` for cache invalidation after mutations
+
+### 4.4 Environment-Aware Base URL
+```typescript
+// lib/api/config.ts
+const isServer = typeof window === 'undefined';
+export const API_BASE = isServer 
+  ? process.env.NEXT_PUBLIC_INTERNAL_API_URL  // Direct internal URL (Docker network)
+  : '/api/backend';                            // Next.js rewrite proxy
+```
+
+**Next.js Rewrites** (`next.config.mjs`):
+```javascript
+async rewrites() {
+  return [{
+    source: '/api/backend/:path*',
+    destination: `${process.env.NEXT_PUBLIC_API_URL}/:path*`,
+  }];
+}
+```
+
+---
+
+## 📝 5. Form Handling & Zod Validation Standards
+
+### 5.1 Form Principles
+* **State Engine:** All interactive forms must utilize `react-hook-form` paired with `@hookform/resolvers/zod`.
+* **Component Rendering:** Forms must strictly render using shadcn/ui wrappers (`<Form>`, `<FormField>`, `<FormItem>`, `<FormLabel>`, `<FormControl>`, `<FormMessage>`).
+* **Validation Schemas:** Every form schema must be located inside `lib/validations/` and export a reusable TypeScript type via `z.infer`.
+
+### 5.2 Validation Parity (Frontend ↔ Backend)
+| Frontend (Zod) | Backend (DRF Serializer) |
+|----------------|--------------------------|
+| `conciergeFormSchema` | `ConciergeLeadSerializer` |
+| `searchFilterSchema` | `PropertySearchSerializer` |
+| Shared constant: `NIGERIAN_PHONE_REGEX` | Same regex in `validate_phone()` |
+
+**Shared Regex (copy to both):**
+```typescript
+// Frontend: lib/validations/conciergeSchema.ts
+// Backend: apps/crm/serializers.py
+export const NIGERIAN_PHONE_REGEX = /^(?:\+?234|0)[789][01]\d{8}$/;
+```
+
+### 5.3 Cross-Field Validation
+```typescript
+// Frontend (Zod)
+.refine(data => data.budgetMin <= data.budgetMax, {
+  message: 'Minimum budget cannot exceed maximum budget',
+  path: ['budgetMin'],
+})
+
+# Backend (DRF)
+def validate(self, attrs):
+    if attrs.get('budget_min', 0) > attrs.get('budget_max', 500_000_000):
+        raise serializers.ValidationError({'budget_min': 'Min cannot exceed max.'})
+    return attrs
+```
+
+### 5.4 Standard Validation Schema Example (`lib/validations/searchSchema.ts`)
 ```typescript
 import * as z from 'zod';
 
-export const nigerianPhoneRegex = /^(\+234|0)[789][01]\d{8}$/;
+export const propertyTypes = [
+  'any', 'self_contain', 'room_and_parlour', 'single_room', 'bq', 'short_let',
+  'flat', 'maisonette', 'bungalow', 'terrace_duplex', 'semi_detached_duplex',
+  'fully_detached_duplex', 'penthouse', 'mansion', 'land', 'commercial',
+] as const;
 
 export const searchFilterSchema = z.object({
-  location: z.string().min(2, { message: 'Please select or enter a valid location' }),
-  propertyType: z.enum(['apartment', 'duplex', 'terrace', 'penthouse', 'land', 'any']),
-  minPrice: z.number().min(0, { message: 'Min price cannot be negative' }),
-  maxPrice: z.number().min(0, { message: 'Max price must be greater than zero' }),
-  bedrooms: z.string(),
+  location: z.string().optional(),
+  propertyType: z.enum(propertyTypes).default('any'),
+  minPrice: z.number().min(0, 'Min price cannot be negative').default(0),
+  maxPrice: z.number().min(0, 'Max price must be positive').default(500_000_000),
+  bedrooms: z.string().default('any'),
+}).refine(d => d.minPrice <= d.maxPrice, {
+  message: 'Min price cannot exceed max price',
+  path: ['minPrice'],
 });
 
 export type SearchFilterValues = z.infer<typeof searchFilterSchema>;
-
 ```
-## 🎬 5. GSAP Animation & Accessibility Rules
-### 5.1 GSAP Lifecycle & Cleanup
- * Always execute GSAP animations inside @gsap/react useGSAP() hook to guarantee automatic lifecycle cleanup and prevent memory leaks during page navigation.
- * Always check browser motion preferences before initiating scroll-triggered timelines using prefersReducedMotion().
-### 5.2 GSAP Animation Helper Standard (lib/animations.ts)
+
+---
+
+## 🎬 6. GSAP Animation & Accessibility Rules
+
+### 6.1 GSAP Lifecycle & Cleanup
+* Always execute GSAP animations inside `@gsap/react` `useGSAP()` hook to guarantee automatic lifecycle cleanup and prevent memory leaks during page navigation.
+* Always check browser motion preferences before initiating scroll-triggered timelines using `prefersReducedMotion()`.
+
+### 6.2 GSAP Animation Helper Standard (`lib/animations.ts`)
 ```typescript
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -224,24 +340,76 @@ export const animateFadeUp = (element: Element | string, delay: number = 0) => {
     },
   });
 };
-
-```
-## ⚙️ 6. Code Quality, Imports & Path Aliases
-### 6.1 Import Order Conventions
-Organize imports in the following strict order, separated by blank lines:
- 1. React core and Next.js built-ins (react, next/font, next/image, next/navigation).
- 2. Third-party libraries (gsap, lucide-react, react-hook-form, zod).
- 3. Internal shadcn/ui primitives (@/components/ui/...).
- 4. Internal domain components (@/components/...).
- 5. Utility helpers, schemas, and types (@/lib/...).
-### 6.2 Path Alias Standard
-Always use configured TypeScript path aliases instead of relative imports:
- * @/components/* maps to ./components/*
- * @/lib/* maps to ./lib/*
- * @/app/* maps to ./app/*
-*(Example: Import import { Button } from '@/components/ui/button' instead of import { Button } from '../../components/ui/button')*.
 ```
 
 ---
 
+## ⚙️ 7. Code Quality, Imports & Path Aliases
+
+### 7.1 Import Order Conventions
+Organize imports in the following strict order, separated by blank lines:
+1. React core and Next.js built-ins (`react`, `next/font`, `next/image`, `next/navigation`).
+2. Third-party libraries (`gsap`, `lucide-react`, `react-hook-form`, `zod`, `swr`).
+3. Internal shadcn/ui primitives (`@/components/ui/...`).
+4. Internal domain components (`@/components/...`).
+5. Utility helpers, schemas, and types (`@/lib/...`).
+
+### 7.2 Path Alias Standard
+Always use configured TypeScript path aliases instead of relative imports:
+* `@/components/*` maps to `./components/*`
+* `@/lib/*` maps to `./lib/*`
+* `@/app/*` maps to `./app/*`
+* `@/hooks/*` maps to `./hooks/*`
+* `@/components/ui/*` maps to `./components/ui/*`
+
+*(Example: `import { Button } from '@/components/ui/button'` instead of `import { Button } from '../../components/ui/button'`)*
+
+### 7.3 Linting & Formatting
+```bash
+# Frontend
+npm run lint      # ESLint with Next.js config
+npm run typecheck # tsc --noEmit
+
+# Backend
+black .           # Format
+isort .           # Sort imports
+flake8 .          # Lint
+mypy .            # Type check
+pytest            # Test
+```
+
+### 7.4 Pre-Commit Hooks (Husky + lint-staged)
+```json
+// package.json
+"lint-staged": {
+  "*.{ts,tsx}": ["eslint --fix", "prettier --write"],
+  "*.py": ["black", "isort"]
+}
+```
+
+---
+
+## 🧪 8. Testing Standards
+
+### 8.1 Frontend
+- **Unit**: Vitest + React Testing Library (`__tests__/`)
+- **Integration**: SWR cache behavior, form validation flows
+- **E2E**: Cypress/Playwright for critical paths (search → concierge)
+
+### 8.2 Backend
+- **Unit**: pytest + factory-boy for models/serializers/services
+- **API**: DRF test client for view endpoints
+- **Contract**: Schema validation against `drf-spectacular` generated OpenAPI
+
+### 8.3 Coverage Targets
+| Layer | Minimum |
+|-------|---------|
+| Serializers/Validators | 90% |
+| Services/Business Logic | 80% |
+| Views/Endpoints | 70% |
+| Hooks/Utilities | 80% |
+
+---
+
+```
 ```

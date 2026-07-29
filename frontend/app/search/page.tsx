@@ -11,10 +11,11 @@ import { EmptyResults } from '@/components/search/EmptyResults';
 import { ConciergeModal } from '@/components/search/ConciergeModal';
 import { AuthInterceptSheet } from '@/components/auth/AuthInterceptSheet';
 import { SearchFilterValues } from '@/lib/validations/searchSchema';
-import { Property } from '@/types/property';
+import { Property } from '@/lib/api/contracts';
 import { Filter, RotateCcw, Search, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useProperties } from '@/hooks/useProperties';
 
 const BRAND_COLOR = '#04164a';
 
@@ -23,63 +24,117 @@ const MOCK_PROPERTIES: Property[] = [
     id: '1',
     title: 'Exquisite 5 Bedroom Fully Detached Duplex',
     slug: '5-bed-detached-duplex-lekki',
-    location: 'Lekki Phase 1',
+    description: '',
+    propertyType: 'fully_detached_duplex',
+    price: 350000000,
+    currency: 'NGN',
+    isNegotiable: false,
+    address: '',
     city: 'Lagos',
     state: 'Lagos',
-    price: 350000000,
-    category: 'sale',
-    propertyType: 'fully_detached_duplex',
+    area: 'Lekki Phase 1',
     bedrooms: 5,
     bathrooms: 6,
-    imageUrl: 'https://encrypted-tbn1.gstatic.com/licensed-image?q=tbn:ANd9GcSiMKJYrVOrM0oW07zcKKchMXArueNucRG_xxNGVBctmZQpKMKNZNQM8dd102K239nq061vyir_8cBE3_U',
-    isVerified: true,
+    toilets: 6,
+    isServiced: false,
+    isFurnished: false,
+    status: 'available',
+    isFeatured: true,
+    images: [{ id: '1', imageUrl: 'https://encrypted-tbn1.gstatic.com/licensed-image?q=tbn:ANd9GcSiMKJYrVOrM0oW07zcKKchMXArueNucRG_xxNGVBctmZQpKMKNZNQM8dd102K239nq061vyir_8cBE3_U', isPrimary: true, caption: '', createdAt: '' }],
+    createdAt: '',
+    updatedAt: '',
   },
   {
     id: '2',
     title: 'Contemporary 2 Bedroom Serviced Luxury Flat',
     slug: '2-bed-serviced-apartment-ikoyi',
-    location: 'Ikoyi',
+    description: '',
+    propertyType: 'flat',
+    price: 12000000,
+    currency: 'NGN',
+    isNegotiable: false,
+    address: '',
     city: 'Lagos',
     state: 'Lagos',
-    price: 12000000,
-    category: 'rent',
-    propertyType: 'flat',
+    area: 'Ikoyi',
     bedrooms: 2,
     bathrooms: 2,
-    imageUrl: 'https://encrypted-tbn3.gstatic.com/licensed-image?q=tbn:ANd9GcQCOuV7-FQU5ARbIT8MXJ-pfTpGo0FHYYQd8TmcC7RYKHrORSLKDQ4wHeirRR2_inLdVs_KEh_NoZAKD6w',
-    isVerified: true,
+    toilets: 2,
+    isServiced: true,
+    isFurnished: true,
+    status: 'available',
+    isFeatured: true,
+    images: [{ id: '2', imageUrl: 'https://encrypted-tbn3.gstatic.com/licensed-image?q=tbn:ANd9GcQCOuV7-FQU5ARbIT8MXJ-pfTpGo0FHYYQd8TmcC7RYKHrORSLKDQ4wHeirRR2_inLdVs_KEh_NoZAKD6w', isPrimary: true, caption: '', createdAt: '' }],
+    createdAt: '',
+    updatedAt: '',
   },
   {
     id: '3',
     title: 'Ultra-Modern Architectural Mansion with Pool',
     slug: 'modern-mansion-maitama-abuja',
-    location: 'Maitama',
+    description: '',
+    propertyType: 'mansion',
+    price: 850000000,
+    currency: 'NGN',
+    isNegotiable: false,
+    address: '',
     city: 'Abuja',
     state: 'FCT',
-    price: 850000000,
-    category: 'sale',
-    propertyType: 'mansion',
+    area: 'Maitama',
     bedrooms: 7,
     bathrooms: 8,
-    imageUrl: 'https://encrypted-tbn0.gstatic.com/licensed-image?q=tbn:ANd9GcTzxFAdKGcbY96KCFF2_R8Xs1eNOaom2NioTUtLh_QLmFgsdsikB0B8hhK7izUi3gURDZ7rFqXY26XGzDQ',
-    isVerified: true,
+    toilets: 8,
+    isServiced: true,
+    isFurnished: true,
+    status: 'available',
+    isFeatured: true,
+    images: [{ id: '3', imageUrl: 'https://encrypted-tbn0.gstatic.com/licensed-image?q=tbn:ANd9GcTzxFAdKGcbY96KCFF2_R8Xs1eNOaom2NioTUtLh_QLmFgsdsikB0B8hhK7izUi3gURDZ7rFqXY26XGzDQ', isPrimary: true, caption: '', createdAt: '' }],
+    createdAt: '',
+    updatedAt: '',
   },
   {
     id: '4',
     title: 'Waterfront Luxury Villa with Private Jet Ski Ramp',
     slug: 'waterfront-villa-banana-island',
-    location: 'Banana Island',
+    description: '',
+    propertyType: 'fully_detached_duplex',
+    price: 1200000000,
+    currency: 'NGN',
+    isNegotiable: false,
+    address: '',
     city: 'Lagos',
     state: 'Lagos',
-    price: 1200000000,
-    category: 'sale',
-    propertyType: 'fully_detached_duplex',
+    area: 'Banana Island',
     bedrooms: 6,
     bathrooms: 7,
-    imageUrl: 'https://encrypted-tbn0.gstatic.com/licensed-image?q=tbn:ANd9GcTy7v1SYos-9Pxr9nqvUqNHongVQatBdmgk8yqwtQPZLwLcYoQmJxvK1dHphVtdRFbGM8ifGsAui-gSrtM',
-    isVerified: true,
+    toilets: 7,
+    isServiced: true,
+    isFurnished: true,
+    status: 'available',
+    isFeatured: true,
+    images: [{ id: '4', imageUrl: 'https://encrypted-tbn0.gstatic.com/licensed-image?q=tbn:ANd9GcTy7v1SYos-9Pxr9nqvUqNHongVQatBdmgk8yqwtQPZLwLcYoQmJxvK1dHphVtdRFbGM8ifGsAui-gSrtM', isPrimary: true, caption: '', createdAt: '' }],
+    createdAt: '',
+    updatedAt: '',
   },
 ];
+
+function transformPropertyForGrid(p: Property) {
+  return {
+    id: p.id,
+    title: p.title,
+    slug: p.slug,
+    location: p.area,
+    city: p.city,
+    state: p.state,
+    price: p.price,
+    category: p.status === 'available' ? 'sale' : 'rent',
+    propertyType: p.propertyType,
+    bedrooms: p.bedrooms,
+    bathrooms: p.bathrooms,
+    imageUrl: p.images[0]?.imageUrl || '',
+    isVerified: p.isFeatured,
+  };
+}
 
 export default function SearchPage() {
   const [filters, setFilters] = useState<SearchFilterValues>({
@@ -90,11 +145,12 @@ export default function SearchPage() {
     bedrooms: 'any',
   });
 
-  const [properties, setProperties] = useState<Property[]>(MOCK_PROPERTIES);
   const [isConciergeOpen, setIsConciergeOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
+
+  const { data, error, isLoading, isValidating } = useProperties(filters);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -104,49 +160,8 @@ export default function SearchPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Multi-layer cumulative filter engine (handles dual-price bounds & context bedrooms)
-  const executeSearch = (updatedFilters: SearchFilterValues) => {
-    const targetLocation = (updatedFilters.location || '').toLowerCase().trim();
-
-    let filtered = MOCK_PROPERTIES.filter((p) => {
-      // 1. Location filter layer
-      const matchesLocation =
-        !targetLocation ||
-        p.location.toLowerCase().includes(targetLocation) ||
-        p.city.toLowerCase().includes(targetLocation) ||
-        p.state.toLowerCase().includes(targetLocation);
-
-      // 2. Dual-thumb Price filter layer (Min and Max boundary)
-      const matchesPrice = p.price >= updatedFilters.minPrice && p.price <= updatedFilters.maxPrice;
-
-      // 3. Property Type filter layer
-      const matchesType =
-        updatedFilters.propertyType === 'any' || p.propertyType === updatedFilters.propertyType;
-
-      // 4. Bedrooms filter layer (Exact match or 5+ threshold)
-      const matchesBeds =
-        updatedFilters.bedrooms === 'any' ||
-        (updatedFilters.bedrooms === '5'
-          ? p.bedrooms >= 5
-          : p.bedrooms === Number(updatedFilters.bedrooms));
-
-      // Must pass ALL active filter criteria simultaneously
-      return matchesLocation && matchesPrice && matchesType && matchesBeds;
-    });
-
-    setProperties(filtered);
-  };
-
   const handleFilterChange = (newPartialFilters: Partial<SearchFilterValues>) => {
-    setFilters((prev) => {
-      const next = { ...prev, ...newPartialFilters };
-      executeSearch(next);
-      return next;
-    });
-  };
-
-  const handleSearchExecute = () => {
-    executeSearch(filters);
+    setFilters((prev) => ({ ...prev, ...newPartialFilters }));
   };
 
   const handleLocationSelect = (loc: string) => {
@@ -162,13 +177,16 @@ export default function SearchPage() {
       bedrooms: 'any',
     };
     setFilters(resetVals);
-    setProperties(MOCK_PROPERTIES);
   };
 
   const handleRequireAuth = (actionName: string) => {
     setPendingAction(actionName);
     setIsAuthOpen(true);
   };
+
+  // Use mock data as fallback while API is being developed
+  const properties = data?.results?.map(transformPropertyForGrid) ?? MOCK_PROPERTIES;
+  const isEmpty = data?.results?.length === 0 && !isLoading;
 
   return (
     <main className="min-h-screen bg-[#f3f0ff] pb-16">
@@ -251,7 +269,7 @@ export default function SearchPage() {
           <SearchBar
             value={filters.location || ''}
             onChange={(loc) => handleFilterChange({ location: loc })}
-            onSearch={handleSearchExecute}
+            onSearch={() => {}}
             onSelectSuggestion={handleLocationSelect}
           />
 
@@ -282,7 +300,7 @@ export default function SearchPage() {
               <RotateCcw className="w-3.5 h-3.5" /> Reset Filters
             </Button>
             <Button
-              onClick={handleSearchExecute}
+              onClick={() => {}}
               className="bg-[#04164a] hover:bg-[#04164a]/90 text-white font-heading text-sm px-6 py-2.5 rounded-xl flex items-center gap-2"
             >
               <Filter className="w-4 h-4" /> Apply Filters
@@ -291,11 +309,35 @@ export default function SearchPage() {
         </div>
 
         {/* Results Area */}
-        {properties.length > 0 ? (
+        {isLoading ? (
+          <div className="space-y-4" aria-live="polite">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="animate-pulse bg-white/90 rounded-2xl border border-slate-200 p-6 space-y-4">
+                <div className="h-48 bg-slate-200 rounded-xl" />
+                <div className="h-6 bg-slate-200 rounded w-3/4" />
+                <div className="h-4 bg-slate-200 rounded w-1/2" />
+              </div>
+            ))}
+          </div>
+        ) : error ? (
+          <div className="bg-rose-50 border border-rose-200 rounded-2xl p-6 text-center">
+            <p className="font-body text-rose-700">Failed to load properties. Please try again.</p>
+            <Button onClick={() => window.location.reload()} className="mt-4">
+              Retry
+            </Button>
+          </div>
+        ) : isEmpty ? (
+          <EmptyResults
+            location={filters.location || ''}
+            onOpenConcierge={() => setIsConciergeOpen(true)}
+            onResetSearch={handleReset}
+          />
+        ) : (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-heading text-xl font-bold text-[#04164a]">
                 Available Properties ({properties.length})
+                {isValidating && <span className="ml-2 text-sm text-slate-500 font-body">Updating...</span>}
               </h2>
             </div>
             <PropertyGrid
@@ -304,12 +346,6 @@ export default function SearchPage() {
               onRequireAuth={handleRequireAuth}
             />
           </div>
-        ) : (
-          <EmptyResults
-            location={filters.location || ''}
-            onOpenConcierge={() => setIsConciergeOpen(true)}
-            onResetSearch={handleReset}
-          />
         )}
 
         {/* Concierge Modal */}

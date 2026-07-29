@@ -1,16 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { conciergeFormSchema, ConciergeFormValues } from '@/lib/validations/conciergeSchema';
-import { SearchFilterValues } from '@/lib/validations/searchSchema';
-import { submitConciergeLead } from '@/lib/api-client';
+import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Sparkles, CheckCircle, Clock, ShieldCheck, Phone, User, MapPin, AlertCircle } from 'lucide-react';
+import { useConcierge, ConciergeState } from '@/hooks/useConcierge';
+import { SearchFilterValues } from '@/lib/validations/searchSchema';
 
 interface ConciergeModalProps {
   isOpen: boolean;
@@ -23,81 +20,21 @@ export const ConciergeModal: React.FC<ConciergeModalProps> = ({
   onClose,
   initialFilters,
 }) => {
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [apiError, setApiError] = useState<string | null>(null);
-
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    reset,
-    formState: { errors },
-  } = useForm<ConciergeFormValues>({
-    resolver: zodResolver(conciergeFormSchema),
-    defaultValues: {
-      fullName: '',
-      phone: '',
-      email: '',
-      preferredLocation: initialFilters?.location || '',
-      propertyType: initialFilters?.propertyType || 'any',
-      budgetMin: initialFilters?.minPrice ?? 0,
-      budgetMax: initialFilters?.maxPrice ?? 500000000,
-      bedrooms: initialFilters?.bedrooms ?? 'any',
-      ndprConsent: false,
-    },
-  });
-
-  // Safely sync initialFilters when modal opens or filters change
-  useEffect(() => {
-    if (isOpen) {
-      reset({
-        fullName: watch('fullName') || '',
-        phone: watch('phone') || '',
-        email: watch('email') || '',
-        preferredLocation: initialFilters?.location || watch('preferredLocation') || '',
-        propertyType: initialFilters?.propertyType || 'any',
-        budgetMin: typeof initialFilters?.minPrice === 'number' ? initialFilters.minPrice : 0,
-        budgetMax: typeof initialFilters?.maxPrice === 'number' ? initialFilters.maxPrice : 500000000,
-        bedrooms: initialFilters?.bedrooms ?? 'any',
-        ndprConsent: watch('ndprConsent') || false,
-      });
-    }
-  }, [initialFilters, isOpen, reset]);
-
-  const onSubmit = async (data: ConciergeFormValues) => {
-    setIsSubmitting(true);
-    setApiError(null);
-
-    try {
-      const response = await submitConciergeLead(data);
-
-      if (response.success) {
-        setIsSubmitted(true);
-      }
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setApiError(err.message);
-      } else {
-        setApiError('Failed to submit concierge request. Please check your connection and try again.');
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const { form, submit, state, error, reset } = useConcierge(initialFilters);
 
   const handleClose = () => {
-    setIsSubmitted(false);
-    setApiError(null);
     reset();
     onClose();
+  };
+
+  const onSubmit = (data: React.ReactNode) => {
+    submit(form.getValues());
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="bg-white border-slate-200 max-w-lg w-[95vw] sm:w-full p-5 sm:p-6 rounded-2xl max-h-[90vh] overflow-y-auto">
-        {!isSubmitted ? (
+        {state !== 'success' ? (
           <div className="space-y-5">
             <DialogHeader className="text-left space-y-2">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f3f0ff] text-[#04164a] text-xs font-heading font-semibold w-fit">
@@ -111,22 +48,15 @@ export const ConciergeModal: React.FC<ConciergeModalProps> = ({
               </DialogDescription>
             </DialogHeader>
 
-            {/* Display Backend Error Banner */}
-            {apiError && (
+            {error && (
               <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2 text-rose-700 text-xs font-body">
                 <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{apiError}</span>
+                <span>{error}</span>
               </div>
             )}
 
             <form
-              onSubmit={handleSubmit(
-                onSubmit,
-                (validationErrors) => {
-                  console.log('❌ Form validation errors:', validationErrors);
-                  console.log('📋 Current watch values:', watch());
-                }
-              )}
+              onSubmit={form.handleSubmit(onSubmit)}
               className="space-y-4 font-body"
             >
               {/* Target Location */}
@@ -138,14 +68,14 @@ export const ConciergeModal: React.FC<ConciergeModalProps> = ({
                   <MapPin className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
                   <Input
                     id="preferredLocation"
-                    {...register('preferredLocation')}
+                    {...form.register('preferredLocation')}
                     placeholder="e.g. Lekki Phase 1, Maitama, GRA Abeokuta"
                     className="pl-9 h-10 border-slate-200 text-xs rounded-xl"
                     autoComplete="off"
                   />
                 </div>
-                {errors.preferredLocation && (
-                  <p className="text-[11px] text-rose-600">{errors.preferredLocation.message}</p>
+                {form.formState.errors.preferredLocation && (
+                  <p className="text-[11px] text-rose-600">{form.formState.errors.preferredLocation.message}</p>
                 )}
               </div>
 
@@ -159,14 +89,14 @@ export const ConciergeModal: React.FC<ConciergeModalProps> = ({
                     <User className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
                     <Input
                       id="fullName"
-                      {...register('fullName')}
+                      {...form.register('fullName')}
                       placeholder="John Doe"
                       className="pl-9 h-10 border-slate-200 text-xs rounded-xl"
                       autoComplete="name"
                     />
                   </div>
-                  {errors.fullName && (
-                    <p className="text-[11px] text-rose-600">{errors.fullName.message}</p>
+                  {form.formState.errors.fullName && (
+                    <p className="text-[11px] text-rose-600">{form.formState.errors.fullName.message}</p>
                   )}
                 </div>
 
@@ -178,14 +108,14 @@ export const ConciergeModal: React.FC<ConciergeModalProps> = ({
                     <Phone className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
                     <Input
                       id="phone"
-                      {...register('phone')}
+                      {...form.register('phone')}
                       placeholder="08012345678"
                       className="pl-9 h-10 border-slate-200 text-xs rounded-xl"
                       autoComplete="tel"
                     />
                   </div>
-                  {errors.phone && (
-                    <p className="text-[11px] text-rose-600">{errors.phone.message}</p>
+                  {form.formState.errors.phone && (
+                    <p className="text-[11px] text-rose-600">{form.formState.errors.phone.message}</p>
                   )}
                 </div>
               </div>
@@ -197,13 +127,13 @@ export const ConciergeModal: React.FC<ConciergeModalProps> = ({
                 </label>
                 <Input
                   id="email"
-                  {...register('email')}
+                  {...form.register('email')}
                   placeholder="john@example.com"
                   className="h-10 border-slate-200 text-xs rounded-xl"
                   autoComplete="email"
                 />
-                {errors.email && (
-                  <p className="text-[11px] text-rose-600">{errors.email.message}</p>
+                {form.formState.errors.email && (
+                  <p className="text-[11px] text-rose-600">{form.formState.errors.email.message}</p>
                 )}
               </div>
 
@@ -213,27 +143,27 @@ export const ConciergeModal: React.FC<ConciergeModalProps> = ({
                   <Checkbox
                     id="ndprConsent"
                     onCheckedChange={(checked) => {
-                      setValue('ndprConsent', checked === true, { shouldValidate: true, shouldDirty: true });
+                      form.setValue('ndprConsent', checked === true, { shouldValidate: true, shouldDirty: true });
                     }}
-                    checked={watch('ndprConsent')}
+                    checked={form.watch('ndprConsent')}
                     className="mt-0.5 border-slate-300 data-[state=checked]:bg-[#04164a]"
                   />
                   <label htmlFor="ndprConsent" className="text-[11px] text-slate-600 leading-tight cursor-pointer">
                     I consent to Primekey Homes processing my contact information under the Nigeria Data Protection Act (NDPR) for concierge property sourcing.
                   </label>
                 </div>
-                {errors.ndprConsent && (
-                  <p className="text-[11px] text-rose-600 mt-1">{errors.ndprConsent.message}</p>
+                {form.formState.errors.ndprConsent && (
+                  <p className="text-[11px] text-rose-600 mt-1">{form.formState.errors.ndprConsent.message}</p>
                 )}
               </div>
 
               {/* Submit Button */}
               <Button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={state === 'submitting'}
                 className="w-full bg-[#04164a] hover:bg-[#04164a]/90 text-white font-heading h-11 rounded-xl text-sm disabled:opacity-50 mt-2"
               >
-                {isSubmitting ? 'Registering Request...' : 'Activate Concierge Sourcing'}
+                {state === 'submitting' ? 'Registering Request...' : 'Activate Concierge Sourcing'}
               </Button>
             </form>
           </div>
