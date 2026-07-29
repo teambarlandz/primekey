@@ -2,13 +2,14 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
-from .serializers import ConciergeLeadSerializer
+from .serializers import ConciergeLeadSerializer, NDPRErasureRequestSerializer
+from .services import LeadScoringService, NDPRErasureService
 
 
 class SubmitConciergeLeadView(APIView):
     """
     Public Endpoint: POST /api/crm/submit-concierge/
-    Handles incoming concierge property sourcing requests.
+    Handles incoming concierge property sourcing requests and calculates lead scores.
     """
     permission_classes = [AllowAny]
 
@@ -22,6 +23,9 @@ class SubmitConciergeLeadView(APIView):
         if serializer.is_valid():
             lead = serializer.save()
 
+            # 🔥 Calculate priority score and tier instantly upon lead creation
+            score_obj = LeadScoringService.if_needed_score_lead(lead)
+
             return Response(
                 {
                     "success": True,
@@ -29,6 +33,8 @@ class SubmitConciergeLeadView(APIView):
                     "data": {
                         "id": str(lead.id),
                         "status": lead.status,
+                        "priority_score": score_obj.get("score"),
+                        "tier": score_obj.get("tier"),
                     },
                 },
                 status=status.HTTP_201_CREATED,
@@ -43,3 +49,36 @@ class SubmitConciergeLeadView(APIView):
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
+
+
+class NDPRErasureView(APIView):
+    """
+    Public Endpoint: POST /api/crm/ndpr/request-erasure/
+    Allows users to exercise their NDPR statutory right to data erasure.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = NDPRErasureRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({
+                "success": False,
+                "message": "Validation failed.",
+                "errors": serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Extract Client IP and User Agent for audit logging
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        ip_address = x_forwarded_for.split(',')[0] if x_forwarded_for else request.META.get('REMOTE_ADDR')
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
+
+        result = NDPRErasureService.process_erasure_request(
+            identifier=serializer.validated_data['identifier'],
+            ip_address=ip_address,
+            user_agent=user_agent
+        )
+
+        if result['success']:
+            return Response(result, status=status.HTTP_200_OK)
+        else:
+            return Response(result, status=status.HTTP_404_NOT_FOUND)

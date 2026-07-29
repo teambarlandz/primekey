@@ -106,3 +106,12 @@ class ConciergeLeadSerializer(serializers.ModelSerializer):
         )
 
         return lead
+
+
+class NDPRErasureRequestSerializer(serializers.Serializer):
+    identifier = serializers.CharField(
+        required=True,
+        max_length=100,
+        help_text="Phone number or email address associated with your lead record."
+    )
+    reason = serializers.CharField(required=False, allow_blank=True, max_length=255)

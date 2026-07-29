@@ -1,7 +1,8 @@
-import { ConciergeFormValues } from "@/lib/schemas/conciergeFormSchema";
+import { ConciergeFormValues } from "@/lib/validations/conciergeSchema";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+// Ensures base URL cleanly handles trailing slashes
+const BASE_URL_RAW = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+const API_BASE_URL = BASE_URL_RAW.replace(/\/+$/, "");
 
 export interface ApiSuccessResponse<T = unknown> {
   success: boolean;
@@ -39,28 +40,28 @@ export async function submitConciergeLead(
         phone: formData.phone,
         email: formData.email || null,
         preferred_location: formData.preferredLocation,
-        property_type: formData.propertyType,
-        budget_min: formData.budgetMin,
-        budget_max: formData.budgetMax,
-        bedrooms: formData.bedrooms,
-        ndpr_consent: formData.ndprConsent, // 👈 Fixed: snake_case
+        property_type: formData.propertyType || "any",
+        budget_min: formData.budgetMin ?? 0,
+        budget_max: formData.budgetMax ?? 500000000,
+        bedrooms: String(formData.bedrooms ?? "any"),
+        ndpr_consent: formData.ndprConsent,
       }),
     });
 
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
-      // Extract DRF field validation message or fallback to message/detail
+      // Extract DRF field validation errors or detail message
       const errorMessage =
         data?.message ||
         data?.detail ||
-        (typeof data === "object" && data !== null
-          ? Object.entries(data)
+        (typeof data?.errors === "object" && data?.errors !== null
+          ? Object.entries(data.errors)
               .map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(", ") : val}`)
               .join(" | ")
           : "Failed to submit concierge request. Please try again.");
 
-      throw new ApiClientError(errorMessage, response.status, data);
+      throw new ApiClientError(errorMessage, response.status, data?.errors);
     }
 
     return data as ApiSuccessResponse;
@@ -69,7 +70,6 @@ export async function submitConciergeLead(
       throw error;
     }
 
-    // Handles offline network failure or unhandled exception
     throw new ApiClientError(
       "Unable to connect to Primekey server. Please check your network connection.",
       0

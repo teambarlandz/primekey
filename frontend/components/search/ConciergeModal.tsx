@@ -3,7 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { conciergeFormSchema, ConciergeFormValues } from '@/lib/validations/conciergeSchema';
+import {
+  conciergeFormSchema,
+  ConciergeFormValues,
+} from '@/lib/validations/conciergeSchema';
 import { SearchFilterValues } from '@/lib/validations/searchSchema';
 import { submitConciergeLead } from '@/lib/api-client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -49,32 +52,37 @@ export const ConciergeModal: React.FC<ConciergeModalProps> = ({
     },
   });
 
-  // Safely sync initialFilters when modal opens or filters change
+  // Only reset form values when the modal transitions from closed -> open
   useEffect(() => {
     if (isOpen) {
       reset({
-        fullName: watch('fullName') || '',
-        phone: watch('phone') || '',
-        email: watch('email') || '',
-        preferredLocation: initialFilters?.location || watch('preferredLocation') || '',
+        fullName: '',
+        phone: '',
+        email: '',
+        preferredLocation: initialFilters?.location || '',
         propertyType: initialFilters?.propertyType || 'any',
         budgetMin: typeof initialFilters?.minPrice === 'number' ? initialFilters.minPrice : 0,
         budgetMax: typeof initialFilters?.maxPrice === 'number' ? initialFilters.maxPrice : 500000000,
         bedrooms: initialFilters?.bedrooms ?? 'any',
-        ndprConsent: watch('ndprConsent') || false,
+        ndprConsent: false,
       });
+      setIsSubmitted(false);
+      setApiError(null);
     }
-  }, [initialFilters, isOpen, reset]);
+  }, [isOpen]); // Depend strictly on isOpen to avoid erasing inputs as user types
 
   const onSubmit = async (data: ConciergeFormValues) => {
     setIsSubmitting(true);
     setApiError(null);
 
     try {
+      // Pass form values directly — submitConciergeLead converts to DRF snake_case internally
       const response = await submitConciergeLead(data);
 
       if (response.success) {
         setIsSubmitted(true);
+      } else {
+        setApiError(response.message || 'Failed to submit concierge request.');
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -119,16 +127,7 @@ export const ConciergeModal: React.FC<ConciergeModalProps> = ({
               </div>
             )}
 
-            <form
-              onSubmit={handleSubmit(
-                onSubmit,
-                (validationErrors) => {
-                  console.log('❌ Form validation errors:', validationErrors);
-                  console.log('📋 Current watch values:', watch());
-                }
-              )}
-              className="space-y-4 font-body"
-            >
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 font-body">
               {/* Target Location */}
               <div className="space-y-1">
                 <label htmlFor="preferredLocation" className="text-xs font-semibold text-[#04164a]">

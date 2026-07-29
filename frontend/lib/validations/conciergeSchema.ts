@@ -68,3 +68,20 @@ export const conciergeFormSchema = z
   );
 
 export type ConciergeFormValues = z.infer<typeof conciergeFormSchema>;
+
+/**
+ * Transforms camelCase frontend form values to snake_case DRF backend payload
+ */
+export function mapConciergeValuesToPayload(values: ConciergeFormValues) {
+  return {
+    full_name: values.fullName,
+    phone: values.phone,
+    email: values.email || null,
+    preferred_location: values.preferredLocation,
+    property_type: values.propertyType ?? 'any',
+    budget_min: values.budgetMin ?? 0,
+    budget_max: values.budgetMax ?? 500000000,
+    bedrooms: String(values.bedrooms ?? 'any'),
+    ndpr_consent: values.ndprConsent,
+  };
+}

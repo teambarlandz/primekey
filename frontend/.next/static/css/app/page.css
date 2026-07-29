@@ -1,0 +1,26 @@
+/*!********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[2].use[1]!./node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js??ruleSet[1].rules[14].oneOf[2].use[2]!./node_modules/next/font/google/target.css?{"path":"components/Navbar.tsx","import":"Poppins","arguments":[{"subsets":["latin"],"weight":["700"]}],"variableName":"poppins"} ***!
+  \********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+@font-face {
+  font-family: '__Poppins_Fallback_673c6b';
+  src: local("Arial");
+  ascent-override:93.62%;
+  descent-override:31.21%;
+  line-gap-override:8.92%;
+  size-adjust:112.16%;
+}@font-face {font-family: '__Poppins_Fallback_Fallback_673c6b';src: local("Arial");ascent-override: 93.62%;descent-override: 31.21%;line-gap-override: 8.92%;size-adjust: 112.16%
+}.__className_673c6b {font-family: '__Poppins_Fallback_673c6b', '__Poppins_Fallback_Fallback_673c6b';font-weight: 700;font-style: normal
+}
+/*!************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[2].use[1]!./node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js??ruleSet[1].rules[14].oneOf[2].use[2]!./node_modules/next/font/google/target.css?{"path":"components/Navbar.tsx","import":"Lora","arguments":[{"subsets":["latin"],"weight":["400","600"],"style":["normal","italic"]}],"variableName":"lora"} ***!
+  \************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+@font-face {
+  font-family: '__Lora_Fallback_2c810c';
+  src: local("Times New Roman");
+  ascent-override:87.33%;
+  descent-override:23.78%;
+  line-gap-override:0.00%;
+  size-adjust:115.20%;
+}@font-face {font-family: '__Lora_Fallback_Fallback_2c810c';src: local("Times New Roman");ascent-override: 87.33%;descent-override: 23.78%;line-gap-override: 0.00%;size-adjust: 115.20%
+}.__className_2c810c {font-family: '__Lora_Fallback_2c810c', '__Lora_Fallback_Fallback_2c810c'
+}

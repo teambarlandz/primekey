@@ -17,6 +17,7 @@ class ConciergeLead(models.Model):
         ('contacted', 'Contacted'),
         ('closed_won', 'Closed (Matched)'),
         ('closed_lost', 'Closed (Unmatched)'),
+        ('erased_ndpr', 'Erased / Closed (NDPR Request)'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -75,14 +76,35 @@ class ConciergeLead(models.Model):
 
 class ConsentLog(models.Model):
     """
-    NDPR Compliance Audit Trail for lead consent capture.
+    NDPR Compliance Audit Trail for lead consent capture & data erasure events.
     """
+    ACTION_CHOICES = [
+        ('CONSENT_GIVEN', 'Consent Given'),
+        ('CONSENT_REVOKED', 'Consent Revoked'),
+        ('ERASURE_REQUESTED', 'Erasure Requested'),
+        ('ERASURE_COMPLETED', 'Erasure Completed'),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    lead = models.ForeignKey(ConciergeLead, on_delete=models.CASCADE, related_name='consent_logs')
+    lead = models.ForeignKey(
+        ConciergeLead,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='consent_logs'
+    )
+    phone = models.CharField(max_length=20, db_index=True, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    action = models.CharField(max_length=30, choices=ACTION_CHOICES, default='CONSENT_GIVEN')
     ip_address = models.GenericIPAddressField(blank=True, null=True)
     user_agent = models.TextField(blank=True, null=True)
     consent_text = models.TextField(default="I consent to Primekey Homes processing my contact information under NDPR.")
+    notes = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        db_table = 'crm_consent_logs'
+        ordering = ['-created_at']
+
     def __str__(self):
-        return f"NDPR Consent Log for Lead: {self.lead.id} at {self.created_at}"
+        return f"NDPR Audit Log [{self.action}] - Phone: {self.phone or 'N/A'} at {self.created_at.strftime('%Y-%m-%d %H:%M')}"
