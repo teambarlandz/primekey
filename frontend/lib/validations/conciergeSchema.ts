@@ -44,10 +44,10 @@ export const conciergeFormSchema = z
       .max(150, 'Location description is too long'),
 
     // Non-rendered / filter context fields with defaults
-    propertyType: z.string().optional().default('any'),
+    propertyType: z.enum(['any', 'self_contain', 'room_and_parlour', 'single_room', 'bq', 'short_let', 'flat', 'maisonette', 'bungalow', 'terrace_duplex', 'semi_detached_duplex', 'fully_detached_duplex', 'penthouse', 'mansion', 'land', 'commercial']).optional().default('any'),
     budgetMin: z.number().nonnegative('Budget cannot be negative').optional().default(0),
     budgetMax: z.number().positive('Budget must be greater than zero').optional().default(500000000),
-    bedrooms: z.union([z.string(), z.number()]).optional().default('any'),
+    bedrooms: z.enum(['any', '1', '2', '3', '4', '5']).optional().default('any'),
 
     // Legal & compliance consent
     ndprConsent: z.boolean().refine((val) => val === true, {

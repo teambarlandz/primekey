@@ -12,6 +12,7 @@ import { ConciergeModal } from '@/components/search/ConciergeModal';
 import { AuthInterceptSheet } from '@/components/auth/AuthInterceptSheet';
 import { SearchFilterValues } from '@/lib/validations/searchSchema';
 import { Property } from '@/lib/api/contracts';
+import { Property as PropertyCard, ListingCategory } from '@/types/property';
 import { Filter, RotateCcw, Search, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -118,7 +119,7 @@ const MOCK_PROPERTIES: Property[] = [
   },
 ];
 
-function transformPropertyForGrid(p: Property) {
+function transformPropertyForGrid(p: Property): PropertyCard {
   return {
     id: p.id,
     title: p.title,
@@ -127,7 +128,7 @@ function transformPropertyForGrid(p: Property) {
     city: p.city,
     state: p.state,
     price: p.price,
-    category: p.status === 'available' ? 'sale' : 'rent',
+    category: (p.status === 'available' ? 'sale' : 'rent') as ListingCategory,
     propertyType: p.propertyType,
     bedrooms: p.bedrooms,
     bathrooms: p.bathrooms,
@@ -185,7 +186,7 @@ export default function SearchPage() {
   };
 
   // Use mock data as fallback while API is being developed
-  const properties = data?.results?.map(transformPropertyForGrid) ?? MOCK_PROPERTIES;
+  const properties = data?.results?.map(transformPropertyForGrid) ?? MOCK_PROPERTIES.map(transformPropertyForGrid);
   const isEmpty = data?.results?.length === 0 && !isLoading;
 
   return (

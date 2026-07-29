@@ -1,4 +1,4 @@
-import useSWR from 'swr';
+import useSWR, { mutate } from 'swr';
 import { api } from '@/lib/api/client';
 import { SearchFilters, SearchResponse, Property } from '@/lib/api/contracts';
 
@@ -23,7 +23,7 @@ export function useProperties(filters: SearchFilters) {
 export function useProperty(id: string | null) {
   return useSWR<Property, Error>(
     id ? ['/properties', id] : null,
-    ([, id]) => api.getProperty(id),
+    ([, id]: [string, string]) => api.getProperty(id),
     {
       revalidateOnFocus: false,
     }
@@ -31,5 +31,5 @@ export function useProperty(id: string | null) {
 }
 
 export function mutateProperties() {
-  return useSWR.mutate('/properties/search');
+  return mutate('/properties/search');
 }

@@ -24,7 +24,7 @@ export const searchFilterSchema = z.object({
   propertyType: z.enum(propertyTypes).default('any'),
   minPrice: z.number().min(0, 'Min price cannot be negative').default(0),
   maxPrice: z.number().min(0, 'Max price must be positive').default(500000000),
-  bedrooms: z.string().default('any'),
+  bedrooms: z.enum(['any', '1', '2', '3', '4', '5']).default('any'),
 });
 
 export type SearchFilterValues = z.infer<typeof searchFilterSchema>;

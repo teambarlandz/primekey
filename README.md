@@ -6,7 +6,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
 [![Django](https://img.shields.io/badge/Django-4.x-092E20?logo=django)](https://www.djangoproject.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql)](https://www.postgresql.org/)
+[![SQLite](https://img.shields.io/badge/SQLite-Dev-003B57?logo=sqlite)](https://www.sqlite.org/)
 [![NDPR Compliant](https://img.shields.io/badge/NDPR-Compliant-green)](https://ndpr.gov.ng/)
 
 ---
@@ -45,7 +45,7 @@ Primekey Homes bridges trust gaps in Nigerian real estate through three pathways
 │  └────┬─────┘ └─────┬─────┘ └─────┬─────┘ └─────┬──────┘   │
 │       │             │             │             │            │
 │  ┌────┴─────────────┴─────────────┴─────────────┴──────┐   │
-│  │              POSTGRESQL + PG_CRON                    │   │
+│  │                SQLite (dev) / PostgreSQL (prod)      │   │
 │  └──────────────────────────────────────────────────────┘   │
 ```
 
@@ -63,9 +63,9 @@ Primekey Homes bridges trust gaps in Nigerian real estate through three pathways
 | Layer | Technology |
 |-------|------------|
 | **Frontend** | Next.js 14 (App Router), TypeScript, Tailwind CSS, shadcn/ui, GSAP, React Hook Form, Zod, Axios |
-| **Backend** | Python 3.11+, Django 4.x, Django REST Framework, PostgreSQL 15, Redis |
+| **Backend** | Python 3.10+, Django 4.x, Django REST Framework, SQLite (dev) / PostgreSQL (prod) |
 | **DevOps** | Docker, docker-compose, GitHub Actions (planned), VPS deployment |
-| **Compliance** | NDPR consent logging, `pg_cron` automated retention, data subject rights APIs |
+| **Compliance** | NDPR consent logging, automated retention, data subject rights APIs |
 
 ---
 
@@ -74,36 +74,58 @@ Primekey Homes bridges trust gaps in Nigerian real estate through three pathways
 ### Prerequisites
 
 - Node.js 18+ / 20+
-- Python 3.11+
-- PostgreSQL 15+
-- Docker (optional)
+- Python 3.10+
+- Git
 
-### Frontend Setup
+### 1. Clone & Install Dependencies
 
 ```bash
+git clone <repo-url>
+cd primekey
+
+# Frontend
 cd frontend
 npm install
-cp .env.example .env.local  # Configure NEXT_PUBLIC_API_URL
-npm run dev
+cp .env.example .env.local   # configure NEXT_PUBLIC_API_URL if needed
+cd ..
+
+# Backend
+cd backend
+python -m venv venv
+# Windows:
+venv\Scripts\activate
+# Mac/Linux:
+# source venv/bin/activate
+pip install -r requirements.txt
+cd ..
 ```
 
-### Backend Setup
+### 2. Run Migrations
 
 ```bash
 cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-cp .env.example .env      # Configure DB, SECRET_KEY, CORS
 python manage.py migrate
+cd ..
+```
+
+### 3. Start Development Servers
+
+**Terminal 1 — Backend:**
+```bash
+cd backend
+venv\Scripts\activate    # Windows
 python manage.py runserver
 ```
 
-### Docker (Full Stack)
-
+**Terminal 2 — Frontend:**
 ```bash
-docker-compose up -d --build
+cd frontend
+npm run dev
 ```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser. The backend API runs on [http://localhost:8000](http://localhost:8000).
+
+> **Note:** The project uses SQLite for local development — no external database server needed. For production, switch to PostgreSQL by updating `core/settings.py`.
 
 ---
 
@@ -168,7 +190,7 @@ primekey-homes/
 |-------------|----------------|
 | **Explicit Consent** | Mandatory checkbox on all personal data forms |
 | **Consent Audit Log** | `ConsentLog` model — IP, user-agent, timestamp, consent text |
-| **Retention (6 months)** | `anonymize_leads` management command + `pg_cron` schedule |
+| **Retention (6 months)** | `anonymize_leads` management command (scheduled via cron) |
 | **Right of Access** | `GET /api/compliance/export-data/` |
 | **Right to Erasure** | `DELETE /api/compliance/forget-me/` |
 
@@ -217,9 +239,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000/api
 ```env
 DEBUG=True
 SECRET_KEY=your-secret-key
-DATABASE_URL=postgres://user:pass@localhost:5432/primekey
 CORS_ALLOWED_ORIGINS=http://localhost:3000
-REDIS_URL=redis://localhost:6379/0
 ```
 
 ---
@@ -231,7 +251,7 @@ REDIS_URL=redis://localhost:6379/0
 1. **Provision** — Ubuntu 22.04, Docker, Nginx, Certbot (SSL)
 2. **Configure** — Production `.env` files, `ALLOWED_HOSTS`, `SECURE_SSL_REDIRECT=True`
 3. **Deploy** — `docker-compose -f docker-compose.prod.yml up -d --build`
-4. **Cron** — `pg_cron` extension for `anonymize_leads` job
+4. **Cron** — Schedule `python manage.py anonymize_leads` via system cron
 5. **Monitor** — Health checks, log aggregation, uptime alerts
 
 ### CI/CD (Planned)

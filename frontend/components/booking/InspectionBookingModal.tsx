@@ -152,7 +152,7 @@ export const InspectionBookingModal: React.FC<InspectionBookingModalProps> = ({
                     onChange={(e) => {
                       if (e.target.value) {
                         setValue('inspectionDate', new Date(e.target.value), {
-                          validate: true,
+                          shouldValidate: true,
                         });
                       }
                     }}

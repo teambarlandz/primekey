@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Sparkles, CheckCircle, Clock, ShieldCheck, Phone, User, MapPin, AlertCircle } from 'lucide-react';
-import { useConcierge, ConciergeState } from '@/hooks/useConcierge';
+import { useConcierge } from '@/hooks/useConcierge';
 import { SearchFilterValues } from '@/lib/validations/searchSchema';
+import { ConciergeFormValues } from '@/lib/validations/conciergeSchema';
 
 interface ConciergeModalProps {
   isOpen: boolean;
@@ -27,8 +28,8 @@ export const ConciergeModal: React.FC<ConciergeModalProps> = ({
     onClose();
   };
 
-  const onSubmit = (data: React.ReactNode) => {
-    submit(form.getValues());
+  const onSubmit = (data: ConciergeFormValues) => {
+    submit(data);
   };
 
   return (

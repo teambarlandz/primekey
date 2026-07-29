@@ -54,7 +54,7 @@ export function useConcierge(initialFilters?: SearchFilterValues) {
         budgetMin: data.budgetMin,
         budgetMax: data.budgetMax,
         bedrooms: data.bedrooms,
-        ndprConsent: data.ndprConsent,
+        ndprConsent: data.ndprConsent as true,
       });
 
       // Invalidate search cache to refresh if needed

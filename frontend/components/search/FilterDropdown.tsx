@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Home, Bed, Ban } from 'lucide-react';
+import { PropertyType, BedroomCount } from '@/lib/api/contracts';
 import {
   Select,
   SelectContent,
@@ -13,10 +14,10 @@ import {
 } from '@/components/ui/select';
 
 interface FilterDropdownProps {
-  propertyType: string;
-  bedrooms: string;
-  onPropertyTypeChange: (value: string) => void;
-  onBedroomsChange: (value: string) => void;
+  propertyType: PropertyType;
+  bedrooms: BedroomCount;
+  onPropertyTypeChange: (value: PropertyType) => void;
+  onBedroomsChange: (value: BedroomCount) => void;
 }
 
 export const FilterDropdown: React.FC<FilterDropdownProps> = ({
@@ -37,7 +38,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
         <Select
           value={propertyType}
           onValueChange={(val: string | null) => {
-            const newType = val ?? 'any';
+            const newType = (val ?? 'any') as PropertyType;
             onPropertyTypeChange(newType);
             // If switched to land or commercial, automatically clear bedrooms
             if (newType === 'land' || newType === 'commercial') {
@@ -106,7 +107,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
         <Select
           value={isLandOrCommercial ? 'any' : bedrooms}
           disabled={isLandOrCommercial}
-          onValueChange={(val: string | null) => onBedroomsChange(val ?? 'any')}
+          onValueChange={(val: string | null) => onBedroomsChange((val ?? 'any') as BedroomCount)}
         >
           <SelectTrigger className={`w-full border-slate-200 font-body rounded-xl focus:ring-[#04164a]/20 h-11 ${isLandOrCommercial ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-white text-slate-800'}`}>
             <SelectValue placeholder={isLandOrCommercial ? "N/A for Land/Commercial" : "Any Bedrooms"} />
