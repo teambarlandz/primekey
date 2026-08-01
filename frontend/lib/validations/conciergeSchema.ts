@@ -18,24 +18,18 @@ export const conciergeFormSchema = z
     phone: z
       .string()
       .trim()
-      // Strips out spaces, dashes, and parentheses automatically before validating
-      .transform((val) => val.replace(/[\s\-\(\)]/g, ''))
-      .pipe(
-        z
-          .string()
-          .regex(
-            NIGERIAN_PHONE_REGEX,
-            'Please enter a valid Nigerian phone number (e.g., 08012345678 or +2348012345678)'
-          )
+      // Strips spaces, dashes, and parentheses inside the refine to avoid transform() type divergence
+      .refine(
+        (val) => NIGERIAN_PHONE_REGEX.test(val.replace(/[\s\-\(\)]/g, '')),
+        'Please enter a valid Nigerian phone number (e.g., 08012345678 or +2348012345678)'
       ),
 
     email: z
-      .string()
-      .trim()
-      .toLowerCase()
-      .email('Invalid email address')
-      .optional()
-      .or(z.literal('')),
+      .union([
+        z.string().trim().email('Invalid email address'),
+        z.literal(''),
+      ])
+      .default(''),
 
     preferredLocation: z
       .string()
@@ -44,10 +38,10 @@ export const conciergeFormSchema = z
       .max(150, 'Location description is too long'),
 
     // Non-rendered / filter context fields with defaults
-    propertyType: z.string().optional().default('any'),
-    budgetMin: z.number().nonnegative('Budget cannot be negative').optional().default(0),
-    budgetMax: z.number().positive('Budget must be greater than zero').optional().default(500000000),
-    bedrooms: z.union([z.string(), z.number()]).optional().default('any'),
+    propertyType: z.string().default('any'),
+    budgetMin: z.number().nonnegative('Budget cannot be negative').default(0),
+    budgetMax: z.number().positive('Budget must be greater than zero').default(500000000),
+    bedrooms: z.union([z.string(), z.number()]).default('any'),
 
     // Legal & compliance consent
     ndprConsent: z.boolean().refine((val) => val === true, {
@@ -75,7 +69,7 @@ export type ConciergeFormValues = z.infer<typeof conciergeFormSchema>;
 export function mapConciergeValuesToPayload(values: ConciergeFormValues) {
   return {
     full_name: values.fullName,
-    phone: values.phone,
+    phone: values.phone.replace(/[\s\-\(\)]/g, ''),
     email: values.email || null,
     preferred_location: values.preferredLocation,
     property_type: values.propertyType ?? 'any',

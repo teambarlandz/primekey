@@ -1,3 +1,46 @@
+# Aider
 .aider*
-node_modules
+
+# Env / secrets
 .env
+.env.*
+!.env.example
+backend/.env
+frontend/.env.local
+
+# Dependencies
+node_modules/
+backend/venv/
+backend/.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+
+# Builds / output
+.next/
+out/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Databases
+*.sqlite3
+*.sqlite
+*.db
+
+# Logs
+*.log
+logs/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.iml

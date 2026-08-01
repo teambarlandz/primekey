@@ -127,7 +127,7 @@ export const ConciergeModal: React.FC<ConciergeModalProps> = ({
               </div>
             )}
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 font-body">
+            <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4 font-body">
               {/* Target Location */}
               <div className="space-y-1">
                 <label htmlFor="preferredLocation" className="text-xs font-semibold text-[#04164a]">
