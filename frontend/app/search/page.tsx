@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { SearchBar } from '@/components/search/SearchBar';
@@ -11,13 +11,14 @@ import { EmptyResults } from '@/components/search/EmptyResults';
 import { ConciergeModal } from '@/components/search/ConciergeModal';
 import { AuthInterceptSheet } from '@/components/auth/AuthInterceptSheet';
 import { SearchFilterValues } from '@/lib/validations/searchSchema';
-import { Property } from '@/types/property';
-import { Filter, RotateCcw, Search, Sparkles } from 'lucide-react';
+import { Property, searchProperties, SearchPropertiesResponse } from '@/lib/api-client';
+import { Filter, RotateCcw, Search, Sparkles, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 const BRAND_COLOR = '#04164a';
 
+// Fallback mock properties for when API is unavailable
 const MOCK_PROPERTIES: Property[] = [
   {
     id: '1',
@@ -90,7 +91,10 @@ export default function SearchPage() {
     bedrooms: 'any',
   });
 
-  const [properties, setProperties] = useState<Property[]>(MOCK_PROPERTIES);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [totalCount, setTotalCount] = useState(0);
   const [isConciergeOpen, setIsConciergeOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState('');
@@ -104,43 +108,52 @@ export default function SearchPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Multi-layer cumulative filter engine (handles dual-price bounds & context bedrooms)
-  const executeSearch = (updatedFilters: SearchFilterValues) => {
-    const targetLocation = (updatedFilters.location || '').toLowerCase().trim();
+  // Fetch properties from API with fallback to mock data
+  const executeSearch = useCallback(async (updatedFilters: SearchFilterValues) => {
+    setIsLoading(true);
+    setSearchError(null);
 
-    let filtered = MOCK_PROPERTIES.filter((p) => {
-      // 1. Location filter layer
-      const matchesLocation =
-        !targetLocation ||
-        p.location.toLowerCase().includes(targetLocation) ||
-        p.city.toLowerCase().includes(targetLocation) ||
-        p.state.toLowerCase().includes(targetLocation);
+    try {
+      const response = await searchProperties(updatedFilters);
+      if (response.data?.results) {
+        setProperties(response.data.results);
+        setTotalCount(response.data.count || response.data.results.length);
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (error: any) {
+      console.warn('API search failed, falling back to mock data:', error.message);
+      setSearchError('Using fallback data. Some results may be limited.');
+      
+      // Fallback to client-side filtering with mock data
+      const targetLocation = (filters.location || '').toLowerCase().trim();
+      const filtered = MOCK_PROPERTIES.filter((p) => {
+        const matchesLocation =
+          !targetLocation ||
+          p.location.toLowerCase().includes(targetLocation) ||
+          p.city.toLowerCase().includes(targetLocation) ||
+          p.state.toLowerCase().includes(targetLocation);
 
-      // 2. Dual-thumb Price filter layer (Min and Max boundary)
-      const matchesPrice = p.price >= updatedFilters.minPrice && p.price <= updatedFilters.maxPrice;
+        const matchesPrice = p.price >= filters.minPrice && p.price <= filters.maxPrice;
+        const matchesType = filters.propertyType === 'any' || p.propertyType === filters.propertyType;
+        const matchesBeds =
+          filters.bedrooms === 'any' ||
+          (filters.bedrooms === '5'
+            ? p.bedrooms >= 5
+            : p.bedrooms === Number(filters.bedrooms));
 
-      // 3. Property Type filter layer
-      const matchesType =
-        updatedFilters.propertyType === 'any' || p.propertyType === updatedFilters.propertyType;
-
-      // 4. Bedrooms filter layer (Exact match or 5+ threshold)
-      const matchesBeds =
-        updatedFilters.bedrooms === 'any' ||
-        (updatedFilters.bedrooms === '5'
-          ? p.bedrooms >= 5
-          : p.bedrooms === Number(updatedFilters.bedrooms));
-
-      // Must pass ALL active filter criteria simultaneously
-      return matchesLocation && matchesPrice && matchesType && matchesBeds;
-    });
-
-    setProperties(filtered);
-  };
+        return matchesLocation && matchesPrice && matchesType && matchesBeds;
+      });
+      setProperties(filtered);
+      setTotalCount(filtered.length);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   const handleFilterChange = (newPartialFilters: Partial<SearchFilterValues>) => {
     setFilters((prev) => {
       const next = { ...prev, ...newPartialFilters };
-      executeSearch(next);
       return next;
     });
   };
@@ -150,7 +163,8 @@ export default function SearchPage() {
   };
 
   const handleLocationSelect = (loc: string) => {
-    handleFilterChange({ location: loc });
+    setFilters((prev) => ({ ...prev, location: loc }));
+    executeSearch({ ...filters, location: loc });
   };
 
   const handleReset = () => {
@@ -162,13 +176,18 @@ export default function SearchPage() {
       bedrooms: 'any',
     };
     setFilters(resetVals);
-    setProperties(MOCK_PROPERTIES);
+    executeSearch(resetVals);
   };
 
   const handleRequireAuth = (actionName: string) => {
     setPendingAction(actionName);
     setIsAuthOpen(true);
   };
+
+  // Initial search on mount
+  useEffect(() => {
+    executeSearch(filters);
+  }, [executeSearch]);
 
   return (
     <main className="min-h-screen bg-[#f3f0ff] pb-16">
@@ -204,14 +223,14 @@ export default function SearchPage() {
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
                 value={filters.location || ''}
-                onChange={(e) => handleFilterChange({ location: e.target.value })}
+                onChange={(e) => setFilters((prev) => ({ ...prev, location: e.target.value }))}
                 placeholder="Search location (e.g., Lekki, Ikoyi)..."
                 className="pl-10 pr-4 py-2 h-10 text-xs rounded-full border-slate-200 bg-white shadow-2xs focus-visible:ring-[#04164a]"
               />
             </div>
             <select
               value={filters.propertyType}
-              onChange={(e) => handleFilterChange({ propertyType: e.target.value as any })}
+              onChange={(e) => setFilters((prev) => ({ ...prev, propertyType: e.target.value as any }))}
               className="h-10 px-3 bg-white border border-slate-200 rounded-full text-xs text-slate-700 font-medium focus:outline-none"
             >
               <option value="any">All Property Types</option>
@@ -250,9 +269,9 @@ export default function SearchPage() {
         <div className="bg-white/90 backdrop-blur-md p-5 md:p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
           <SearchBar
             value={filters.location || ''}
-            onChange={(loc) => handleFilterChange({ location: loc })}
+            onChange={(loc) => setFilters((prev) => ({ ...prev, location: loc }))}
             onSearch={handleSearchExecute}
-            onSelectSuggestion={handleLocationSelect}
+            onSelectSuggestion={(loc) => setFilters((prev) => ({ ...prev, location: loc }))}
           />
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 pt-2 border-t border-slate-100">
@@ -260,15 +279,15 @@ export default function SearchPage() {
               <FilterDropdown
                 propertyType={filters.propertyType}
                 bedrooms={filters.bedrooms}
-                onPropertyTypeChange={(type) => handleFilterChange({ propertyType: type as any })}
-                onBedroomsChange={(beds) => handleFilterChange({ bedrooms: beds })}
+                onPropertyTypeChange={(type) => setFilters((prev) => ({ ...prev, propertyType: type as any }))}
+                onBedroomsChange={(beds) => setFilters((prev) => ({ ...prev, bedrooms: beds }))}
               />
             </div>
             <div>
               <PriceRange
                 minPrice={filters.minPrice}
                 maxPrice={filters.maxPrice}
-                onChange={(min, max) => handleFilterChange({ minPrice: min, maxPrice: max })}
+                onChange={(min, max) => setFilters((prev) => ({ ...prev, minPrice: min, maxPrice: max }))}
               />
             </div>
           </div>
@@ -283,19 +302,41 @@ export default function SearchPage() {
             </Button>
             <Button
               onClick={handleSearchExecute}
+              disabled={isLoading}
               className="bg-[#04164a] hover:bg-[#04164a]/90 text-white font-heading text-sm px-6 py-2.5 rounded-xl flex items-center gap-2"
             >
+              {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
               <Filter className="w-4 h-4" /> Apply Filters
             </Button>
           </div>
         </div>
 
         {/* Results Area */}
-        {properties.length > 0 ? (
+        {searchError && (
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2 text-amber-700 text-xs font-body">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{searchError}</span>
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <div key={i} className="bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200 overflow-hidden animate-pulse">
+                <div className="aspect-[4/3] bg-slate-100" />
+                <div className="p-4 space-y-3">
+                  <div className="h-4 bg-slate-100 rounded w-3/4" />
+                  <div className="h-4 bg-slate-100 rounded w-1/2" />
+                  <div className="h-4 bg-slate-100 rounded w-1/4" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : properties.length > 0 ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-heading text-xl font-bold text-[#04164a]">
-                Available Properties ({properties.length})
+                Available Properties ({totalCount})
               </h2>
             </div>
             <PropertyGrid

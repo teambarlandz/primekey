@@ -1,3 +1,5 @@
+from django.utils.decorators import method_decorator
+from django_ratelimit.decorators import ratelimit
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -6,6 +8,7 @@ from .serializers import ConciergeLeadSerializer, NDPRErasureRequestSerializer
 from .services import LeadScoringService, NDPRErasureService
 
 
+@method_decorator(ratelimit(key='ip', rate='10/m', method='POST'), name='post')
 class SubmitConciergeLeadView(APIView):
     """
     Public Endpoint: POST /api/crm/submit-concierge/
@@ -51,6 +54,7 @@ class SubmitConciergeLeadView(APIView):
         )
 
 
+@method_decorator(ratelimit(key='ip', rate='10/m', method='POST'), name='post')
 class NDPRErasureView(APIView):
     """
     Public Endpoint: POST /api/crm/ndpr/request-erasure/

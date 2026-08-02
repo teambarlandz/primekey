@@ -31,3 +31,70 @@
 - [x] 6.1 Lead Scoring & SLA Alerting (Backend) - Unit 1.8
 - [x] 6.2 NDPR Compliance — Data Export & Erasure Endpoints - Unit 1.15
 - [x] 6.3 QA & Testing (Buyer Pathway) - Unit 1.16
+
+## Project Phase 2: Landlord/Owner Pathway (Units 2.1–2.8)
+
+> ⚠️ **Recover the lost backend first.** `apps/landlords` (and `apps/compliance`, `apps/ecommerce`) source is NOT on this branch (`SearchPage-Done`) — only `.pyc` remnants remain. The real source exists in commit `caf35883` on branch `fix/update-gitignore`.
+> Restore: `git restore --source=caf35883 -- backend/apps/landlords/ backend/apps/compliance/ backend/apps/ecommerce/`
+> Then verify `core/settings.py` (INSTALLED_APPS currently only has `apps.crm`, `apps.properties`) and `core/urls.py` (only `api/crm/` wired). Review.md's "Phase 1: 129 tests / NDPR / /api/v1/ / Swagger / rate limit" claims are STALE on this branch — re-verify after recovery.
+
+### 2.1 Landlord Landing Page (Value Proposition)
+- [x] Restore `apps/landlords` from `caf35883`; add to `INSTALLED_APPS`; run `makemigrations landlords && migrate`
+- [x] Wire `/api/landlords/` (or `/api/v1/landlords/`) into `core/urls.py`
+- [x] Create `frontend/app/landlord/page.tsx` — hero (#04164a, Poppins/Lora), value props (2-week listing, NDPR-protected data, dedicated agent, marketing reach)
+- [x] GSAP scroll animations via `useGSAP` + `prefersReducedMotion` guard (`lib/animations.ts`)
+- [x] CTAs: "List your property" → 2.2, "Book an inspection" → 2.4
+- [x] Build verified: `npm run build` succeeds, page statically generated
+
+### 2.2 Gated Registration Form (Landlord) + Backend API
+- [x] Backend: `LandlordRegistrationView` + serializer (Nigerian phone regex, NDPR consent required, `verification_status=pending`)
+- [x] Frontend: `lib/validations/landlordSchema.ts` — Zod parity with DRF serializer
+- [x] Frontend: `components/landlord/LandlordRegistrationForm.tsx` — RHF + Zod + shadcn/ui, `noValidate` form (avoid base-ui FieldControl bug)
+- [ ] Auth interception: gate via `AuthInterceptSheet` pattern
+- [x] `lib/api-client.ts`: add `submitLandlordRegistration` with DRF field-error extraction + banner UI (mirror `submitConciergeLead`)
+
+### 2.3 Property Intake Form (Multi-step)
+- [ ] Backend: `PropertyIntakeCreateView` / `PropertyIntakeListView` — ownership-scoped, status draft→submitted
+- [ ] Frontend: `lib/validations/propertyIntakeSchema.ts` (price > 0, bedrooms/bathrooms ≥ 1, required fields, NDPR consent)
+- [ ] Frontend: `components/landlord/PropertyIntakeForm.tsx` — 3-step wizard (Details → Pricing & Location → Review), per-step validation before advancing
+- [ ] Success + error states; return-to-dashboard CTA
+
+### 2.4 Appointment Booking Engine
+- [ ] Backend: `AppointmentCreateView` (preferred_date + time_slot, tour_type, status workflow pending→confirmed→completed/cancelled)
+- [ ] Backend: duplicate-date / conflict guard
+- [ ] Frontend: reuse `lib/validations/bookingSchema.ts` + `InspectionBookingModal` pattern
+- [ ] Frontend: `components/landlord/AppointmentBookingForm.tsx` + confirmation state
+
+### 2.5 Backend Parity — versioning, rate limit, docs
+- [x] Settle URL contract: `/api/v1/` vs `/api/...` to match frontend `API_BASE_URL` contract (`/api/crm/...` vs `/api/v1/...` — confirm one)
+- [x] django-ratelimit on registration/intake/appointment (parity: 10 req/min/IP)
+- [x] drf-spectacular OpenAPI schema + Swagger at `/api/docs/`
+- [x] NDPR consent logging parity (recover `apps/compliance` ConsentLog from `caf35883`) — compliance module restored, 44 tests passing
+- [x] Backend tests for landlords app (pytest + factory-boy, mirroring crm/properties) — 5 tests covering consent enforcement + phone validation
+
+### 2.6 Agent Dashboard (Landlord Leads)
+- [ ] Backend: landlord lead list + status filtering endpoints (pending/approved/rejected)
+- [ ] Frontend: `app/dashboard/agent/page.tsx` + `components/dashboard/*` (table, status badges, SLA lead age)
+- [ ] Row actions: approve/reject, mark contacted (PATCH)
+- [ ] Loading + empty + error states
+
+### 2.7 Frontend-Backend Integration (Landlord)
+- [ ] Extend `lib/api-client.ts` with all landlord endpoints (typed, `ApiClientError`)
+- [ ] Wire all pages to real APIs — no mock data on this pathway
+- [ ] Cross-link search flow → landlord CTA
+
+### 2.8 QA & Testing (Landlord Pathway)
+- [ ] Backend: pytest suite passing (models, serializers, views, appointment conflicts)
+- [ ] Frontend: `npx tsc --noEmit` + `next lint` clean
+- [ ] Manual E2E: landing → register → intake → appointment → dashboard
+- [ ] Update Review.md, TODO.md, `docs/context/progress-tracker.md`
+
+### 🔧 Lost-code recovery checklist (verify BEFORE starting work)
+- [x] `apps/landlords/` — restored from `caf35883`; models/serializers/views/urls/services/migrations all present
+- [x] `apps/compliance/` — restored from `caf35883` (NDPR export/erase, ConsentLog, anonymization tasks, 44 tests passing)
+- [x] `apps/ecommerce/` — restored stubs from `caf35883`
+- [x] Wired `INSTALLED_APPS` + `/api/v1/*` URLconfs + drf-spectacular (schema/docs) + rate-limit cache
+- [x] Fixed pre-existing `properties` blocker: `SerializerMethodGetter` → `SerializerMethodField` (nonexistent DRF API)
+- [x] Added missing `__init__.py` for `apps/`, `apps/crm/`, `apps/properties/` (pytest import-mode fix) + `backend/conftest.py`
+- [x] Landlord registration: NDPR consent now mandatory (was bypassable) + Nigerian phone validation aligned with crm
+- [x] Backend tests: 49 passing (44 compliance + 5 new landlords); migrations applied cleanly

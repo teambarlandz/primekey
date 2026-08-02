@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Phone, Lock, ArrowRight, RotateCcw, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Phone, Lock, ArrowRight, RotateCcw, CheckCircle2, AlertCircle } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -11,6 +11,9 @@ import {
 } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { submitOTP, verifyOTP } from '@/lib/api-client';
+
+const BRAND_COLOR = '#04164a';
 
 interface AuthInterceptSheetProps {
   isOpen: boolean;
@@ -31,6 +34,7 @@ export const AuthInterceptSheet: React.FC<AuthInterceptSheetProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resendTimer, setResendTimer] = useState(60);
   const [phoneError, setPhoneError] = useState('');
+  const [apiError, setApiError] = useState('');
 
   // Countdown timer for OTP resend
   useEffect(() => {
@@ -48,8 +52,9 @@ export const AuthInterceptSheet: React.FC<AuthInterceptSheetProps> = ({
     return regex.test(cleaned);
   };
 
-  const handleSendOtp = (e: React.FormEvent) => {
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+    setApiError('');
     if (!validateNigerianPhone(phone)) {
       setPhoneError('Please enter a valid Nigerian phone number (e.g., 08012345678)');
       return;
@@ -57,12 +62,20 @@ export const AuthInterceptSheet: React.FC<AuthInterceptSheetProps> = ({
     setPhoneError('');
     setIsSubmitting(true);
 
-    // Simulate OTP Dispatch API call
-    setTimeout(() => {
+    try {
+      const response = await submitOTP(phone, 'login');
+      const responseData = response.data as { dev_code?: string } | undefined;
+      if (responseData?.dev_code) {
+        // Development mode - show the code for testing
+        console.log('DEV OTP Code:', responseData.dev_code);
+      }
       setIsSubmitting(false);
       setStep('otp');
       setResendTimer(60);
-    }, 800);
+    } catch (error: any) {
+      setIsSubmitting(false);
+      setPhoneError(error.message || 'Failed to send OTP. Please try again.');
+    }
   };
 
   const handleOtpChange = (index: number, value: string) => {
@@ -78,20 +91,35 @@ export const AuthInterceptSheet: React.FC<AuthInterceptSheetProps> = ({
     }
   };
 
-  const handleVerifyOtp = (e: React.FormEvent) => {
+  const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+    setApiError('');
     const fullCode = otp.join('');
     if (fullCode.length < 6) return;
 
     setIsSubmitting(true);
 
-    // Simulate OTP Verification & Token Storage
-    setTimeout(() => {
+    try {
+      const response = await verifyOTP(phone, fullCode, 'login');
+      const verifyData = response.data as { access: string; refresh: string; user: { id: string; phone: string; is_new_user: boolean } } | undefined;
+      if (!verifyData) throw new Error('Invalid response from server');
+      const { access, refresh, user } = verifyData;
+      
+      // Store tokens
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('access_token', access);
+        localStorage.setItem('refresh_token', refresh);
+        localStorage.setItem('user', JSON.stringify(user));
+      }
+      
       setIsSubmitting(false);
       onSuccess(); // Executes pending action
       handleReset();
       onClose();
-    }, 1000);
+    } catch (error: any) {
+      setIsSubmitting(false);
+      setApiError(error.message || 'Invalid code. Please try again.');
+    }
   };
 
   const handleReset = () => {
@@ -99,6 +127,7 @@ export const AuthInterceptSheet: React.FC<AuthInterceptSheetProps> = ({
     setPhone('');
     setOtp(['', '', '', '', '', '']);
     setPhoneError('');
+    setApiError('');
   };
 
   return (

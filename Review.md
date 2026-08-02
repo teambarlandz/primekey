@@ -27,7 +27,7 @@ Primekey Homes is a **high-converting Nigerian real estate platform** built as a
 Next.js 14.2.35 | React 18.3.1 | TypeScript 5.9.3
 Tailwind CSS 3.4.19 | shadcn/ui (base-nova) | Radix UI primitives
 GSAP 3.15.0 + @gsap/react | react-hook-form 7.81 | Zod 3.25
-SWR 2.x | Axios 1.18 | Lucide React icons
+Native fetch ApiClient (lib/api-client.ts) | Axios (unused dep) | Lucide React icons
 ```
 
 ### Backend Stack
@@ -82,11 +82,11 @@ pytest 8.0+ | factory-boy | Faker
 - `PropertyImage` gallery with primary/secondary ordering
 
 **API Layer (Units 1.11–1.14):**
-- Contract-first: `lib/api/contracts.ts` as single source of truth for all request/response types
-- Centralized `ApiClient` with exponential backoff retry, rate-limit (429) handling, auth interceptor
-- SWR hooks (`useProperties`, `useConcierge`) with optimistic updates and revalidation
+- Type-safe `lib/api-client.ts`: `submitConciergeLead` + `ApiClientError` (status + field-error map), native `fetch` with trailing-slash-safe base URL
+- DRF error extraction (message / detail / field errors) mapped to a user-facing banner in ConciergeModal
+- Full validation parity: Zod schemas mirror DRF serializer rules (Nigerian phone regex, budget bounds, enum alignment)
 - All endpoints under `/api/v1/`, Swagger UI at `/api/docs/` via drf-spectacular
-- Full validation parity: Zod schemas mirror DRF serializer rules (Nigerian phone regex, budget cross-field, enum alignment)
+- Post-pull refactor: earlier SWR hooks (`useProperties`, `useConcierge`) and `lib/api/contracts.ts` were consolidated into the single fetch-based client; no SWR dependency remains
 
 **NDPR Compliance (Unit 1.15):**
 - Data Subject Access Request: `POST /api/v1/compliance/export/` with 6-digit verification
@@ -115,6 +115,8 @@ pytest 8.0+ | factory-boy | Faker
 | `properties/serializers.py` referenced nonexistent `slug` field | `backend/apps/properties/serializers.py` | Removed `slug` from serializer fields |
 | Missing `__init__.py` in all app packages | `backend/apps/*/` | Added package initializers |
 | Missing `landlords` and `ecommerce` apps | `backend/apps/` | Created minimal app stubs (required by INSTALLED_APPS) |
+| Concierge form showing "required" on already-filled fields | `frontend/components/ui/input.tsx`, `frontend/components/search/ConciergeModal.tsx`, `frontend/lib/validations/conciergeSchema.ts` | Root cause: `@base-ui/react/input` FieldControl intercepts `onChange` and calls native `setCustomValidity()`, breaking react-hook-form. Replaced with plain forwardRef `<input>`; added `noValidate` to the form; phone now validated via `.refine()` (inline `.replace()` strip) instead of `.transform().pipe()` to avoid type divergence |
+| Build error — `validate` is not a valid `setValue` option | `frontend/components/booking/InspectionBookingModal.tsx` | `validate: true` → `shouldValidate: true` |
 
 ---
 
@@ -147,19 +149,20 @@ pytest 8.0+ | factory-boy | Faker
 6. **Animation Hygiene** — GSAP via `useGSAP` hook, `prefersReducedMotion` check, ScrollTrigger cleanup
 7. **Design Tokens** — CSS custom properties in `globals.css`, Tailwind config extended
 8. **Error Handling** — `ApiError` class with status, field errors; exponential backoff retry
-9. **API Contracts** — Single source of truth in `lib/api/contracts.ts`
+9. **Type-Safe API Client** — `lib/api-client.ts` with typed `ApiClientError`, DRF field-error extraction
 10. **Testing** — 129 pytest tests with factory-boy, comprehensive view/serializer/service/model coverage
 11. **Documentation** — Exceptional context docs (`architecture.md`, `userflow.md`, `progress-tracker.md`, `code-standards.md`, `dependencies.md`)
+12. **Repo Hygiene** — venv, `.next`, `__pycache__`, `db.sqlite3`, `.env.local`, `.idea` untracked via `.gitignore`
 
 ### ⚠️ Areas for Improvement
 
 | Issue | Location | Recommendation |
 |-------|----------|----------------|
-| **No frontend tests** | `frontend/__tests__/` | Add Jest/Vitest for components, SWR hooks, validation schemas |
+| **No frontend tests** | `frontend/__tests__/` | Add Jest/Vitest for components, form validation schemas, API client |
 | **No E2E tests** | `frontend/cypress/` | Add Cypress for critical path: search → concierge → SLA flow |
 | **No CI/CD pipeline** | `.github/workflows/` | Add GitHub Actions: lint, typecheck, test, build |
 | **OTP Auth not wired** | `components/auth/AuthInterceptSheet.tsx` | Connect to Django REST auth / custom JWT flow |
-| **ConciergeModal form reset** | `components/search/ConciergeModal.tsx` | Already fixed with `setValue` pattern (noted in Unit 1.10) |
+| **Search results still mock-driven** | `app/search/page.tsx` | Client-side `executeSearch` over `MOCK_PROPERTIES`; backend `GET /api/v1/properties/search/` (Unit 1.9) is ready but the search page does not consume it yet |
 | **Redis not installed** | `backend/requirements.txt` | Needed for django-q2 production broker and rate-limit cache |
 | **Environment config** | `Dockerfile`, `docker-compose.yml` | Verify production Dockerfile multi-stage build |
 
