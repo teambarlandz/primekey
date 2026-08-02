@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
@@ -22,6 +22,20 @@ import { submitOTP, verifyOTP } from '@/lib/api-client';
 const BRAND_COLOR = '#04164a';
 
 export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#f3f0ff] flex items-center justify-center py-12 px-4">
+          <p className="text-slate-500 font-body">Loading sign in...</p>
+        </div>
+      }
+    >
+      <LoginContent />
+    </Suspense>
+  );
+}
+
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/';
@@ -59,10 +73,9 @@ export default function LoginPage() {
     return regex.test(cleaned);
   };
 
-  const handleSendOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const sendOtp = async (phoneNumber: string) => {
     setApiError('');
-    if (!validateNigerianPhone(phone)) {
+    if (!validateNigerianPhone(phoneNumber)) {
       setPhoneError('Please enter a valid Nigerian phone number (e.g., 08012345678)');
       return;
     }
@@ -70,7 +83,7 @@ export default function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await submitOTP(phone, 'login');
+      const response = await submitOTP(phoneNumber, 'login');
       const responseData = response.data as { dev_code?: string } | undefined;
       if (responseData?.dev_code) {
         console.log('DEV OTP Code:', responseData.dev_code);
@@ -82,6 +95,11 @@ export default function LoginPage() {
       setIsSubmitting(false);
       setPhoneError(error.message || 'Failed to send OTP. Please try again.');
     }
+  };
+
+  const handleSendOtp = (e: React.FormEvent) => {
+    e.preventDefault();
+    sendOtp(phone);
   };
 
   const handleOtpChange = (index: number, value: string) => {
@@ -260,7 +278,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     disabled={resendTimer > 0}
-                    onClick={() => { handleReset(); handleSendOtp(new Event('submit')) }}
+                    onClick={() => { sendOtp(phone); }}
                     className="text-[#04164a] font-semibold disabled:text-slate-400 flex items-center gap-1"
                   >
                     <RotateCcw className="w-3 h-3" />

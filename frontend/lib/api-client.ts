@@ -2,6 +2,20 @@ import { ConciergeFormValues } from "@/lib/validations/conciergeSchema";
 import { LandlordRegistrationValues } from "@/lib/validations/landlordSchema";
 import { SearchFilterValues } from "@/lib/validations/searchSchema";
 
+/**
+ * Snake_case payload expected by the DRF backend for landlord registration.
+ * Produced by mapLandlordValuesToPayload in landlordSchema.
+ */
+export type LandlordRegistrationPayload = {
+  full_name: string;
+  phone: string;
+  email: string | null;
+  id_type: LandlordRegistrationValues["idType"];
+  id_number: string;
+  property_count: number;
+  ndpr_consent: boolean;
+};
+
 // Ensures base URL cleanly handles trailing slashes
 const BASE_URL_RAW = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 const API_BASE_URL = BASE_URL_RAW.replace(/\/+$/, "");
@@ -83,7 +97,7 @@ export async function submitConciergeLead(
  * Submit Landlord Registration payload to Django REST Framework backend.
  */
 export async function submitLandlordRegistration(
-  formData: LandlordRegistrationValues
+  payload: LandlordRegistrationPayload
 ): Promise<ApiSuccessResponse> {
   try {
     const response = await fetch(`${API_BASE_URL}/landlords/register/`, {
@@ -92,15 +106,7 @@ export async function submitLandlordRegistration(
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify({
-        full_name: formData.fullName,
-        phone: formData.phone,
-        email: formData.email || null,
-        id_type: formData.idType,
-        id_number: formData.idNumber,
-        property_count: formData.propertyCount,
-        ndpr_consent: formData.ndprConsent,
-      }),
+      body: JSON.stringify(payload),
     });
 
     const data = await response.json().catch(() => null);

@@ -22,11 +22,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle, CheckCircle2 } from 'lucide-react';
-import Image from 'next/image';
-import { Mail, Phone, MessageCircle, MapPin, Building2, Send } from 'lucide-react';
-import { useGSAP } from '@gsap/react';
-import gsap from 'gsap';
+import { AlertCircle, CheckCircle2, Mail, Phone, MessageCircle, MapPin, Building2, Send } from 'lucide-react';
 
 const BRAND_COLOR = '#04164a';
 
@@ -106,7 +102,8 @@ export default function ContactPage() {
                 Fill out the form below and we'll get back to you as soon as possible.
               </p>
 
-              <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-5 font-body">
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-5 font-body">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -206,6 +203,7 @@ export default function ContactPage() {
                   <Send className="w-4 h-4" />
                 </Button>
               </form>
+              </Form>
 
               {submitStatus === 'success' && (
                 <div className="mt-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3 text-emerald-700 text-sm font-body animate-fade-in">
