@@ -29,12 +29,12 @@ Update this file after every meaningful implementation change. This document ser
 | **1.6** | **Backend API — POST /api/submit-concierge** | ✅ Completed | Built the Django backend endpoint that receives concierge form data, validates it via DRF serializers, creates lead records, and logs NDPR consent. | `backend/apps/crm/views.py`, `backend/apps/crm/serializers.py`, `backend/apps/crm/models.py`, `backend/apps/crm/services.py`, `backend/apps/crm/urls.py` | 2-3 hrs |
 | **1.7** | **Database Schema & Migrations** | ✅ Completed | Created PostgreSQL/Django ORM tables for `concierge_leads`, `consent_logs`, `lead_scores`, and `properties`. Executed migrations and configured CORS. | `backend/apps/crm/models.py`, `backend/apps/properties/models.py`, `backend/apps/crm/migrations/`, `backend/apps/properties/migrations/`, `backend/core/settings.py` | 2-3 hrs |
 | 1.8 | Lead Scoring & SLA Alerting (Backend) | ⬜ Not Started | Implement lead scoring logic and the 2-hour SLA alert system. | `backend/apps/crm/services.py` (LeadScoringService, SLAAlertService), `backend/apps/crm/tasks.py`, `backend/apps/crm/models.py`, `backend/apps/dashboard/views.py` | 3-4 hrs |
-| 1.9 | Search API — GET /api/search | ⬜ Not Started | Build the backend search endpoint that queries the `properties` table and returns matching results. | `backend/apps/properties/views.py`, `backend/apps/properties/serializers.py`, `backend/apps/properties/services.py` (SearchService), `backend/apps/properties/urls.py` | 2-3 hrs |
-| **1.10** | **Frontend-Backend Integration (Search + Concierge)** | 🟡 In Progress | Connect the frontend search and concierge form to the backend APIs. Currently refining Concierge form UX and payload handling. | `app/search/page.tsx`, `lib/api-client.ts`, `components/search/SearchResults.tsx`, `components/concierge/ConciergeModal.tsx` | 2-3 hrs |
-| 1.11 | NDPR Compliance — Data Export & Erasure Endpoints | ⬜ Not Started | Build the backend endpoints for data subject rights (Right of Access, Right to Erasure) and scheduled anonymization. | `backend/apps/compliance/views.py`, `backend/apps/compliance/serializers.py`, `backend/apps/compliance/services.py`, `backend/apps/compliance/management/commands/anonymize_leads.py`, `backend/apps/compliance/urls.py` | 3-4 hrs |
-| 1.12 | QA & Testing (Buyer Pathway) | ⬜ Not Started | Write and run tests for all Buyer pathway functionality. | `backend/apps/*/tests.py`, `__tests__/`, `cypress/e2e/` | 3-4 hrs |
+| 1.9 | Search API — GET /api/search | ✅ Completed | Built the backend search endpoint that queries the `properties` table and returns matching results, wired into the frontend search page. | `backend/apps/properties/views.py`, `backend/apps/properties/serializers.py`, `backend/apps/properties/services.py`, `backend/apps/properties/urls.py`, `app/search/page.tsx` | 2-3 hrs |
+| **1.10** | **Frontend-Backend Integration (Search + Concierge)** | ✅ Completed | Connected the frontend search and concierge form to the backend APIs. | `app/search/page.tsx`, `lib/api-client.ts`, `components/search/SearchResults.tsx`, `components/concierge/ConciergeModal.tsx` | 2-3 hrs |
+| 1.11 | NDPR Compliance — Data Export & Erasure Endpoints | ✅ Completed | Built the backend endpoints for data subject rights (Right of Access, Right to Erasure) and scheduled anonymization. 44 compliance tests passing. | `backend/apps/compliance/views.py`, `backend/apps/compliance/serializers.py`, `backend/apps/compliance/services.py`, `backend/apps/compliance/management/commands/anonymize_leads.py`, `backend/apps/compliance/urls.py` | 3-4 hrs |
+| 1.12 | QA & Testing (Buyer Pathway) | 🟡 In Progress | Backend tests for Buyer pathway functionality written and passing (44 compliance tests). Frontend e2e not yet started. | `backend/apps/*/tests.py`, `__tests__/`, `cypress/e2e/` | 3-4 hrs |
 
-**Phase 1 Progress: 7 / 12 Units Complete**
+**Phase 1 Progress: 10 / 12 Units Complete**
 
 ---
 
@@ -42,14 +42,14 @@ Update this file after every meaningful implementation change. This document ser
 
 | Unit | Name | Status | Description | Files | Est. Time |
 | --- | --- | --- | --- | --- | --- |
-| 2.1 | Landlord Landing Page (Value Proposition) | ⬜ Not Started | Build the dedicated landing page for landlords/owners, emphasizing the value of outsourcing property management. | `app/landlord/page.tsx`, `components/landlord/LandlordHero.tsx`, `components/landlord/BenefitsGrid.tsx`, `components/landlord/TrustSignals.tsx` | 1-2 hrs |
-| 2.2 | Gated Registration Form (Landlord) | ⬜ Not Started | Build the registration form that filters casual inquiries and collects owner details. | `components/landlord/LandlordRegistrationForm.tsx`, `backend/apps/landlords/models.py`, `backend/apps/landlords/views.py`, `backend/apps/landlords/serializers.py` | 2 hrs |
-| 2.3 | Property Intake Form (Detailed) | ⬜ Not Started | Build the multi-step property intake form that captures all necessary details. | `components/landlord/PropertyIntakeForm.tsx`, `components/landlord/IntakeStep1.tsx`, `components/landlord/IntakeStep2.tsx`, `components/landlord/IntakeStep3.tsx`, `backend/apps/landlords/models.py`, `backend/apps/landlords/views.py`, `backend/apps/landlords/serializers.py` | 3 hrs |
-| 2.4 | Automated Appointment Booking Engine | ⬜ Not Started | Build the system that allows landlords to book consultations with agents. | `components/landlord/AppointmentBooking.tsx`, `backend/apps/landlords/models.py` (Appointment), `backend/apps/landlords/services.py` (BookingService), `backend/apps/landlords/views.py` | 3 hrs |
-| 2.5 | Backend APIs for Landlord Pathway | ⬜ Not Started | Build all backend endpoints for landlord registration, property intake, and appointment booking. | `backend/apps/landlords/views.py`, `backend/apps/landlords/serializers.py`, `backend/apps/landlords/services.py`, `backend/apps/landlords/urls.py` | 3-4 hrs |
-| 2.6 | Agent Dashboard (Landlord Leads) | ⬜ Not Started | Build the agent dashboard for viewing and managing landlord leads. | `app/dashboard/agent/page.tsx`, `components/dashboard/LeadTable.tsx`, `components/dashboard/LeadDetail.tsx`, `backend/apps/dashboard/views.py`, `backend/apps/dashboard/serializers.py` | 2-3 hrs |
-| 2.7 | Frontend-Backend Integration (Landlord) | ⬜ Not Started | Connect all landlord frontend components to their backend APIs. | `components/landlord/LandlordRegistrationForm.tsx`, `components/landlord/PropertyIntakeForm.tsx`, `components/landlord/AppointmentBooking.tsx`, `lib/api-client.ts`, `app/dashboard/agent/page.tsx` | 2-3 hrs |
-| 2.8 | QA & Testing (Landlord Pathway) | ⬜ Not Started | Write and run tests for all Landlord pathway functionality. | `backend/apps/landlords/tests.py`, `__tests__/landlord/`, `cypress/e2e/landlord/` | 3-4 hrs |
+| 2.1 | Landlord Landing Page (Value Proposition) | ✅ Completed | Built the dedicated landing page for landlords/owners, emphasizing the value of outsourcing property management. | `app/landlord/page.tsx`, `components/landlord/LandlordHero.tsx`, `components/landlord/BenefitsGrid.tsx`, `components/landlord/TrustSignals.tsx` | 1-2 hrs |
+| 2.2 | Gated Registration Form (Landlord) | ✅ Completed | Built the registration form that filters casual inquiries and collects owner details. Persists landlord id to `localStorage('primekey_landlord_id')` and redirects to `/landlord/intake`. Fixed `driver_license` field name mismatch with backend. | `components/landlord/LandlordRegistrationForm.tsx`, `backend/apps/landlords/models.py`, `backend/apps/landlords/views.py`, `backend/apps/landlords/serializers.py` | 2 hrs |
+| 2.3 | Property Intake Form (Detailed) | ✅ Completed | Built the multi-step property intake wizard (3 steps) with Zod validation (`propertyIntakeSchema.ts`) and hardened backend serializer (`price>0`, beds/baths/toilets `>=1`, status `submitted`). | `components/landlord/PropertyIntakeForm.tsx`, `app/landlord/intake/page.tsx`, `components/landlord/LandlordGate.tsx`, `lib/validations/propertyIntakeSchema.ts`, `backend/apps/landlords/{models,views,serializers}.py` | 3 hrs |
+| 2.4 | Automated Appointment Booking Engine | ✅ Completed | Built the system allowing landlords to book consultations with agents. Appointment serializer validates past dates, slot allowlist (`09:00/11:00 AM/02:00/04:00 PM`), tour types, and duplicate date+slot conflicts (excluding cancelled). | `components/landlord/AppointmentBookingForm.tsx`, `app/landlord/inspection-booking/page.tsx`, `backend/apps/landlords/models.py` (Appointment), `backend/apps/landlords/serializers.py`, `backend/apps/landlords/views.py` | 3 hrs |
+| 2.5 | Backend APIs for Landlord Pathway | ✅ Completed | All backend endpoints for landlord registration, property intake, appointment booking, plus `GET /landlords/<id>/appointments/` and `PATCH /landlords/appointments/<id>/` (reschedule/cancel with conflict guard). 19 landlord tests passing. | `backend/apps/landlords/views.py`, `backend/apps/landlords/serializers.py`, `backend/apps/landlords/urls.py`, `backend/apps/landlords/tests.py` | 3-4 hrs |
+| 2.6 | Agent Dashboard (Landlord Leads) | ✅ Completed | Built the agent dashboard for viewing and managing landlord leads: stat cards, lead/listing/appointment tables, detail dialogs, search/filter, CSV export, approve/reject/confirm/cancel actions (PATCH endpoints). 11 dashboard tests passing. | `app/dashboard/agent/page.tsx`, `components/dashboard/{LeadTable,IntakeTable,AppointmentTable,LeadDetail,StatCard}.tsx`, `backend/apps/dashboard/{views,serializers,urls}.py` | 2-3 hrs |
+| 2.7 | Frontend-Backend Integration (Landlord) | ✅ Completed | Connected all landlord frontend components to their backend APIs, plus the landlord portal (`/landlord/dashboard`) with listings, appointment reschedule/cancel, and NDPR data-rights links. | `components/landlord/LandlordRegistrationForm.tsx`, `components/landlord/PropertyIntakeForm.tsx`, `components/landlord/AppointmentBookingForm.tsx`, `lib/api-client.ts`, `app/dashboard/agent/page.tsx`, `app/landlord/dashboard/page.tsx` | 2-3 hrs |
+| 2.8 | QA & Testing (Landlord Pathway) | ✅ Completed | Wrote and ran tests for all Landlord pathway functionality. Backend suite: 80 tests passing (44 compliance + 19 landlords + 11 dashboard + 6 notifications). Frontend `tsc --noEmit` clean, `npm run build` passes (20 routes). | `backend/apps/landlords/tests.py`, `backend/apps/dashboard/tests.py`, `backend/apps/notifications/tests.py` | 3-4 hrs |
 
 **Phase 2 Complete ✅ — Core Project Done**
 
@@ -71,12 +71,14 @@ Update this file after every meaningful implementation change. This document ser
 ---
 
 ## Current Phase
-- **Phase:** Phase 1 — Buyer/Renter Pathway.
-- **Status:** Units 1.1 through 1.7 are complete.
-- **Current Goal:** Unit 1.10 (Frontend-Backend Integration) — Currently resolving two UX/form issues on the Concierge Modal.
+- **Phase:** Phase 2 — Landlord/Owner Pathway (Core Project Done).
+- **Status:** All Phase 1 (except 1.8 SLA/lead scoring and 1.12 e2e) and all Phase 2 units complete.
+- **Current Goal:** Optional refinements — agent auth/roles, 2-hour SLA alerts (Unit 1.8), lead scoring, WhatsApp messaging, document vault, buyer inquiries per listing.
 
 ## Completed
 - **Phase 0:** Discovery & Planning — Complete. All context files aligned with Modular Monolith + DDD architecture.
+- **Phase 1 (Buyer Pathway):** Units 1.1–1.7, 1.9, 1.10, 1.11 complete.
+- **Phase 2 (Landlord Pathway):** Units 2.1–2.8 complete — Core Project Done.
 - **Unit 1.1:** Landing Page UI (Styling, Localization & Interactivity) — **COMPLETE**.
 - **Unit 1.2:** Dynamic Property Search (UI & Filters) — **COMPLETE**.
 - **Unit 1.3:** Property Results Grid & Detail View — **COMPLETE**.
@@ -88,20 +90,35 @@ Update this file after every meaningful implementation change. This document ser
 - **Unit 1.7:** Database Schema & Migrations — **COMPLETE**.
   - Created ORM models for `ConciergeLead`, `ConsentLog`, `LeadScore`, and `Property`.
   - Executed migration commands and configured DRF CORS permissions (`corsheaders`).
+- **Unit 1.11:** NDPR Compliance (Data Export & Erasure) — **COMPLETE**. 44 compliance tests passing.
+- **Units 2.2–2.5:** Landlord registration, property intake (3-step wizard), appointment booking, and all backend APIs — **COMPLETE**.
+  - Hardened intake serializer (`price>0`, beds/baths/toilets `>=1`); appointment validation (past-date, slot allowlist, conflict guard).
+  - Landlord portal endpoints: list + reschedule/cancel appointments.
+  - Fixed `driver_license` id-type field name mismatch (was `driver's_license`).
+- **Unit 2.6–2.7:** Agent Dashboard + integrations — **COMPLETE**.
+  - New `apps/dashboard`: summary, landlords, intakes, appointments GET endpoints + PATCH action endpoints (verification, intake status, appointment confirm/cancel/reschedule).
+  - Frontend: stat cards, lead/intake/appointment tables with approve/reject/confirm/cancel actions, LeadDetail dialog, search/filter, CSV export.
+  - Landlord portal `/landlord/dashboard`: My Listings, My Appointments (reschedule dialog + cancel), NDPR data-rights links.
+- **Notifications app (extension):** New `apps/notifications` — `Notification` model, `GET /api/v1/notifications/` (landlord/agent scoped, unread_count) and `PATCH` mark-read. Wired into dashboard approval/rejection/reschedule actions and landlord appointment updates. `NotificationsPanel` component shown on landlord portal + agent overview. 6 tests passing.
+- **Nav & footer:** Dropdown group menus (List a Property, Company) via new `NavDropdown`, mobile accordions, discreet "Agent Login" footer pill → `/dashboard/agent`.
 
 ## In Progress
-- **Unit 1.10:** Frontend-Backend Integration (Search + Concierge).
+- **Unit 1.12:** Frontend/cypress e2e test suites (backend QA done).
 
 ## Next Up
-- **Unit 1.8 & 1.9:** Lead Scoring & SLA Alerting (Backend) + Search API (`GET /api/search`).
+- **Unit 1.8:** Lead Scoring & SLA Alerting (Backend) + 2-hour SLA alerts.
+- Agent authentication/roles (dashboard currently `AllowAny`); WhatsApp-first messaging; document vault; buyer inquiries per listing.
 
 ---
 
 ## Session Notes
 
-**Session Date:** 2026-07-28
+**Session Date:** 2026-08-02
 **Context:**
-Completed Unit 1.6 (`POST /api/submit-concierge`) and Unit 1.7 (PostgreSQL/Django database setup, migrations, and CORS integration). Moving into addressing front-end form issues on the Concierge Modal before completing Unit 1.10.
+Completed Phase 2 (Landlord Pathway) and executed the approved recommendations: dropdown nav + Agent Login footer link, operational agent dashboard (actions, search/filter, CSV export, LeadDetail), landlord portal (`/landlord/dashboard` with reschedule/cancel + NDPR links), and a new notifications app wired into approval/rejection/reschedule events. Full backend suite: **80 tests passing** (44 compliance + 19 landlords + 11 dashboard + 6 notifications). Frontend: `tsc --noEmit` clean, `npm run build` passing (20 routes). Work is uncommitted — next step is commit + push.
+
+**Earlier Session (2026-07-28):**
+Completed Unit 1.6 (`POST /api/submit-concierge`) and Unit 1.7 (PostgreSQL/Django database setup, migrations, and CORS integration).
 
 ---
 

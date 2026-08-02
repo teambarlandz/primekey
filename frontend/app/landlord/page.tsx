@@ -187,6 +187,15 @@ export default function LandlordPage() {
                   </svg>
                   Book an inspection
                 </Link>
+
+                <Link 
+                  href="/landlord/intake" 
+                  className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full border border-[#04164a]/30 hover:border-[#04164a] font-semibold font-heading text-sm transition-all duration-200 shadow-sm"
+                  style={{ color: BRAND_COLOR }}
+                >
+                  <FileText className="w-4 h-4" />
+                  Add a property
+                </Link>
               </div>
 
               <ul className="landlord-anim opacity-0 flex flex-wrap gap-x-6 gap-y-2 text-sm text-[#4a607a] font-body pt-2" role="list">

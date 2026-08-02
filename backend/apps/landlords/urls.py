@@ -5,6 +5,8 @@ from .views import (
     PropertyIntakeCreateView,
     PropertyIntakeListView,
     AppointmentCreateView,
+    AppointmentListView,
+    AppointmentUpdateView,
 )
 
 app_name = 'landlords'
@@ -15,4 +17,6 @@ urlpatterns = [
     path('intakes/', PropertyIntakeCreateView.as_view(), name='intake-create'),
     path('landlords/<uuid:landlord_pk>/intakes/', PropertyIntakeListView.as_view(), name='intake-list'),
     path('appointments/', AppointmentCreateView.as_view(), name='appointment-create'),
+    path('landlords/<uuid:landlord_pk>/appointments/', AppointmentListView.as_view(), name='appointment-list'),
+    path('appointments/<uuid:pk>/', AppointmentUpdateView.as_view(), name='appointment-update'),
 ]

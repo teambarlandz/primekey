@@ -145,7 +145,7 @@ export const LandlordRegistrationForm: React.FC<LandlordRegistrationFormProps> =
                   <SelectContent className="rounded-xl border-slate-200">
                     <SelectItem value="nin">National ID (NIN)</SelectItem>
                     <SelectItem value="passport">International Passport</SelectItem>
-                    <SelectItem value="driver's_license">Driver's License</SelectItem>
+                    <SelectItem value="driver_license">Driver's License</SelectItem>
                     <SelectItem value="voter_card">Permanent Voter's Card</SelectItem>
                   </SelectContent>
                 </Select>

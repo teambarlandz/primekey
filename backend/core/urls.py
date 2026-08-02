@@ -23,6 +23,8 @@ urlpatterns = [
     path('api/v1/compliance/', include('apps.compliance.urls', namespace='compliance')),
     path('api/v1/ecommerce/', include('apps.ecommerce.urls', namespace='ecommerce')),
     path('api/v1/auth/otp/', include('apps.otp_auth.urls', namespace='otp_auth')),
+    path('api/v1/dashboard/', include('apps.dashboard.urls', namespace='dashboard')),
+    path('api/v1/notifications/', include('apps.notifications.urls', namespace='notifications')),
 
     # OpenAPI Schema
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

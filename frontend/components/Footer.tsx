@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Phone, MessageCircle, Mail, MapPin, Facebook, Instagram, Linkedin, Twitter } from 'lucide-react';
+import { Phone, MessageCircle, Mail, MapPin, Facebook, Instagram, Linkedin, Twitter, Lock } from 'lucide-react';
 
 // Exact Brand Navy
 const BRAND_COLOR = '#04164a';
@@ -190,6 +190,12 @@ export default function Footer() {
               <li>
                 <Link href="/cookies" className="hover:underline transition-all" style={{ color: BRAND_COLOR }}>
                   Cookie Policy
+                </Link>
+              </li>
+              <li className="pt-2">
+                <Link href="/dashboard/agent" className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border border-purple-200/70 bg-white/70 hover:bg-white transition-colors" style={{ color: BRAND_COLOR }}>
+                  <Lock className="w-3 h-3" aria-hidden="true" />
+                  Agent Login
                 </Link>
               </li>
             </ul>

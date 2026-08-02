@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django_ratelimit.decorators import ratelimit
 from rest_framework.views import APIView
@@ -9,7 +10,9 @@ from .serializers import (
     LandlordProfileSerializer,
     PropertyIntakeSerializer,
     AppointmentSerializer,
+    APPOINTMENT_TIME_SLOTS,
 )
+from apps.notifications.services import create_notification
 
 
 @method_decorator(ratelimit(key='ip', rate='10/m', method='POST'), name='post')
@@ -91,4 +94,94 @@ class AppointmentCreateView(APIView):
         return Response(
             {"success": False, "errors": serializer.errors},
             status=status.HTTP_400_BAD_REQUEST,
+        )
+
+
+class AppointmentListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, landlord_pk):
+        try:
+            LandlordProfile.objects.get(pk=landlord_pk)
+        except LandlordProfile.DoesNotExist:
+            return Response(
+                {"success": False, "message": "Landlord not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        appointments = Appointment.objects.filter(landlord_id=landlord_pk)
+        serializer = AppointmentSerializer(appointments, many=True)
+        return Response({"success": True, "data": serializer.data})
+
+
+@method_decorator(ratelimit(key='ip', rate='10/m', method='PATCH'), name='patch')
+class AppointmentUpdateView(APIView):
+    permission_classes = [AllowAny]
+
+    def patch(self, request, pk):
+        try:
+            appointment = Appointment.objects.get(pk=pk)
+        except Appointment.DoesNotExist:
+            return Response(
+                {"success": False, "message": "Appointment not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        allowed_fields = {"status", "preferred_date", "time_slot"}
+        provided = set(request.data.keys())
+        if not provided.issubset(allowed_fields):
+            return Response(
+                {"success": False, "errors": {"detail": "Only status, preferred_date and time_slot can be updated."}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        status_value = request.data.get("status")
+        if status_value is not None and status_value not in {"pending", "confirmed", "cancelled"}:
+            return Response(
+                {"success": False, "errors": {"status": ["Invalid appointment status."]}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        preferred_date = request.data.get("preferred_date", appointment.preferred_date)
+        time_slot = request.data.get("time_slot", appointment.time_slot)
+
+        if str(preferred_date) < timezone.localdate().isoformat():
+            return Response(
+                {"success": False, "errors": {"preferred_date": ["Preferred date cannot be in the past."]}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if "time_slot" in request.data and time_slot not in APPOINTMENT_TIME_SLOTS:
+            return Response(
+                {"success": False, "errors": {"time_slot": ["Invalid time slot."]}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        reschedule = "preferred_date" in request.data or "time_slot" in request.data
+        if reschedule:
+            conflict = Appointment.objects.filter(
+                landlord=appointment.landlord,
+                preferred_date=preferred_date,
+                time_slot=time_slot,
+            ).exclude(status='cancelled').exclude(pk=appointment.pk).exists()
+            if conflict:
+                return Response(
+                    {"success": False, "errors": {"time_slot": ["This time slot is already booked for the selected date."]}},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            appointment.preferred_date = preferred_date
+            appointment.time_slot = time_slot
+
+        if status_value:
+            appointment.status = status_value
+
+        appointment.save()
+        create_notification(
+            "agent",
+            appointment.landlord_id,
+            "Appointment updated by landlord",
+            f"{appointment.landlord.full_name} {'cancelled' if status_value == 'cancelled' else 'rescheduled'} their consultation ({appointment.preferred_date} at {appointment.time_slot}).",
+        )
+        return Response(
+            {"success": True, "data": AppointmentSerializer(appointment).data},
+            status=status.HTTP_200_OK,
         )

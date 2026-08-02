@@ -61,6 +61,8 @@ INSTALLED_APPS = [
     "apps.compliance",
     "apps.ecommerce",
     "apps.otp_auth",
+    "apps.dashboard",
+    "apps.notifications",
 ]
 
 MIDDLEWARE = [

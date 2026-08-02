@@ -7,7 +7,7 @@ import { z } from 'zod';
  */
 const NIGERIAN_PHONE_REGEX = /^(?:\+?234|0)[789][01]\d{8}$/;
 
-const ID_TYPE_CHOICES = ['nin', 'passport', "driver's_license", 'voter_card'] as const;
+const ID_TYPE_CHOICES = ['nin', 'passport', 'driver_license', 'voter_card'] as const;
 
 export const landlordRegistrationSchema = z
   .object({

@@ -4,6 +4,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
 import { Poppins, Lora } from 'next/font/google';
+import { NavDropdown, NavDropdownItem } from './NavDropdown';
+import { ChevronDown } from 'lucide-react';
 
 // Google Fonts Setup
 const poppins = Poppins({ 
@@ -20,8 +22,56 @@ const lora = Lora({
 // Deep Navy color from logo SVG
 const BRAND_COLOR = '#04164a';
 
+const LIST_PROPERTY_LINKS: NavDropdownItem[] = [
+  { label: 'Register as Landlord', href: '/landlord/register', description: 'Free, NDPR-compliant registration' },
+  { label: 'Add a Property', href: '/landlord/intake', description: 'Submit your listing details' },
+  { label: 'Book an Inspection', href: '/landlord/inspection-booking', description: 'Schedule a consultation' },
+  { label: 'My Dashboard', href: '/landlord/dashboard', description: 'Manage listings & appointments' },
+];
+
+const COMPANY_LINKS: NavDropdownItem[] = [
+  { label: 'About Us', href: '/about' },
+  { label: 'FAQ', href: '/faq' },
+  { label: 'Contact', href: '/contact' },
+];
+
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileGroup, setMobileGroup] = useState<string | null>(null);
+
+  const closeMobile = () => {
+    setMobileMenuOpen(false);
+    setMobileGroup(null);
+  };
+
+  const renderMobileGroup = (label: string, links: NavDropdownItem[]) => {
+    const expanded = mobileGroup === label;
+    return (
+      <li>
+        <button
+          type="button"
+          onClick={() => setMobileGroup(expanded ? null : label)}
+          className="flex items-center justify-between w-full opacity-80"
+          style={{ color: BRAND_COLOR }}
+          aria-expanded={expanded}
+        >
+          {label}
+          <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
+        </button>
+        {expanded && (
+          <ul className="pl-4 mt-2 space-y-2 border-l-2 border-purple-200/60">
+            {links.map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className="block opacity-80 text-sm" style={{ color: BRAND_COLOR }} onClick={closeMobile}>
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </li>
+    );
+  };
 
   return (
     // Lavender semi-transparent background with blur (#f3f0ff = soft lavender)
@@ -76,17 +126,11 @@ export default function Navbar() {
                 className="opacity-80 hover:opacity-100 transition-opacity duration-200"
                 style={{ color: BRAND_COLOR }}
               >
-                Buy/Rent a Property
+                Buy/Rent
               </Link>
             </li>
             <li>
-              <Link 
-                href="/landlord" 
-                className="opacity-80 hover:opacity-100 transition-opacity duration-200"
-                style={{ color: BRAND_COLOR }}
-              >
-                List a Property
-              </Link>
+              <NavDropdown label="List a Property" items={LIST_PROPERTY_LINKS} />
             </li>
             <li>
               <Link 
@@ -96,6 +140,9 @@ export default function Navbar() {
               >
                 For Builders
               </Link>
+            </li>
+            <li>
+              <NavDropdown label="Company" items={COMPANY_LINKS} />
             </li>
           </ul>
         </div>
@@ -155,34 +202,31 @@ export default function Navbar() {
           <div className="px-6 py-6 space-y-4">
             <ul className={`space-y-4 text-base ${lora.className}`} role="list">
               <li>
-                <Link href="/" className="block font-semibold" style={{ color: BRAND_COLOR }} onClick={() => setMobileMenuOpen(false)}>
+                <Link href="/" className="block font-semibold" style={{ color: BRAND_COLOR }} onClick={closeMobile}>
                   Home
                 </Link>
               </li>
               <li>
-                <Link href="/search" className="block opacity-80" style={{ color: BRAND_COLOR }} onClick={() => setMobileMenuOpen(false)}>
+                <Link href="/search" className="block opacity-80" style={{ color: BRAND_COLOR }} onClick={closeMobile}>
                   Buy/Rent a Property
                 </Link>
               </li>
+              {renderMobileGroup('List a Property', LIST_PROPERTY_LINKS)}
               <li>
-                <Link href="/landlord" className="block opacity-80" style={{ color: BRAND_COLOR }} onClick={() => setMobileMenuOpen(false)}>
-                  List a Property
-                </Link>
-              </li>
-              <li>
-                <Link href="/builder" className="block opacity-80" style={{ color: BRAND_COLOR }} onClick={() => setMobileMenuOpen(false)}>
+                <Link href="/builder" className="block opacity-80" style={{ color: BRAND_COLOR }} onClick={closeMobile}>
                   For Builders
                 </Link>
               </li>
+              {renderMobileGroup('Company', COMPANY_LINKS)}
               <li className="pt-4 border-t border-purple-200/50 flex flex-col gap-3">
-                <Link href="/login" className="block text-center py-2" style={{ color: BRAND_COLOR }} onClick={() => setMobileMenuOpen(false)}>
+                <Link href="/login" className="block text-center py-2" style={{ color: BRAND_COLOR }} onClick={closeMobile}>
                   Login
                 </Link>
                 <Link 
                   href="/contact" 
                   className={`block text-center text-sm font-semibold text-white py-3 rounded-full ${lora.className}`}
                   style={{ backgroundColor: BRAND_COLOR }}
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={closeMobile}
                 >
                   Talk to us
                 </Link>

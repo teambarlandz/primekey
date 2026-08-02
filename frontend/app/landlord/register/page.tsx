@@ -49,8 +49,12 @@ export default function LandlordRegisterPage() {
 
     try {
       const payload = mapLandlordValuesToPayload(values);
-      await submitLandlordRegistration(payload);
-      router.push('/landlord?registered=true');
+      const response = await submitLandlordRegistration(payload);
+      const responseData = response.data as { id?: string } | undefined;
+      if (typeof window !== 'undefined' && responseData?.id) {
+        localStorage.setItem('primekey_landlord_id', responseData.id);
+      }
+      router.push('/landlord/intake');
     } catch (error: any) {
       setApiError(error.message || 'Registration failed. Please try again.');
     } finally {
@@ -206,7 +210,7 @@ export default function LandlordRegisterPage() {
                         <SelectContent className="rounded-xl border-slate-200">
                           <SelectItem value="nin">National ID (NIN)</SelectItem>
                           <SelectItem value="passport">International Passport</SelectItem>
-                          <SelectItem value="driver's_license">Driver's License</SelectItem>
+                          <SelectItem value="driver_license">Driver's License</SelectItem>
                           <SelectItem value="voter_card">Permanent Voter's Card</SelectItem>
                         </SelectContent>
                       </Select>
