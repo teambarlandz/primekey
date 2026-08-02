@@ -4,24 +4,30 @@ from django.utils import timezone
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 
-from apps.landlords.models import LandlordProfile, PropertyIntake, Appointment
+from apps.landlords.models import LandlordProfile, PropertyIntake, Appointment, DocumentVault
 from apps.crm.models import ConciergeLead
 from apps.notifications.services import create_notification
+from .permissions import IsAgent
 from .serializers import (
     DashboardLandlordSerializer,
     DashboardIntakeSerializer,
     DashboardAppointmentSerializer,
+    DashboardLeadSerializer,
     DashboardSummarySerializer,
+    DashboardDocumentSerializer,
+    DocumentReviewSerializer,
     LandlordVerificationUpdateSerializer,
     IntakeStatusUpdateSerializer,
     AppointmentUpdateSerializer,
 )
 
+AGENT_PERMISSIONS = [IsAuthenticated, IsAgent]
+
 
 class DashboardSummaryView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = AGENT_PERMISSIONS
 
     def get(self, request):
         seven_days_ago = timezone.now() - timedelta(days=7)
@@ -40,6 +46,10 @@ class DashboardSummaryView(APIView):
             "appointments_confirmed": Appointment.objects.filter(status='confirmed').count(),
             "total_concierge_leads": ConciergeLead.objects.count(),
             "leads_new_7d": ConciergeLead.objects.filter(created_at__gte=seven_days_ago).count(),
+            "leads_hot": ConciergeLead.objects.filter(score_breakdown__tier='HOT').count(),
+            "leads_warm": ConciergeLead.objects.filter(score_breakdown__tier='WARM').count(),
+            "leads_cold": ConciergeLead.objects.filter(score_breakdown__tier='COLD').count(),
+            "leads_sla_breached": ConciergeLead.objects.filter(sla_breached_at__isnull=False).count(),
         }
 
         serializer = DashboardSummarySerializer(summary)
@@ -47,7 +57,7 @@ class DashboardSummaryView(APIView):
 
 
 class DashboardLandlordListView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = AGENT_PERMISSIONS
 
     def get(self, request):
         landlords = LandlordProfile.objects.select_related().prefetch_related('properties', 'appointments')
@@ -55,8 +65,19 @@ class DashboardLandlordListView(APIView):
         return Response({"success": True, "data": serializer.data}, status=status.HTTP_200_OK)
 
 
+class DashboardLeadListView(APIView):
+    permission_classes = AGENT_PERMISSIONS
+
+    def get(self, request):
+        leads = ConciergeLead.objects.select_related('score_breakdown', 'assigned_agent').order_by(
+            '-score_breakdown__total_score', '-created_at'
+        )
+        serializer = DashboardLeadSerializer(leads, many=True)
+        return Response({"success": True, "data": serializer.data}, status=status.HTTP_200_OK)
+
+
 class DashboardIntakeListView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = AGENT_PERMISSIONS
 
     def get(self, request):
         intakes = PropertyIntake.objects.select_related('landlord')
@@ -65,7 +86,7 @@ class DashboardIntakeListView(APIView):
 
 
 class DashboardAppointmentListView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = AGENT_PERMISSIONS
 
     def get(self, request):
         appointments = Appointment.objects.select_related('landlord')
@@ -74,7 +95,7 @@ class DashboardAppointmentListView(APIView):
 
 
 class LandlordVerificationUpdateView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = AGENT_PERMISSIONS
 
     def patch(self, request, pk):
         try:
@@ -113,7 +134,7 @@ class LandlordVerificationUpdateView(APIView):
 
 
 class IntakeStatusUpdateView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = AGENT_PERMISSIONS
 
     def patch(self, request, pk):
         try:
@@ -152,7 +173,7 @@ class IntakeStatusUpdateView(APIView):
 
 
 class AppointmentUpdateView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = AGENT_PERMISSIONS
 
     def patch(self, request, pk):
         try:
@@ -216,3 +237,63 @@ class AppointmentUpdateView(APIView):
             {"success": True, "data": DashboardAppointmentSerializer(appointment).data},
             status=status.HTTP_200_OK,
         )
+
+
+class DashboardDocumentListView(APIView):
+    permission_classes = AGENT_PERMISSIONS
+
+    def get(self, request):
+        documents = DocumentVault.objects.select_related('landlord', 'intake').order_by(
+            '-uploaded_at'
+        )
+        serializer = DashboardDocumentSerializer(documents, many=True, context={'request': request})
+        return Response({"success": True, "data": serializer.data}, status=status.HTTP_200_OK)
+
+
+class DocumentReviewView(APIView):
+    permission_classes = AGENT_PERMISSIONS
+
+    def patch(self, request, pk):
+        try:
+            document = DocumentVault.objects.select_related('landlord', 'intake').get(pk=pk)
+        except DocumentVault.DoesNotExist:
+            return Response(
+                {"success": False, "message": "Document not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = DocumentReviewSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                {"success": False, "errors": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        attrs = serializer.validated_data
+        document.review_status = attrs["review_status"]
+        document.review_notes = attrs.get("review_notes", document.review_notes)
+        document.reviewed_at = timezone.now()
+        document.save(update_fields=["review_status", "review_notes", "reviewed_at"])
+
+        if document.review_status == "approved":
+            create_notification(
+                "landlord",
+                document.landlord_id,
+                "Document approved",
+                f"Your {document.get_doc_type_display()} has been approved.",
+            )
+        elif document.review_status == "rejected":
+            notes = document.review_notes or "Please reach out to your manager for details."
+            create_notification(
+                "landlord",
+                document.landlord_id,
+                "Document needs attention",
+                f"Your {document.get_doc_type_display()} was rejected. {notes}",
+            )
+
+        return Response(
+            {"success": True, "data": DashboardDocumentSerializer(document, context={'request': request}).data},
+            status=status.HTTP_200_OK,
+        )
+
+

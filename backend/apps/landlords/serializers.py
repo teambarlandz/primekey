@@ -2,7 +2,7 @@ import re
 
 from django.utils import timezone
 from rest_framework import serializers
-from .models import LandlordProfile, PropertyIntake, Appointment
+from .models import LandlordProfile, PropertyIntake, Appointment, DocumentVault
 
 # Regex supporting local (080..., 070..., 090..., 081...) and international (+234... / 234...) formats
 NIGERIAN_PHONE_REGEX = r'^(?:\+?234|0)[789][01]\d{8}$'
@@ -107,5 +107,41 @@ class AppointmentSerializer(serializers.ModelSerializer):
             if exists:
                 raise serializers.ValidationError({
                     "time_slot": "This time slot is already booked for the selected date."
+                })
+        return attrs
+
+
+class DocumentVaultSerializer(serializers.ModelSerializer):
+    file_url = serializers.SerializerMethodField()
+    landlord_name = serializers.CharField(source='landlord.full_name', read_only=True)
+    intake_title = serializers.CharField(source='intake.title', read_only=True, default=None)
+
+    class Meta:
+        model = DocumentVault
+        fields = [
+            'id', 'landlord', 'landlord_name', 'intake', 'intake_title',
+            'doc_type', 'file', 'file_url',
+            'review_status', 'review_notes',
+            'uploaded_at', 'reviewed_at',
+        ]
+        read_only_fields = [
+            'id', 'landlord', 'review_status', 'review_notes',
+            'uploaded_at', 'reviewed_at',
+        ]
+
+    def get_file_url(self, obj):
+        request = self.context.get('request')
+        url = obj.file.url
+        if request:
+            return request.build_absolute_uri(url)
+        return url
+
+    def validate(self, attrs):
+        file_field = attrs.get('file')
+        if file_field:
+            max_size = 10 * 1024 * 1024
+            if file_field.size > max_size:
+                raise serializers.ValidationError({
+                    "file": "File size must be 10MB or less."
                 })
         return attrs

@@ -42,6 +42,7 @@ import {
 } from '@/lib/api-client';
 import { LandlordGate } from '@/components/landlord/LandlordGate';
 import { NotificationsPanel } from '@/components/NotificationsPanel';
+import { DocumentVaultPanel } from '@/components/landlord/DocumentVaultPanel';
 import { getPropertyTypeLabel, formatNaira } from '@/lib/validations/propertyIntakeSchema';
 import { formatAppointmentDate, APPOINTMENT_TIME_SLOTS } from '@/lib/validations/appointmentSchema';
 
@@ -367,13 +368,15 @@ export default function LandlordDashboardPage() {
                     </div>
                   </div>
 
+                  {/* Document vault */}
+                  {landlordId && <DocumentVaultPanel landlordId={landlordId} />}
+
                   {/* NDPR data rights */}
                   <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-purple-100 shadow-sm p-6">
                     <h2 className="flex items-center gap-2 text-xl font-bold font-heading mb-2" style={{ color: BRAND_COLOR }}>
                       <ShieldCheck className="w-5 h-5" />
                       Your data & privacy
-                    </h2>
-                    <p className="text-sm text-[#4a607a] font-body mb-4">
+                    </h2>                    <p className="text-sm text-[#4a607a] font-body mb-4">
                       Primekey Homes processes your information under the Nigeria Data Protection Act. You can exercise your data subject rights at any time.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3">

@@ -29,6 +29,9 @@ class SubmitConciergeLeadView(APIView):
             # 🔥 Calculate priority score and tier instantly upon lead creation
             score_obj = LeadScoringService.if_needed_score_lead(lead)
 
+            # ⏱ Start the 2-hour SLA clock for unassigned leads
+            lead.start_sla_clock()
+
             return Response(
                 {
                     "success": True,
@@ -38,6 +41,7 @@ class SubmitConciergeLeadView(APIView):
                         "status": lead.status,
                         "priority_score": score_obj.get("score"),
                         "tier": score_obj.get("tier"),
+                        "sla_deadline": lead.sla_deadline.isoformat(),
                     },
                 },
                 status=status.HTTP_201_CREATED,

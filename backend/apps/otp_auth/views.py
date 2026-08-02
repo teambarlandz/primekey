@@ -108,10 +108,45 @@ class VerifyOTPView(APIView):
                 "message": message,
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        if purpose == 'agent_login':
+            # Agent login must map to an existing active AgentProfile
+            from apps.dashboard.models import AgentProfile
+
+            try:
+                agent = AgentProfile.objects.get(phone=phone, is_active=True)
+            except AgentProfile.DoesNotExist:
+                return Response({
+                    "success": False,
+                    "message": "No active agent account found for this phone number.",
+                }, status=status.HTTP_403_FORBIDDEN)
+
+            user = agent.user
+            user.is_active = True
+            user.save(update_fields=['is_active'])
+
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+
+            return Response({
+                "success": True,
+                "message": "OTP verified successfully.",
+                "data": {
+                    "access": str(refresh.access_token),
+                    "refresh": str(refresh),
+                    "user": {
+                        "id": str(user.id),
+                        "phone": phone,
+                        "full_name": agent.full_name or user.username,
+                        "role": agent.role,
+                    }
+                }
+            }, status=status.HTTP_200_OK)
+
         # Get or create user
         user, created = User.objects.get_or_create(
             username=phone,
-            defaults={'phone': phone, 'is_active': True}
+            defaults={'is_active': True}
         )
 
         # Generate JWT tokens

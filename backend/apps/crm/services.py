@@ -2,19 +2,20 @@ from decimal import Decimal
 from django.utils import timezone
 from datetime import timedelta
 from django.db import models
-from .models import ConciergeLead, ConsentLog
+from .models import ConciergeLead, ConsentLog, LeadScore, SLAAlert
 
 
 class LeadScoringService:
     """
     Automatically calculates lead priority scores based on financial capacity,
-    contact completeness, and target location demand.
+    contact completeness, and target location demand, then persists them
+    for reporting, SLA prioritization, and NDPR data export.
     """
 
     HIGH_DEMAND_LOCATIONS = ['lekki phase 1', 'ikoyi', 'vi', 'victoria island', 'maitama', 'asokoro', 'ikeja gra']
 
     @classmethod
-    def if_needed_score_lead(cls, lead: ConciergeLead) -> dict:
+    def calculate_score(cls, lead: ConciergeLead) -> dict:
         score = 0
         breakdown = {}
 
@@ -27,7 +28,7 @@ class LeadScoringService:
         else:
             budget_pts = 10
         score += budget_pts
-        breakdown['budget_score'] = budget_pts
+        breakdown['budget_match_score'] = budget_pts
 
         # 2. Contact Completeness (Max 30 points)
         contact_pts = 0
@@ -36,7 +37,7 @@ class LeadScoringService:
         if lead.email:
             contact_pts += 15
         score += contact_pts
-        breakdown['contact_score'] = contact_pts
+        breakdown['completeness_score'] = contact_pts
 
         # 3. Location Desirability (Max 30 points)
         location_pts = 10
@@ -44,7 +45,25 @@ class LeadScoringService:
         if any(hot_spot in loc_clean for hot_spot in cls.HIGH_DEMAND_LOCATIONS):
             location_pts = 30
         score += location_pts
-        breakdown['location_score'] = location_pts
+        breakdown['location_match_score'] = location_pts
+
+        # 4. Property type specificity (Max 10 points)
+        type_pts = 10 if lead.property_type and lead.property_type != 'any' else 5
+        score += type_pts
+        breakdown['property_type_match_score'] = type_pts
+
+        # 5. Bedroom specificity (Max 10 points)
+        bedrooms_pts = 10 if lead.bedrooms and lead.bedrooms != 'any' else 5
+        score += bedrooms_pts
+        breakdown['bedrooms_match_score'] = bedrooms_pts
+
+        # 6. Urgency proxy: newer leads score higher (Max 10 points)
+        urgency_pts = 10
+        age_minutes = (timezone.now() - lead.created_at).total_seconds() / 60 if lead.created_at else 0
+        if age_minutes > 60:
+            urgency_pts = 5
+        score += urgency_pts
+        breakdown['urgency_score'] = urgency_pts
 
         # Determine Tier
         if score >= 75:
@@ -57,31 +76,85 @@ class LeadScoringService:
         return {
             'score': score,
             'tier': tier,
-            'breakdown': breakdown
+            'breakdown': breakdown,
+        }
+
+    @classmethod
+    def persist_score(cls, lead: ConciergeLead) -> LeadScore:
+        result = cls.calculate_score(lead)
+        score_obj, _ = LeadScore.objects.update_or_create(
+            lead=lead,
+            defaults={
+                **result['breakdown'],
+                'total_score': result['score'],
+                'tier': result['tier'],
+            },
+        )
+        return score_obj
+
+    @classmethod
+    def if_needed_score_lead(cls, lead: ConciergeLead) -> dict:
+        result = cls.calculate_score(lead)
+        cls.persist_score(lead)
+        return {
+            'score': result['score'],
+            'tier': result['tier'],
+            'breakdown': result['breakdown'],
         }
 
 
 class SLAAlertService:
     """
     Monitors 2-hour response SLAs and flags overdue unassigned leads.
+    Creates SLAAlert records and notifies the agent queue on breach.
     """
 
     SLA_HOURS = 2
 
     @classmethod
-    def check_overdue_leads(cls):
+    def check_overdue_leads(cls) -> list[dict]:
         sla_threshold = timezone.now() - timedelta(hours=cls.SLA_HOURS)
 
         overdue_leads = ConciergeLead.objects.filter(
             status='active_sla_queue',
-            created_at__lte=sla_threshold
+            sla_deadline__lte=sla_threshold,
+            sla_breached_at__isnull=True,
         )
 
-        breached_count = 0
+        breached = []
         for lead in overdue_leads:
-            breached_count += 1
+            lead.sla_breached_at = timezone.now()
+            lead.save(update_fields=['sla_breached_at', 'updated_at'])
 
-        return breached_count
+            alert, _ = SLAAlert.objects.get_or_create(
+                lead=lead,
+                severity='critical',
+                defaults={
+                    'message': (
+                        f"Lead {lead.full_name} ({lead.phone}) has exceeded the "
+                        f"{cls.SLA_HOURS}-hour response SLA and is awaiting assignment."
+                    ),
+                },
+            )
+
+            # Notify the agent queue
+            from apps.notifications.services import create_notification
+            create_notification(
+                "agent",
+                None,
+                "SLA breach — lead needs attention",
+                alert.message,
+            )
+
+            breached.append({
+                'id': str(lead.id),
+                'full_name': lead.full_name,
+                'phone': lead.phone,
+                'tier': getattr(lead.score_breakdown, 'tier', None) if hasattr(lead, 'score_breakdown') else None,
+                'message': alert.message,
+            })
+
+        return breached
 
 
 class NDPRErasureService:

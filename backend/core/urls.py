@@ -6,6 +6,8 @@ OpenAPI schema at /api/schema/
 Swagger UI at /api/docs/
 """
 
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
@@ -25,9 +27,10 @@ urlpatterns = [
     path('api/v1/auth/otp/', include('apps.otp_auth.urls', namespace='otp_auth')),
     path('api/v1/dashboard/', include('apps.dashboard.urls', namespace='dashboard')),
     path('api/v1/notifications/', include('apps.notifications.urls', namespace='notifications')),
+    path('api/v1/messaging/', include('apps.messaging.urls', namespace='messaging')),
 
     # OpenAPI Schema
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

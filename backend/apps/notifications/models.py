@@ -10,7 +10,7 @@ class Notification(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     recipient_type = models.CharField(max_length=20, choices=RECIPIENT_TYPES, db_index=True)
-    recipient_id = models.UUIDField(db_index=True)
+    recipient_id = models.UUIDField(null=True, blank=True, db_index=True)
     title = models.CharField(max_length=150)
     message = models.TextField()
     is_read = models.BooleanField(default=False, db_index=True)

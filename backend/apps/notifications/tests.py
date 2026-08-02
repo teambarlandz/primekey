@@ -1,9 +1,13 @@
 import pytest
 
+from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 
 from apps.notifications.models import Notification
 from apps.landlords.models import LandlordProfile
+from apps.dashboard.models import AgentProfile
+
+User = get_user_model()
 
 
 @pytest.fixture
@@ -21,6 +25,15 @@ def make_landlord():
         data.update(overrides)
         return LandlordProfile.objects.create(**data)
     return _make
+
+
+@pytest.fixture
+def agent_client():
+    user = User.objects.create_user(username="08050000000", password="testpass123")
+    AgentProfile.objects.create(user=user, phone="08050000000", full_name="Test Agent")
+    client = APIClient()
+    client.force_authenticate(user=user)
+    return client
 
 
 @pytest.mark.django_db
@@ -90,9 +103,9 @@ def test_mark_notification_read(make_landlord):
 
 
 @pytest.mark.django_db
-def test_approving_landlord_creates_notification(make_landlord):
+def test_approving_landlord_creates_notification(make_landlord, agent_client):
     landlord = make_landlord()
-    response = APIClient().patch(
+    response = agent_client.patch(
         f"/api/v1/dashboard/landlords/{landlord.id}/verification/",
         {"verification_status": "approved"},
         format="json",
@@ -106,7 +119,7 @@ def test_approving_landlord_creates_notification(make_landlord):
 
 
 @pytest.mark.django_db
-def test_rejecting_intake_creates_notification(make_landlord):
+def test_rejecting_intake_creates_notification(make_landlord, agent_client):
     from apps.landlords.models import PropertyIntake
 
     landlord = make_landlord()
@@ -123,7 +136,7 @@ def test_rejecting_intake_creates_notification(make_landlord):
         bathrooms=2,
         toilets=2,
     )
-    response = APIClient().patch(
+    response = agent_client.patch(
         f"/api/v1/dashboard/intakes/{intake.id}/",
         {"status": "rejected"},
         format="json",

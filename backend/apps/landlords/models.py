@@ -114,3 +114,48 @@ class Appointment(models.Model):
 
     def __str__(self):
         return f"{self.landlord.full_name} - {self.preferred_date} ({self.time_slot})"
+
+
+class DocumentVault(models.Model):
+    DOC_TYPES = [
+        ('title_deed', 'Title Deed'),
+        ('certificate_of_occupancy', "Certificate of Occupancy"),
+        ('proof_of_ownership', 'Proof of Ownership'),
+        ('government_id', 'Government-issued ID'),
+        ('land_receipt', 'Land Receipt / Agreement'),
+        ('other', 'Other'),
+    ]
+
+    REVIEW_STATUS = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    landlord = models.ForeignKey(
+        LandlordProfile, on_delete=models.CASCADE, related_name='documents'
+    )
+    intake = models.ForeignKey(
+        PropertyIntake,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='documents',
+    )
+    doc_type = models.CharField(max_length=40, choices=DOC_TYPES, default='title_deed')
+    file = models.FileField(upload_to='landlord_documents/')
+    review_status = models.CharField(
+        max_length=20, choices=REVIEW_STATUS, default='pending', db_index=True
+    )
+    review_notes = models.TextField(blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-uploaded_at']
+        verbose_name = "Document Vault Entry"
+        verbose_name_plural = "Document Vault Entries"
+
+    def __str__(self):
+        return f"{self.get_doc_type_display()} - {self.landlord.full_name}"

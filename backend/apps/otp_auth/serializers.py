@@ -4,7 +4,7 @@ from .models import OTPCode
 
 class SendOTPSerializer(serializers.Serializer):
     phone = serializers.CharField(max_length=20)
-    purpose = serializers.ChoiceField(choices=['login', 'register', 'password_reset'], default='login')
+    purpose = serializers.ChoiceField(choices=['login', 'register', 'password_reset', 'agent_login'], default='login')
 
     def validate_phone(self, value):
         # Basic Nigerian phone validation
@@ -18,7 +18,7 @@ class SendOTPSerializer(serializers.Serializer):
 class VerifyOTPSerializer(serializers.Serializer):
     phone = serializers.CharField(max_length=20)
     code = serializers.CharField(max_length=6, min_length=6)
-    purpose = serializers.ChoiceField(choices=['login', 'register', 'password_reset'], default='login')
+    purpose = serializers.ChoiceField(choices=['login', 'register', 'password_reset', 'agent_login'], default='login')
 
     def validate_phone(self, value):
         import re

@@ -6,6 +6,75 @@ from .models import ConciergeLead, ConsentLog
 NIGERIAN_PHONE_REGEX = r'^(?:\+?234|0)[789][01]\d{8}$'
 
 
+class PropertyInquirySerializer(serializers.ModelSerializer):
+    """
+    Serializer for buyer inquiries submitted from a listing detail page.
+    Creates a ConciergeLead tied to the inquired-about property.
+    """
+
+    class Meta:
+        model = ConciergeLead
+        fields = [
+            'id', 'full_name', 'phone', 'email',
+            'listing', 'inquiry_message',
+            'ndpr_consent', 'status', 'created_at',
+        ]
+        read_only_fields = ['id', 'listing', 'status', 'created_at']
+
+    def validate_full_name(self, value: str) -> str:
+        value = value.strip()
+        if len(value) < 2:
+            raise serializers.ValidationError("Full name must be at least 2 characters long.")
+        return value
+
+    def validate_phone(self, value: str) -> str:
+        cleaned_phone = re.sub(r'[\s\-\(\)]', '', value.strip())
+        if not re.match(NIGERIAN_PHONE_REGEX, cleaned_phone):
+            raise serializers.ValidationError(
+                "Please enter a valid Nigerian phone number (e.g., 08012345678 or +2348012345678)."
+            )
+        return cleaned_phone
+
+    def validate_email(self, value: str | None) -> str | None:
+        if not value or not value.strip():
+            return None
+        return value.strip().lower()
+
+    def validate_inquiry_message(self, value: str) -> str:
+        value = (value or '').strip()
+        if len(value) < 2:
+            raise serializers.ValidationError("Please tell us a little about what you're looking for.")
+        return value
+
+    def validate_ndpr_consent(self, value: bool) -> bool:
+        if value is not True:
+            raise serializers.ValidationError(
+                "You must accept the NDPR privacy policy to make an inquiry."
+            )
+        return value
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        lead = ConciergeLead.objects.create(**validated_data)
+
+        ip_address = None
+        user_agent = None
+        if request:
+            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+            if x_forwarded_for:
+                ip_address = x_forwarded_for.split(',')[0].strip()
+            else:
+                ip_address = request.META.get('REMOTE_ADDR')
+            user_agent = request.META.get('HTTP_USER_AGENT')
+
+        ConsentLog.objects.create(
+            lead=lead,
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
+        return lead
+
+
 class ConciergeLeadSerializer(serializers.ModelSerializer):
     """
     Serializer for validating and saving incoming 2-Week Concierge leads.

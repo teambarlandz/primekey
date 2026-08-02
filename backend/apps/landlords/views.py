@@ -5,11 +5,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from .models import LandlordProfile, PropertyIntake, Appointment
+from .models import LandlordProfile, PropertyIntake, Appointment, DocumentVault
 from .serializers import (
     LandlordProfileSerializer,
     PropertyIntakeSerializer,
     AppointmentSerializer,
+    DocumentVaultSerializer,
     APPOINTMENT_TIME_SLOTS,
 )
 from apps.notifications.services import create_notification
@@ -185,3 +186,74 @@ class AppointmentUpdateView(APIView):
             {"success": True, "data": AppointmentSerializer(appointment).data},
             status=status.HTTP_200_OK,
         )
+
+
+@method_decorator(ratelimit(key='ip', rate='10/m', method='POST'), name='post')
+class DocumentUploadView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        data = request.data.copy()
+        landlord_pk = data.get('landlord_id')
+        if not landlord_pk:
+            return Response(
+                {"success": False, "errors": {"landlord_id": ["Landlord ID is required."]}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            landlord = LandlordProfile.objects.get(pk=landlord_pk)
+        except LandlordProfile.DoesNotExist:
+            return Response(
+                {"success": False, "message": "Landlord not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        intake_pk = data.get('intake_id')
+        intake = None
+        if intake_pk:
+            try:
+                intake = PropertyIntake.objects.get(pk=intake_pk, landlord=landlord)
+            except PropertyIntake.DoesNotExist:
+                return Response(
+                    {"success": False, "errors": {"intake_id": ["Intake not found for this landlord."]}},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        serializer = DocumentVaultSerializer(
+            data=data,
+            context={'request': request},
+        )
+        serializer.is_valid(raise_exception=True)
+        document = serializer.save(landlord=landlord, intake=intake)
+
+        create_notification(
+            "agent",
+            landlord.id,
+            "New document uploaded",
+            f"{landlord.full_name} uploaded a {document.get_doc_type_display()} for review.",
+        )
+
+        return Response(
+            {
+                "success": True,
+                "message": "Document uploaded for review.",
+                "data": DocumentVaultSerializer(document, context={'request': request}).data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class DocumentListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, landlord_pk):
+        try:
+            LandlordProfile.objects.get(pk=landlord_pk)
+        except LandlordProfile.DoesNotExist:
+            return Response(
+                {"success": False, "message": "Landlord not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        documents = DocumentVault.objects.filter(landlord_id=landlord_pk)
+        serializer = DocumentVaultSerializer(documents, many=True, context={'request': request})
+        return Response({"success": True, "data": serializer.data})

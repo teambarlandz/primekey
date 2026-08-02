@@ -13,6 +13,7 @@ class OTPCode(models.Model):
         ('login', 'Login / Sign In'),
         ('register', 'Registration Verification'),
         ('password_reset', 'Password Reset'),
+        ('agent_login', 'Agent Login'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

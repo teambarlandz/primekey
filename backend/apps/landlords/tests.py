@@ -1,7 +1,7 @@
 import pytest
 from rest_framework.test import APIClient
 
-from .models import LandlordProfile, PropertyIntake, Appointment
+from .models import LandlordProfile, PropertyIntake, Appointment, DocumentVault
 
 pytestmark = pytest.mark.django_db
 
@@ -283,3 +283,69 @@ class TestAppointmentCreation:
         response = APIClient().get(f"/api/v1/landlords/landlords/{landlord.id}/appointments/")
         assert response.status_code == 200
         assert len(response.data["data"]) == 2
+
+
+class TestDocumentVault:
+    def _upload(self, landlord_id, **overrides):
+        payload = {
+            "landlord_id": str(landlord_id),
+            "doc_type": "title_deed",
+        }
+        payload.update(overrides)
+        return APIClient().post(
+            "/api/v1/landlords/documents/",
+            payload,
+            format="multipart",
+        )
+
+    def test_upload_document_creates_pending_entry(self):
+        landlord = make_landlord()
+        with open(__file__, "rb") as f:
+            response = self._upload(landlord.id, file=f)
+
+        assert response.status_code == 201
+        assert response.data["data"]["review_status"] == "pending"
+        assert response.data["data"]["file_url"]
+        assert DocumentVault.objects.count() == 1
+
+    def test_upload_requires_landlord(self):
+        response = APIClient().post("/api/v1/landlords/documents/", {}, format="multipart")
+        assert response.status_code == 400
+        assert "landlord_id" in response.data["errors"]
+
+    def test_upload_unknown_landlord_404(self):
+        response = self._upload("00000000-0000-0000-0000-000000000000")
+        assert response.status_code == 404
+
+    def test_upload_intake_must_belong_to_landlord(self):
+        landlord = make_landlord()
+        other = make_landlord(full_name="Other Landlord", phone="09087654321", email="other@test.com")
+        intake = PropertyIntake.objects.create(
+            landlord=other,
+            title="Other Property",
+            property_type="fully_detached_duplex",
+            price="200000000",
+            address="5 Test Road",
+            city="Ikeja",
+            state="Lagos",
+            area="GRA",
+        )
+        with open(__file__, "rb") as f:
+            response = self._upload(landlord.id, intake_id=str(intake.id), file=f)
+        assert response.status_code == 400
+        assert "intake_id" in response.data["errors"]
+
+    def test_document_list_for_landlord(self):
+        landlord = make_landlord()
+        with open(__file__, "rb") as f:
+            self._upload(landlord.id, file=f)
+        with open(__file__, "rb") as f:
+            self._upload(landlord.id, doc_type="government_id", file=f)
+
+        response = APIClient().get(f"/api/v1/landlords/landlords/{landlord.id}/documents/")
+        assert response.status_code == 200
+        assert len(response.data["data"]) == 2
+
+    def test_document_list_unknown_landlord_404(self):
+        response = APIClient().get("/api/v1/landlords/landlords/00000000-0000-0000-0000-000000000000/documents/")
+        assert response.status_code == 404

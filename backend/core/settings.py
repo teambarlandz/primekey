@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     "apps.otp_auth",
     "apps.dashboard",
     "apps.notifications",
+    "apps.messaging",
 ]
 
 MIDDLEWARE = [

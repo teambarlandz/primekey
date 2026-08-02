@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
+import { useRouter } from 'next/navigation';
 import {
   Users,
   ShieldCheck,
@@ -15,6 +16,9 @@ import {
   RefreshCw,
   Search,
   Download,
+  LogOut,
+  MessageCircle,
+  FolderOpen,
 } from 'lucide-react';
 import { ANIMATION_TOKENS, prefersReducedMotion } from '@/lib/animations';
 import {
@@ -22,30 +26,43 @@ import {
   fetchLandlordLeads,
   fetchIntakes,
   fetchAppointments,
+  fetchDashboardLeads,
+  fetchDashboardDocuments,
   updateLandlordVerification,
   updateIntakeStatus,
   updateAppointment,
+  getAgentProfile,
+  isAgentLoggedIn,
+  clearAgentSession,
   DashboardSummary,
   DashboardLandlord,
   DashboardIntake,
   DashboardAppointment,
+  DashboardLead,
+  DocumentVaultEntry,
 } from '@/lib/api-client';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { LeadTable } from '@/components/dashboard/LeadTable';
 import { IntakeTable } from '@/components/dashboard/IntakeTable';
 import { AppointmentTable } from '@/components/dashboard/AppointmentTable';
+import { ConciergeLeadTable } from '@/components/dashboard/ConciergeLeadTable';
+import { WhatsAppPanel } from '@/components/dashboard/WhatsAppPanel';
+import { DocumentReviewTable } from '@/components/dashboard/DocumentReviewTable';
 import { LeadDetail } from '@/components/dashboard/LeadDetail';
 import { NotificationsPanel } from '@/components/NotificationsPanel';
 
 const BRAND_COLOR = '#04164a';
 
-type Tab = 'overview' | 'leads' | 'intakes' | 'appointments';
+type Tab = 'overview' | 'leads' | 'intakes' | 'appointments' | 'concierge' | 'whatsapp' | 'documents';
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'overview', label: 'Overview', icon: <LayoutDashboard className="w-4 h-4" /> },
   { id: 'leads', label: 'Landlord Leads', icon: <Users className="w-4 h-4" /> },
   { id: 'intakes', label: 'Property Intakes', icon: <Home className="w-4 h-4" /> },
   { id: 'appointments', label: 'Appointments', icon: <CalendarCheck className="w-4 h-4" /> },
+  { id: 'concierge', label: 'Concierge Leads', icon: <TrendingUp className="w-4 h-4" /> },
+  { id: 'documents', label: 'Documents', icon: <FolderOpen className="w-4 h-4" /> },
+  { id: 'whatsapp', label: 'WhatsApp', icon: <MessageCircle className="w-4 h-4" /> },
 ];
 
 function toCsv(rows: Record<string, unknown>[]): string {
@@ -78,11 +95,16 @@ const selectClass =
   "h-10 rounded-xl border border-purple-200 bg-white/90 px-3 text-sm font-body focus:ring-[#04164a]/20 text-[#22376e]";
 
 export default function AgentDashboardPage() {
+  const router = useRouter();
+  const [authed, setAuthed] = useState<boolean | null>(null);
+  const [agentProfile, setAgentProfile] = useState(getAgentProfile());
   const [tab, setTab] = useState<Tab>('overview');
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [leads, setLeads] = useState<DashboardLandlord[]>([]);
   const [intakes, setIntakes] = useState<DashboardIntake[]>([]);
   const [appointments, setAppointments] = useState<DashboardAppointment[]>([]);
+  const [conciergeLeads, setConciergeLeads] = useState<DashboardLead[]>([]);
+  const [documents, setDocuments] = useState<DocumentVaultEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -91,20 +113,39 @@ export default function AgentDashboardPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
+  useEffect(() => {
+    if (!isAgentLoggedIn()) {
+      router.replace('/dashboard/agent/login');
+      return;
+    }
+    setAuthed(true);
+  }, [router]);
+
+  const handleLogout = () => {
+    clearAgentSession();
+    setAgentProfile(null);
+    setAuthed(null);
+    router.replace('/dashboard/agent/login');
+  };
+
   const loadAll = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [summaryData, leadsData, intakesData, appointmentsData] = await Promise.all([
+      const [summaryData, leadsData, intakesData, appointmentsData, conciergeData, documentsData] = await Promise.all([
         fetchDashboardSummary(),
         fetchLandlordLeads(),
         fetchIntakes(),
         fetchAppointments(),
+        fetchDashboardLeads(),
+        fetchDashboardDocuments(),
       ]);
       setSummary(summaryData);
       setLeads(leadsData);
       setIntakes(intakesData);
       setAppointments(appointmentsData);
+      setConciergeLeads(conciergeData);
+      setDocuments(documentsData);
     } catch (e: any) {
       setError(e?.message ?? 'Failed to load dashboard data.');
     } finally {
@@ -197,11 +238,40 @@ export default function AgentDashboardPage() {
     });
   }, [appointments, search, statusFilter]);
 
+  const filteredConcierge = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return conciergeLeads.filter((lead) => {
+      const matchesStatus = statusFilter === 'all' || lead.status === statusFilter;
+      const matchesSearch =
+        !q ||
+        lead.full_name.toLowerCase().includes(q) ||
+        lead.phone.includes(q) ||
+        (lead.email ?? '').toLowerCase().includes(q) ||
+        lead.preferred_location.toLowerCase().includes(q);
+      return matchesStatus && matchesSearch;
+    });
+  }, [conciergeLeads, search, statusFilter]);
+
+  const filteredDocuments = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return documents.filter((doc) => {
+      const matchesStatus = statusFilter === 'all' || doc.review_status === statusFilter;
+      const matchesSearch =
+        !q ||
+        doc.landlord_name.toLowerCase().includes(q) ||
+        (doc.intake_title ?? '').toLowerCase().includes(q);
+      return matchesStatus && matchesSearch;
+    });
+  }, [documents, search, statusFilter]);
+
   const filterOptions: Record<Tab, string[]> = {
     overview: ['all'],
     leads: ['all', 'pending', 'approved', 'rejected'],
     intakes: ['all', 'submitted', 'approved', 'rejected', 'draft'],
     appointments: ['all', 'pending', 'confirmed', 'completed', 'cancelled'],
+    concierge: ['all', 'active_sla_queue', 'assigned', 'contacted', 'closed_won', 'closed_lost'],
+    documents: ['all', 'pending', 'approved', 'rejected'],
+    whatsapp: ['all'],
   };
 
   const handleExport = () => {
@@ -248,6 +318,36 @@ export default function AgentDashboardPage() {
           status: a.status,
         }))
       );
+    } else if (tab === 'concierge') {
+      downloadCsv(
+        'primekey-concierge-leads.csv',
+        filteredConcierge.map((l) => ({
+          name: l.full_name,
+          phone: l.phone,
+          email: l.email ?? '',
+          location: l.preferred_location,
+          type: l.property_type,
+          budget: l.budget_max,
+          tier: l.tier ?? '',
+          score: l.priority_score,
+          status: l.status,
+          sla_breached: l.is_sla_breached,
+          created: l.created_at,
+        }))
+      );
+    } else if (tab === 'documents') {
+      downloadCsv(
+        'primekey-documents.csv',
+        filteredDocuments.map((d) => ({
+          landlord: d.landlord_name,
+          phone: d.landlord_phone,
+          listing: d.intake_title ?? '',
+          type: d.doc_type_label ?? d.doc_type,
+          status: d.review_status,
+          notes: d.review_notes,
+          uploaded: d.uploaded_at,
+        }))
+      );
     }
   };
 
@@ -258,10 +358,19 @@ export default function AgentDashboardPage() {
     { label: 'Appointments Pending', value: summary?.appointments_pending ?? 0, icon: <CalendarCheck className="w-5 h-5" />, accent: 'bg-amber-50' },
     { label: 'Concierge Leads', value: summary?.total_concierge_leads ?? 0, icon: <Home className="w-5 h-5" />, accent: 'bg-[#f3f0ff]' },
     { label: 'New Leads (7d)', value: summary?.leads_new_7d ?? 0, icon: <TrendingUp className="w-5 h-5" />, accent: 'bg-emerald-50' },
+    { label: 'Hot Leads', value: summary?.leads_hot ?? 0, icon: <TrendingUp className="w-5 h-5" />, accent: 'bg-rose-50' },
+    { label: 'SLA Breached', value: summary?.leads_sla_breached ?? 0, icon: <AlertCircle className="w-5 h-5" />, accent: 'bg-rose-50' },
   ];
 
   return (
     <main className="min-h-screen bg-[#f3f0ff]">
+      {authed !== true ? (
+        <div className="flex items-center justify-center py-24 text-[#4a607a]">
+          <RefreshCw className="w-6 h-6 animate-spin mr-3" />
+          Verifying access…
+        </div>
+      ) : (
+      <>
       <section className="relative pt-12 pb-16 lg:pt-16 lg:pb-24 bg-[#f3f0ff] overflow-hidden">
         <div
           className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-200/40 rounded-full blur-3xl pointer-events-none"
@@ -277,16 +386,31 @@ export default function AgentDashboardPage() {
               <h1 className="text-3xl sm:text-4xl font-bold font-heading tracking-tight" style={{ color: BRAND_COLOR }}>
                 Agent Dashboard
               </h1>
+              {agentProfile && (
+                <p className="text-sm text-[#4a607a] font-body mt-1">
+                  Signed in as {agentProfile.full_name || agentProfile.phone} ({agentProfile.role})
+                </p>
+              )}
             </div>
-            <button
-              onClick={loadAll}
-              disabled={loading}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-white/80 hover:bg-white border border-purple-200 text-sm font-semibold font-heading transition-all"
-              style={{ color: BRAND_COLOR }}
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={loadAll}
+                disabled={loading}
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-white/80 hover:bg-white border border-purple-200 text-sm font-semibold font-heading transition-all"
+                style={{ color: BRAND_COLOR }}
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                Refresh
+              </button>
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-white/80 hover:bg-white border border-purple-200 text-sm font-semibold font-heading transition-all"
+                style={{ color: BRAND_COLOR }}
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </button>
+            </div>
           </header>
 
           {/* Tabs */}
@@ -420,7 +544,9 @@ export default function AgentDashboardPage() {
                         ? 'Search by name, phone, or email…'
                         : tab === 'intakes'
                           ? 'Search by title, landlord, or location…'
-                          : 'Search by landlord or notes…'
+                          : tab === 'documents'
+                            ? 'Search by landlord or listing…'
+                            : 'Search by landlord or notes…'
                     }
                     className="w-full h-10 pl-9 pr-3 rounded-xl border border-purple-200 bg-white/90 text-sm font-body focus:outline-none focus:ring-[#04164a]/20 text-[#22376e]"
                     aria-label="Search"
@@ -438,14 +564,16 @@ export default function AgentDashboardPage() {
                     </option>
                   ))}
                 </select>
-                <button
-                  onClick={handleExport}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/80 hover:bg-white border border-purple-200 text-sm font-semibold font-heading transition-all"
-                  style={{ color: BRAND_COLOR }}
-                >
-                  <Download className="w-4 h-4" />
-                  Export CSV
-                </button>
+                {tab !== 'whatsapp' && (
+                  <button
+                    onClick={handleExport}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/80 hover:bg-white border border-purple-200 text-sm font-semibold font-heading transition-all"
+                    style={{ color: BRAND_COLOR }}
+                  >
+                    <Download className="w-4 h-4" />
+                    Export CSV
+                  </button>
+                )}
               </div>
 
               {tab === 'leads' && (
@@ -472,6 +600,21 @@ export default function AgentDashboardPage() {
                   />
                 </div>
               )}
+              {tab === 'concierge' && (
+                <div className="dash-anim opacity-0">
+                  <ConciergeLeadTable leads={filteredConcierge} />
+                </div>
+              )}
+              {tab === 'documents' && (
+                <div className="dash-anim opacity-0">
+                  <DocumentReviewTable documents={filteredDocuments} onReload={loadAll} />
+                </div>
+              )}
+              {tab === 'whatsapp' && (
+                <div className="dash-anim opacity-0">
+                  <WhatsAppPanel />
+                </div>
+              )}
             </>
           )}
         </div>
@@ -485,6 +628,8 @@ export default function AgentDashboardPage() {
           if (!open) setSelectedLead(null);
         }}
       />
+      </>
+      )}
     </main>
   );
 }

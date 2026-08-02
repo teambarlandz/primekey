@@ -38,6 +38,75 @@ export interface DashboardSummary {
   appointments_confirmed: number;
   total_concierge_leads: number;
   leads_new_7d: number;
+  leads_hot: number;
+  leads_warm: number;
+  leads_cold: number;
+  leads_sla_breached: number;
+}
+
+export interface DashboardLead {
+  id: string;
+  full_name: string;
+  phone: string;
+  email: string | null;
+  preferred_location: string;
+  property_type: string;
+  budget_max: number;
+  status: string;
+  tier: 'HOT' | 'WARM' | 'COLD' | null;
+  priority_score: number;
+  is_sla_breached: boolean;
+  sla_deadline: string | null;
+  sla_remaining_minutes: number | null;
+  assigned_agent: string | null;
+  created_at: string;
+}
+
+export interface WhatsAppThread {
+  id: string;
+  phone: string;
+  display_name: string;
+  concierge_lead: string | null;
+  landlord: string | null;
+  lead_name: string;
+  last_message: string;
+  last_message_at: string | null;
+  message_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WhatsAppMessage {
+  id: string;
+  direction: 'outbound' | 'inbound';
+  body: string;
+  created_at: string;
+}
+
+export interface DocumentVaultEntry {
+  id: string;
+  landlord: string;
+  landlord_name: string;
+  landlord_phone?: string;
+  intake: string | null;
+  intake_title: string | null;
+  doc_type: string;
+  doc_type_label?: string;
+  file_url: string;
+  review_status: 'pending' | 'approved' | 'rejected';
+  review_notes: string;
+  uploaded_at: string;
+  reviewed_at: string | null;
+}
+
+export function buildWhatsAppLink(phone: string, message: string): string {
+  const digits = phone.replace(/[^0-9]/g, '');
+  const international = digits.startsWith('0') ? `234${digits.slice(1)}` : digits;
+  return `https://wa.me/${international}?text=${encodeURIComponent(message)}`;
+}
+
+export function formatWhatsAppPhone(phone: string): string {
+  return phone.replace(/[^0-9]/g, '');
 }
 
 export interface DashboardLandlord {
@@ -165,6 +234,136 @@ export type LandlordRegistrationPayload = {
 // Ensures base URL cleanly handles trailing slashes
 const BASE_URL_RAW = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 const API_BASE_URL = BASE_URL_RAW.replace(/\/+$/, "");
+
+// --- Agent auth token helpers (localStorage-backed) ---
+const AGENT_ACCESS_KEY = "primekey_agent_access";
+const AGENT_REFRESH_KEY = "primekey_agent_refresh";
+const AGENT_PROFILE_KEY = "primekey_agent_profile";
+
+export interface AgentSessionProfile {
+  id: string;
+  phone: string;
+  full_name: string;
+  role: "agent" | "manager" | "admin";
+}
+
+export function getAgentAccessToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(AGENT_ACCESS_KEY);
+}
+
+export function getAgentRefreshToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(AGENT_REFRESH_KEY);
+}
+
+export function getAgentProfile(): AgentSessionProfile | null {
+  if (typeof window === "undefined") return null;
+  const raw = window.localStorage.getItem(AGENT_PROFILE_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as AgentSessionProfile;
+  } catch {
+    return null;
+  }
+}
+
+export function isAgentLoggedIn(): boolean {
+  return getAgentAccessToken() !== null;
+}
+
+export function saveAgentSession(access: string, refresh: string, profile: AgentSessionProfile): void {
+  window.localStorage.setItem(AGENT_ACCESS_KEY, access);
+  window.localStorage.setItem(AGENT_REFRESH_KEY, refresh);
+  window.localStorage.setItem(AGENT_PROFILE_KEY, JSON.stringify(profile));
+}
+
+export function clearAgentSession(): void {
+  window.localStorage.removeItem(AGENT_ACCESS_KEY);
+  window.localStorage.removeItem(AGENT_REFRESH_KEY);
+  window.localStorage.removeItem(AGENT_PROFILE_KEY);
+}
+
+function authHeaders(): Record<string, string> {
+  const token = getAgentAccessToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+export interface AuthResponse {
+  access: string;
+  refresh: string;
+  user: AgentSessionProfile & { is_new_user?: boolean };
+}
+
+export interface SendOtpResponse {
+  data: { phone: string; purpose: string; expires_in_minutes: number; dev_code?: string };
+}
+
+/**
+ * Request an OTP code (agent_login purpose for agents).
+ */
+export async function sendOtp(phone: string, purpose: "login" | "agent_login" | "register" = "login"): Promise<SendOtpResponse> {
+  const response = await fetch(`${API_BASE_URL}/auth/otp/send/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
+    body: JSON.stringify({ phone, purpose }),
+  });
+
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = data?.message || data?.detail || "Failed to send OTP.";
+    throw new ApiClientError(message, response.status, data?.errors);
+  }
+  return data as SendOtpResponse;
+}
+
+/**
+ * Verify an OTP and store the returned agent JWT session.
+ */
+export async function verifyAgentOtp(phone: string, code: string): Promise<AgentSessionProfile> {
+  const response = await fetch(`${API_BASE_URL}/auth/otp/verify/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
+    body: JSON.stringify({ phone, code, purpose: "agent_login" }),
+  });
+
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = data?.message || data?.detail || "OTP verification failed.";
+    throw new ApiClientError(message, response.status, data?.errors);
+  }
+
+  const auth = data.data as AuthResponse;
+  const profile: AgentSessionProfile = {
+    id: auth.user.id,
+    phone: auth.user.phone,
+    full_name: auth.user.full_name,
+    role: auth.user.role,
+  };
+  saveAgentSession(auth.access, auth.refresh, profile);
+  return profile;
+}
+
+export async function refreshAgentAccessToken(): Promise<boolean> {
+  const refresh = getAgentRefreshToken();
+  if (!refresh) return false;
+
+  const response = await fetch(`${API_BASE_URL}/auth/otp/refresh/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
+    body: JSON.stringify({ refresh }),
+  });
+
+  const data = await response.json().catch(() => null);
+  if (!response.ok || !data?.access) {
+    clearAgentSession();
+    return false;
+  }
+
+  window.localStorage.setItem(AGENT_ACCESS_KEY, data.access);
+  if (data.refresh) window.localStorage.setItem(AGENT_REFRESH_KEY, data.refresh);
+  return true;
+}
 
 export interface ApiSuccessResponse<T = unknown> {
   success: boolean;
@@ -377,7 +576,7 @@ export async function submitAppointment(
 export async function fetchDashboardSummary(): Promise<DashboardSummary> {
   const response = await fetch(`${API_BASE_URL}/dashboard/summary/`, {
     method: "GET",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
   });
 
   const data = await response.json().catch(() => null);
@@ -397,7 +596,7 @@ export async function fetchDashboardSummary(): Promise<DashboardSummary> {
 export async function fetchLandlordLeads(): Promise<DashboardLandlord[]> {
   const response = await fetch(`${API_BASE_URL}/dashboard/landlords/`, {
     method: "GET",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
   });
 
   const data = await response.json().catch(() => null);
@@ -411,12 +610,31 @@ export async function fetchLandlordLeads(): Promise<DashboardLandlord[]> {
 }
 
 /**
+ * Fetch scored concierge leads for the agent dashboard.
+ */
+export async function fetchDashboardLeads(): Promise<DashboardLead[]> {
+  const response = await fetch(`${API_BASE_URL}/dashboard/leads/`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const errorMessage = data?.message || data?.detail || "Failed to load concierge leads.";
+    throw new ApiClientError(errorMessage, response.status, data?.errors);
+  }
+
+  return (data?.data ?? []) as DashboardLead[];
+}
+
+/**
  * Fetch property intakes for the agent dashboard.
  */
 export async function fetchIntakes(): Promise<DashboardIntake[]> {
   const response = await fetch(`${API_BASE_URL}/dashboard/intakes/`, {
     method: "GET",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
   });
 
   const data = await response.json().catch(() => null);
@@ -435,7 +653,7 @@ export async function fetchIntakes(): Promise<DashboardIntake[]> {
 export async function fetchAppointments(): Promise<DashboardAppointment[]> {
   const response = await fetch(`${API_BASE_URL}/dashboard/appointments/`, {
     method: "GET",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
   });
 
   const data = await response.json().catch(() => null);
@@ -457,7 +675,7 @@ export async function updateLandlordVerification(
 ): Promise<DashboardLandlord> {
   const response = await fetch(`${API_BASE_URL}/dashboard/landlords/${id}/verification/`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
     body: JSON.stringify({ verification_status: status }),
   });
 
@@ -480,7 +698,7 @@ export async function updateIntakeStatus(
 ): Promise<DashboardIntake> {
   const response = await fetch(`${API_BASE_URL}/dashboard/intakes/${id}/`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
     body: JSON.stringify({ status }),
   });
 
@@ -503,7 +721,7 @@ export async function updateAppointment(
 ): Promise<DashboardAppointment> {
   const response = await fetch(`${API_BASE_URL}/dashboard/appointments/${id}/`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
     body: JSON.stringify(payload),
   });
 
@@ -523,7 +741,7 @@ export async function updateAppointment(
 export async function fetchLandlordProfile(id: string): Promise<LandlordProfile> {
   const response = await fetch(`${API_BASE_URL}/landlords/profiles/${id}/`, {
     method: "GET",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
   });
 
   const data = await response.json().catch(() => null);
@@ -542,7 +760,7 @@ export async function fetchLandlordProfile(id: string): Promise<LandlordProfile>
 export async function fetchLandlordIntakes(id: string): Promise<LandlordIntake[]> {
   const response = await fetch(`${API_BASE_URL}/landlords/landlords/${id}/intakes/`, {
     method: "GET",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
   });
 
   const data = await response.json().catch(() => null);
@@ -561,7 +779,7 @@ export async function fetchLandlordIntakes(id: string): Promise<LandlordIntake[]
 export async function fetchLandlordAppointments(id: string): Promise<LandlordAppointment[]> {
   const response = await fetch(`${API_BASE_URL}/landlords/landlords/${id}/appointments/`, {
     method: "GET",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
   });
 
   const data = await response.json().catch(() => null);
@@ -583,7 +801,7 @@ export async function updateLandlordAppointment(
 ): Promise<LandlordAppointment> {
   const response = await fetch(`${API_BASE_URL}/landlords/appointments/${id}/`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
     body: JSON.stringify(payload),
   });
 
@@ -609,7 +827,7 @@ export async function fetchNotifications(
 
   const response = await fetch(`${API_BASE_URL}/notifications/?${params.toString()}`, {
     method: "GET",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
   });
 
   const data = await response.json().catch(() => null);
@@ -628,7 +846,7 @@ export async function fetchNotifications(
 export async function markNotificationRead(id: string, isRead = true): Promise<AppNotification> {
   const response = await fetch(`${API_BASE_URL}/notifications/${id}/`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
     body: JSON.stringify({ is_read: isRead }),
   });
 
@@ -640,6 +858,167 @@ export async function markNotificationRead(id: string, isRead = true): Promise<A
   }
 
   return data?.data as AppNotification;
+}
+
+/**
+ * List WhatsApp threads (agent-only).
+ */
+export async function fetchWhatsAppThreads(): Promise<WhatsAppThread[]> {
+  const response = await fetch(`${API_BASE_URL}/messaging/threads/`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
+  });
+
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = data?.message || data?.detail || "Failed to load WhatsApp threads.";
+    throw new ApiClientError(message, response.status, data?.errors);
+  }
+  return (data?.data ?? []) as WhatsAppThread[];
+}
+
+/**
+ * Start (or reuse) a WhatsApp thread and log an outbound message.
+ */
+export async function startWhatsAppThread(payload: {
+  phone: string;
+  display_name?: string;
+  concierge_lead?: string;
+  landlord?: string;
+  message?: string;
+}): Promise<WhatsAppThread> {
+  const response = await fetch(`${API_BASE_URL}/messaging/threads/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = data?.message || data?.detail || "Failed to start WhatsApp conversation.";
+    throw new ApiClientError(message, response.status, data?.errors);
+  }
+  return data?.data as WhatsAppThread;
+}
+
+/**
+ * Fetch message history for a thread.
+ */
+export async function fetchWhatsAppMessages(threadId: string): Promise<WhatsAppMessage[]> {
+  const response = await fetch(`${API_BASE_URL}/messaging/threads/${threadId}/messages/`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
+  });
+
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = data?.message || data?.detail || "Failed to load chat history.";
+    throw new ApiClientError(message, response.status, data?.errors);
+  }
+  return (data?.data ?? []) as WhatsAppMessage[];
+}
+
+/**
+ * Log a new outbound message to a thread.
+ */
+export async function sendWhatsAppMessage(threadId: string, body: string): Promise<WhatsAppMessage> {
+  const response = await fetch(`${API_BASE_URL}/messaging/threads/${threadId}/messages/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
+    body: JSON.stringify({ body }),
+  });
+
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = data?.message || data?.detail || "Failed to send message.";
+    throw new ApiClientError(message, response.status, data?.errors);
+  }
+  return data?.data as WhatsAppMessage;
+}
+
+/**
+ * Upload a document to the vault (landlord-side, unauthenticated).
+ */
+export async function uploadLandlordDocument(payload: {
+  landlord_id: string;
+  intake_id?: string;
+  doc_type: string;
+  file: File;
+}): Promise<DocumentVaultEntry> {
+  const form = new FormData();
+  form.append('landlord_id', payload.landlord_id);
+  if (payload.intake_id) form.append('intake_id', payload.intake_id);
+  form.append('doc_type', payload.doc_type);
+  form.append('file', payload.file);
+
+  const response = await fetch(`${API_BASE_URL}/landlords/documents/`, {
+    method: "POST",
+    headers: { Accept: "application/json" },
+    body: form,
+  });
+
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = data?.message || data?.detail || "Failed to upload document.";
+    throw new ApiClientError(message, response.status, data?.errors);
+  }
+  return data?.data as DocumentVaultEntry;
+}
+
+/**
+ * List documents uploaded by a landlord.
+ */
+export async function fetchLandlordDocuments(landlordId: string): Promise<DocumentVaultEntry[]> {
+  const response = await fetch(`${API_BASE_URL}/landlords/landlords/${landlordId}/documents/`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+  });
+
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = data?.message || data?.detail || "Failed to load documents.";
+    throw new ApiClientError(message, response.status, data?.errors);
+  }
+  return (data?.data ?? []) as DocumentVaultEntry[];
+}
+
+/**
+ * List all documents for agent review.
+ */
+export async function fetchDashboardDocuments(): Promise<DocumentVaultEntry[]> {
+  const response = await fetch(`${API_BASE_URL}/dashboard/documents/`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
+  });
+
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = data?.message || data?.detail || "Failed to load documents.";
+    throw new ApiClientError(message, response.status, data?.errors);
+  }
+  return (data?.data ?? []) as DocumentVaultEntry[];
+}
+
+/**
+ * Approve or reject a vault document (agent-side).
+ */
+export async function reviewDocument(
+  id: string,
+  review_status: 'approved' | 'rejected',
+  review_notes = ''
+): Promise<DocumentVaultEntry> {
+  const response = await fetch(`${API_BASE_URL}/dashboard/documents/${id}/`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
+    body: JSON.stringify({ review_status, review_notes }),
+  });
+
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = data?.message || data?.detail || "Failed to update document.";
+    throw new ApiClientError(message, response.status, data?.errors);
+  }
+  return data?.data as DocumentVaultEntry;
 }
 
 /**
