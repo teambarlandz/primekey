@@ -26,9 +26,19 @@ const NAV_GROUPS: { title: string; items: NavDropdownItem[] }[] = [
   { title: 'Company', items: COMPANY_LINKS },
 ];
 
-export default function SiteNav() {
+export default function SiteNav({ pageTitle }: { pageTitle?: string }) {
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [openMobileGroup, setOpenMobileGroup] = useState<string | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // Reveal the page title in the navbar once the user scrolls past the hero
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 160);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Lock body scroll while the nav drawer is open
   useEffect(() => {
@@ -59,6 +69,20 @@ export default function SiteNav() {
               Primekey
             </span>
           </Link>
+
+          {/* Page title - reveals on scroll so users never lose the topic */}
+          {pageTitle && (
+            <div className="flex-1 min-w-0 mx-2 flex items-center justify-center">
+              <span
+                className={`inline-block max-w-full truncate font-heading font-semibold transition-all duration-300 ${
+                  isScrolled ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'
+                }`}
+                style={{ color: BRAND_COLOR, fontSize: 'clamp(0.8125rem, 1.1vw + 0.5rem, 1.0625rem)' }}
+              >
+                {pageTitle}
+              </span>
+            </div>
+          )}
 
           {/* Right-hand Navigation Menu */}
           <button

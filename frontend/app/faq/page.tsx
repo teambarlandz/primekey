@@ -152,7 +152,7 @@ export default function FAQPage() {
 
   return (
     <div className="min-h-screen bg-[#f3f0ff] py-16 px-4">
-      <SiteNav />
+      <SiteNav pageTitle="Frequently Asked Questions" />
 
       <div className="max-w-5xl mx-auto">
         {/* Breadcrumb */}
