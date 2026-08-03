@@ -39,10 +39,6 @@
     --state-warning: #e65100;
     --state-info: #0277bd;
 
-    /* Typography System (Updated to Poppins & Lora) */
-    --font-heading: 'Poppins', sans-serif;
-    --font-body: 'Lora', serif;
-
     /* ──────────────────────────────────────────────────────────────
        shadcn/ui HSL COMPATIBILITY BLOCK
        Raw HSL values (deg % %) allowing Tailwind opacity modifiers 

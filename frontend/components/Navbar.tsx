@@ -3,21 +3,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
-import { Poppins, Lora } from 'next/font/google';
 import { NavDropdown, NavDropdownItem } from './NavDropdown';
 import { ChevronDown } from 'lucide-react';
-
-// Google Fonts Setup
-const poppins = Poppins({ 
-  subsets: ['latin'], 
-  weight: ['700'] 
-});
-
-const lora = Lora({ 
-  subsets: ['latin'], 
-  weight: ['400', '600'],
-  style: ['normal', 'italic']
-});
 
 // Deep Navy color from logo SVG
 const BRAND_COLOR = '#04164a';
@@ -97,7 +84,7 @@ export default function Navbar() {
         
             {/* Poppins Bold */}
             <span 
-              className={`${poppins.className} text-2xl sm:text-3xl font-bold tracking-tight`}
+              className={`font-heading text-2xl sm:text-3xl font-bold tracking-tight`}
               style={{ color: BRAND_COLOR }}
             >
               Primekey
@@ -109,7 +96,7 @@ export default function Navbar() {
             MIDDLE: Navigation Links (Lora Regular)
             ────────────────────────────────────────────────────────────── */}
         <div className="hidden md:flex items-center space-x-8">
-          <ul className={`flex items-center gap-8 text-base ${lora.className}`} role="list">
+          <ul className={`flex items-center gap-8 text-base font-body`} role="list">
             <li className="relative flex flex-col items-center">
               {/* Active Indicator Bar matching logo color */}
               <span 
@@ -155,7 +142,7 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-6">
             <Link 
               href="/login" 
-              className={`text-base opacity-90 hover:opacity-100 transition-opacity duration-200 ${lora.className}`}
+              className={`text-base opacity-90 hover:opacity-100 transition-opacity duration-200 font-body`}
               style={{ color: BRAND_COLOR }}
             >
               Login
@@ -164,7 +151,7 @@ export default function Navbar() {
             {/* CTA Button in Lora */}
             <Link 
               href="/contact" 
-              className={`text-sm font-semibold text-white px-6 py-2.5 rounded-full transition-all duration-200 shadow-sm hover:opacity-95 ${lora.className}`}
+              className={`text-sm font-semibold text-white px-6 py-2.5 rounded-full transition-all duration-200 shadow-sm hover:opacity-95 font-body`}
               style={{ backgroundColor: BRAND_COLOR }}
             >
               Talk to us
@@ -200,7 +187,7 @@ export default function Navbar() {
           className="md:hidden absolute top-full left-0 right-0 bg-[#f3f0ff]/95 backdrop-blur-md shadow-lg border-t border-purple-100 z-50"
         >
           <div className="px-6 py-6 space-y-4">
-            <ul className={`space-y-4 text-base ${lora.className}`} role="list">
+            <ul className={`space-y-4 text-base font-body`} role="list">
               <li>
                 <Link href="/" className="block font-semibold" style={{ color: BRAND_COLOR }} onClick={closeMobile}>
                   Home
@@ -224,7 +211,7 @@ export default function Navbar() {
                 </Link>
                 <Link 
                   href="/contact" 
-                  className={`block text-center text-sm font-semibold text-white py-3 rounded-full ${lora.className}`}
+                  className={`block text-center text-sm font-semibold text-white py-3 rounded-full font-body`}
                   style={{ backgroundColor: BRAND_COLOR }}
                   onClick={closeMobile}
                 >
