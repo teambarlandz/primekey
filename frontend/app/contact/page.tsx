@@ -22,7 +22,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle, CheckCircle2, Mail, Phone, MessageCircle, MapPin, Building2, Send } from 'lucide-react';
+import SiteNav from '@/components/SiteNav';
+import { AlertCircle, CheckCircle2, Mail, Phone, MessageCircle, MapPin, Building2, Send, ChevronRight } from 'lucide-react';
 
 const BRAND_COLOR = '#04164a';
 
@@ -77,7 +78,18 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-[#f3f0ff] py-16 px-4">
+      <SiteNav />
+
       <div className="max-w-4xl mx-auto">
+        {/* Breadcrumb */}
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-slate-500 font-body mb-12">
+          <Link href="/" className="hover:text-[#04164a] transition-colors">
+            Home
+          </Link>
+          <ChevronRight className="w-3 h-3 text-slate-400" />
+          <span className="text-slate-700 font-medium">Contact</span>
+        </nav>
+
         {/* Page Header */}
         <div className="text-center mb-12 contact-anim opacity-0">
           <div className="w-16 h-16 rounded-2xl bg-[#f3f0ff] flex items-center justify-center text-[#04164a] mx-auto mb-6">
