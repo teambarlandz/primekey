@@ -14,6 +14,7 @@ class PropertyListSerializer(serializers.ModelSerializer):
     """
     images = PropertyImageSerializer(many=True, read_only=True)
     primary_image = serializers.SerializerMethodField()
+    purpose_display = serializers.CharField(source='get_purpose_display', read_only=True)
     property_type_display = serializers.CharField(source='get_property_type_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
 
@@ -22,6 +23,8 @@ class PropertyListSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'title',
+            'purpose',
+            'purpose_display',
             'property_type',
             'property_type_display',
             'price',

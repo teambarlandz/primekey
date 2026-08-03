@@ -21,10 +21,13 @@ export const propertyTypes = [
 
 export const searchFilterSchema = z.object({
   location: z.string().optional(),
+  purpose: z.enum(['all', 'sale', 'rent', 'short_let']).default('all'),
   propertyType: z.enum(propertyTypes).default('any'),
   minPrice: z.number().min(0, 'Min price cannot be negative').default(0),
   maxPrice: z.number().min(0, 'Max price must be positive').default(500000000),
   bedrooms: z.string().default('any'),
+  sortBy: z.enum(['newest', 'price_asc', 'price_desc']).default('newest'),
+  page: z.number().min(1).default(1),
 });
 
 export type SearchFilterValues = z.infer<typeof searchFilterSchema>;

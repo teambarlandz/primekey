@@ -33,9 +33,22 @@ class Property(models.Model):
         ("sold", "Sold"),
     ]
 
+    PURPOSE_CHOICES = [
+        ("sale", "For Sale"),
+        ("rent", "For Rent"),
+        ("short_let", "Short Let"),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=200)
     description = models.TextField()
+    purpose = models.CharField(
+        max_length=20,
+        choices=PURPOSE_CHOICES,
+        default="sale",
+        db_index=True,
+        verbose_name="Listing Purpose",
+    )
     property_type = models.CharField(max_length=50, choices=PROPERTY_TYPE_CHOICES)
 
     # Pricing fields (in NGN - Naira)

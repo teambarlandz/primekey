@@ -40,12 +40,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 
   const handleBookTourClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!isAuthenticated) {
-      onRequireAuth('Book Inspection Tour');
-      return;
-    }
-    // Proceed to tour booking modal/flow
-    console.log('Opening inspection booking for:', property.id);
+    onSelectProperty(property.id);
   };
 
   return (

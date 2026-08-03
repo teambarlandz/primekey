@@ -1,6 +1,7 @@
 import { ConciergeFormValues } from "@/lib/validations/conciergeSchema";
 import { LandlordRegistrationValues } from "@/lib/validations/landlordSchema";
 import { SearchFilterValues } from "@/lib/validations/searchSchema";
+import { ListingCategory } from "@/types/property";
 
 export type PropertyIntakePayload = {
   landlord: string;
@@ -1125,7 +1126,7 @@ export interface Property {
   city: string;
   state: string;
   price: number;
-  category: 'sale' | 'rent';
+  category: 'sale' | 'rent' | 'short_let';
   propertyType: string;
   bedrooms: number;
   bathrooms: number;
@@ -1145,6 +1146,7 @@ export interface SearchPropertiesResponse {
 interface BackendPropertyRow {
   id: string;
   title: string;
+  purpose?: string;
   property_type: string;
   property_type_display: string;
   price: string;
@@ -1166,6 +1168,7 @@ interface BackendPropertyRow {
 }
 
 function mapBackendProperty(row: BackendPropertyRow): Property {
+  const category: ListingCategory = (row.purpose || (row.property_type === 'short_let' ? 'rent' : 'sale')) as ListingCategory;
   return {
     id: row.id,
     title: row.title,
@@ -1174,7 +1177,7 @@ function mapBackendProperty(row: BackendPropertyRow): Property {
     city: row.city,
     state: row.state,
     price: Number(row.price),
-    category: row.property_type === 'short_let' ? 'rent' : 'sale',
+    category,
     propertyType: row.property_type,
     bedrooms: row.bedrooms,
     bathrooms: row.bathrooms,
@@ -1329,10 +1332,14 @@ export async function searchProperties(
   try {
     const params = new URLSearchParams();
     if (filters.location) params.append('location', filters.location);
+    if (filters.purpose && filters.purpose !== 'all') params.append('purpose', filters.purpose);
     if (filters.propertyType && filters.propertyType !== 'any') params.append('property_type', filters.propertyType);
     if (filters.minPrice !== undefined) params.append('min_price', String(filters.minPrice));
     if (filters.maxPrice !== undefined) params.append('max_price', String(filters.maxPrice));
     if (filters.bedrooms && filters.bedrooms !== 'any') params.append('bedrooms', filters.bedrooms);
+    if (filters.sortBy && filters.sortBy !== 'newest') {
+      params.append('sort_by', filters.sortBy === 'price_asc' ? 'price' : '-price');
+    }
     params.append('page', String(page));
     params.append('page_size', String(pageSize));
 

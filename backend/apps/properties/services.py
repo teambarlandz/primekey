@@ -24,12 +24,17 @@ class SearchService:
                 Q(address__icontains=loc_clean)
             )
 
-        # 2. Property Type Filter
+        # 2. Property Purpose Filter (Buy / Rent / Short Let)
+        purpose = params.get('purpose')
+        if purpose and purpose.lower() != 'all':
+            queryset = queryset.filter(purpose__iexact=purpose)
+
+        # 3. Property Type Filter
         property_type = params.get('property_type')
         if property_type and property_type.lower() != 'any':
             queryset = queryset.filter(property_type__iexact=property_type)
 
-        # 3. Price Range Filter (in NGN)
+        # 4. Price Range Filter (in NGN)
         min_price = params.get('min_price')
         if min_price and min_price != '':
             try:
@@ -44,7 +49,7 @@ class SearchService:
             except (ValueError, TypeError):
                 pass
 
-        # 4. Bedrooms Filter
+        # 5. Bedrooms Filter
         bedrooms = params.get('bedrooms')
         if bedrooms and bedrooms != 'any':
             try:
@@ -56,7 +61,7 @@ class SearchService:
             except (ValueError, TypeError):
                 pass
 
-        # 5. Additional Feature Toggles
+        # 6. Additional Feature Toggles
         if params.get('is_serviced') == 'true':
             queryset = queryset.filter(is_serviced=True)
         if params.get('is_furnished') == 'true':

@@ -13,6 +13,7 @@ SEED_LISTINGS = [
             "24/7 power backup ready."
         ),
         "property_type": "fully_detached_duplex",
+        "purpose": "sale",
         "price": "350000000",
         "is_negotiable": True,
         "address": "12 Admiralty Way",
@@ -36,6 +37,7 @@ SEED_LISTINGS = [
             "key business districts."
         ),
         "property_type": "flat",
+        "purpose": "rent",
         "price": "15000000",
         "is_negotiable": False,
         "address": "8 Awolowo Road",
@@ -59,6 +61,7 @@ SEED_LISTINGS = [
             "spacious plot."
         ),
         "property_type": "mansion",
+        "purpose": "sale",
         "price": "850000000",
         "is_negotiable": True,
         "address": "23 Yakubu Gowon Crescent",
@@ -82,6 +85,7 @@ SEED_LISTINGS = [
             "dedicated staff quarters."
         ),
         "property_type": "fully_detached_duplex",
+        "purpose": "sale",
         "price": "1200000000",
         "is_negotiable": True,
         "address": "15 Banana Island",
@@ -104,6 +108,7 @@ SEED_LISTINGS = [
             "fitted kitchen, en-suite rooms, dedicated parking, and a small garden perfect for families."
         ),
         "property_type": "terrace_duplex",
+        "purpose": "sale",
         "price": "180000000",
         "is_negotiable": False,
         "address": "5 Prince & Princess Estate",
@@ -126,6 +131,7 @@ SEED_LISTINGS = [
             "business district, with WiFi, air conditioning, weekly housekeeping, and 24/7 security."
         ),
         "property_type": "short_let",
+        "purpose": "short_let",
         "price": "120000",
         "is_negotiable": False,
         "address": "7a Bourdillon Road",
