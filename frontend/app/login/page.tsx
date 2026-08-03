@@ -170,18 +170,18 @@ function LoginContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f3f0ff] lg:flex">
+    <div className="min-h-screen bg-[#f3f0ff] lg:flex lg:h-screen lg:overflow-hidden">
       {/* ─────────────────────────────────────────────────────────────
           LEFT: Brand Showcase Panel (desktop)
           ───────────────────────────────────────────────────────────── */}
-      <aside className="hidden lg:flex lg:w-[54%] xl:w-[56%] relative min-h-screen flex-col justify-between p-12 xl:p-16 overflow-hidden">
+      <aside className="hidden lg:flex lg:w-[50%] xl:w-[48%] relative lg:h-full shrink-0 flex-col justify-between p-12 xl:p-16 overflow-hidden">
         {/* Background property image + navy overlay */}
         <div className="absolute inset-0" aria-hidden="true">
           <Image
             src="/assets/hero-primekey-homes.jpg"
             alt=""
             fill
-            sizes="55vw"
+            sizes="48vw"
             className="object-cover"
             priority
           />
@@ -286,11 +286,11 @@ function LoginContent() {
       {/* ─────────────────────────────────────────────────────────────
           RIGHT: Sign In Panel
           ───────────────────────────────────────────────────────────── */}
-      <div className="flex-1 flex items-center justify-center px-4 py-12 relative overflow-hidden">
+      <div className="flex-1 relative overflow-y-auto">
         {/* Decorative glows */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[560px] h-[560px] bg-purple-200/40 rounded-full blur-3xl pointer-events-none" aria-hidden="true" />
 
-        <div className="w-full max-w-md relative z-10">
+        <div className="w-full max-w-lg relative z-10 m-auto px-4 sm:px-8 py-12">
           {/* Brand Header (mobile only — left panel is hidden) */}
           <div className="lg:hidden text-center mb-10 login-anim opacity-0">
             <Link href="/" className="flex items-center justify-center gap-3 mb-6" aria-label="Primekey Homes home">
@@ -315,7 +315,7 @@ function LoginContent() {
           </div>
 
           {/* Sign In Card */}
-          <Card className="bg-white/95 backdrop-blur-md border-purple-100/80 shadow-2xl rounded-3xl login-anim opacity-0">
+          <Card className="w-full bg-white/95 backdrop-blur-md border-purple-100/80 shadow-2xl rounded-3xl login-anim opacity-0">
             <CardHeader className="text-center pb-4 pt-8">
               <div className="w-14 h-14 rounded-2xl bg-[#f3f0ff] flex items-center justify-center text-[#04164a] mx-auto mb-4">
                 <ShieldCheck className="w-7 h-7" />
