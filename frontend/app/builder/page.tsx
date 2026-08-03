@@ -6,7 +6,7 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ANIMATION_TOKENS, prefersReducedMotion } from '@/lib/animations';
 import SiteNav from '@/components/SiteNav';
-import { HardHat, Package, LayoutDashboard, Truck, Users, Wallet, ArrowRight, CheckCircle2, Sparkles, ChevronRight } from 'lucide-react';
+import { HardHat, Package, LayoutDashboard, Truck, Users, Wallet, ArrowRight, CheckCircle2, Sparkles } from 'lucide-react';
 
 const BRAND_COLOR = '#04164a';
 
@@ -65,19 +65,10 @@ export default function BuilderPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f3f0ff] py-16 px-4">
-      <SiteNav pageTitle="For Builders" />
+    <div className="min-h-screen bg-[#f3f0ff]">
+      <SiteNav variant="minimal" breadcrumb={[{ label: 'For Builders' }]} />
 
-      <div className="max-w-5xl mx-auto">
-        {/* Breadcrumb */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-slate-500 font-body mb-12">
-          <Link href="/" className="hover:text-[#04164a] transition-colors">
-            Home
-          </Link>
-          <ChevronRight className="w-3 h-3 text-slate-400" />
-          <span className="text-slate-700 font-medium">For Builders</span>
-        </nav>
-
+      <div className="max-w-5xl mx-auto px-4 py-16">
         {/* ─────────────────────────────────────────────
             HERO
             ───────────────────────────────────────────── */}

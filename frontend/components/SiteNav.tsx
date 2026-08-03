@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { Fragment, useState, useEffect } from 'react';
 import { NavDropdownItem } from './NavDropdown';
-import { Menu, X, ChevronDown, Home, Search } from 'lucide-react';
+import { Menu, X, ChevronDown, ChevronRight, Home, Search } from 'lucide-react';
 
 const BRAND_COLOR = '#04164a';
 
@@ -26,13 +26,25 @@ const NAV_GROUPS: { title: string; items: NavDropdownItem[] }[] = [
   { title: 'Company', items: COMPANY_LINKS },
 ];
 
-export default function SiteNav({ pageTitle }: { pageTitle?: string }) {
+interface BreadcrumbItem {
+  label: string;
+  href?: string;
+}
+
+interface SiteNavProps {
+  pageTitle?: string;
+  variant?: 'default' | 'minimal';
+  breadcrumb?: BreadcrumbItem[];
+}
+
+export default function SiteNav({ pageTitle, variant = 'default', breadcrumb }: SiteNavProps) {
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [openMobileGroup, setOpenMobileGroup] = useState<string | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
 
   // Reveal the page title in the navbar once the user scrolls past the hero
   useEffect(() => {
+    if (variant !== 'default') return;
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 160);
     };
@@ -50,8 +62,43 @@ export default function SiteNav({ pageTitle }: { pageTitle?: string }) {
 
   return (
     <>
-      {/* Sticky Brand Header: Logo left (goes home), Nav Menu right */}
-      <header className="sticky top-0 z-50 bg-[#f3f0ff]/95 backdrop-blur-md border-b border-purple-100/60 shadow-xs transition-all duration-300">
+      {variant === 'minimal' ? (
+        /* Minimal bar: Breadcrumb left, Nav Menu right (no logo, not sticky) */
+        <header className="bg-[#f3f0ff]/95 backdrop-blur-md border-b border-purple-100/60">
+          <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between gap-4">
+            <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-slate-500 font-body min-w-0">
+              <Link href="/" className="hover:text-[#04164a] transition-colors shrink-0">
+                Home
+              </Link>
+              {breadcrumb?.map((item) => (
+                <Fragment key={item.label}>
+                  <ChevronRight className="w-3 h-3 text-slate-400 shrink-0" />
+                  {item.href ? (
+                    <Link href={item.href} className="hover:text-[#04164a] transition-colors truncate">
+                      {item.label}
+                    </Link>
+                  ) : (
+                    <span className="text-slate-700 font-medium truncate">{item.label}</span>
+                  )}
+                </Fragment>
+              ))}
+            </nav>
+
+            {/* Right-hand Navigation Menu */}
+            <button
+              type="button"
+              onClick={() => setIsNavOpen(true)}
+              className="p-2.5 rounded-xl border border-[#04164a]/15 bg-white text-[#04164a] hover:bg-[#04164a]/5 transition-colors shrink-0"
+              aria-label="Open navigation menu"
+              aria-expanded={isNavOpen}
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          </div>
+        </header>
+      ) : (
+        /* Sticky Brand Header: Logo left (goes home), Nav Menu right */
+        <header className="sticky top-0 z-50 bg-[#f3f0ff]/95 backdrop-blur-md border-b border-purple-100/60 shadow-xs transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 md:px-8 h-20 flex items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-3 shrink-0 group" aria-label="Primekey Homes - Go to homepage">
             <Image
@@ -96,6 +143,7 @@ export default function SiteNav({ pageTitle }: { pageTitle?: string }) {
           </button>
         </div>
       </header>
+      )}
 
       {/* Slide-in Navigation Drawer */}
       <div
