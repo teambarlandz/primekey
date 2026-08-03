@@ -7,6 +7,7 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ANIMATION_TOKENS, prefersReducedMotion } from '@/lib/animations';
+import SiteNav from '@/components/SiteNav';
 import { Building2, ShieldCheck, Zap, FileText, Target, HeartHandshake, Users, Compass, ArrowRight } from 'lucide-react';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -105,6 +106,8 @@ export default function AboutPage() {
 
   return (
     <main className="min-h-screen bg-[#f3f0ff]">
+      <SiteNav />
+
       {/* ─────────────────────────────────────────────
           HERO
           ───────────────────────────────────────────── */}
