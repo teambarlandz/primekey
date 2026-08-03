@@ -59,6 +59,8 @@ export interface DashboardLead {
   sla_deadline: string | null;
   sla_remaining_minutes: number | null;
   assigned_agent: string | null;
+  listing_title: string | null;
+  inquiry_message: string;
   created_at: string;
 }
 
@@ -232,7 +234,7 @@ export type LandlordRegistrationPayload = {
 };
 
 // Ensures base URL cleanly handles trailing slashes
-const BASE_URL_RAW = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+const BASE_URL_RAW = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 const API_BASE_URL = BASE_URL_RAW.replace(/\/+$/, "");
 
 // --- Agent auth token helpers (localStorage-backed) ---
@@ -1129,6 +1131,8 @@ export interface Property {
   bathrooms: number;
   imageUrl: string;
   isVerified: boolean;
+  isFeatured?: boolean;
+  serviced?: boolean;
 }
 
 export interface SearchPropertiesResponse {
@@ -1136,6 +1140,182 @@ export interface SearchPropertiesResponse {
   count: number;
   next: string | null;
   previous: string | null;
+}
+
+interface BackendPropertyRow {
+  id: string;
+  title: string;
+  property_type: string;
+  property_type_display: string;
+  price: string;
+  currency: string;
+  is_negotiable: boolean;
+  address: string;
+  area: string;
+  city: string;
+  state: string;
+  bedrooms: number;
+  bathrooms: number;
+  is_serviced: boolean;
+  is_furnished: boolean;
+  status: string;
+  status_display: string;
+  is_featured: boolean;
+  primary_image: { image_url: string } | null;
+  created_at: string;
+}
+
+function mapBackendProperty(row: BackendPropertyRow): Property {
+  return {
+    id: row.id,
+    title: row.title,
+    slug: row.id,
+    location: [row.area, row.city].filter(Boolean).join(', ') || row.address,
+    city: row.city,
+    state: row.state,
+    price: Number(row.price),
+    category: row.property_type === 'short_let' ? 'rent' : 'sale',
+    propertyType: row.property_type,
+    bedrooms: row.bedrooms,
+    bathrooms: row.bathrooms,
+    imageUrl: row.primary_image?.image_url || '/assets/hero-primekey-homes.jpg',
+    isVerified: row.status === 'available',
+    isFeatured: row.is_featured,
+    serviced: row.is_serviced,
+  };
+}
+
+export interface PropertyImageData {
+  id: string;
+  image_url: string;
+  caption: string | null;
+  is_primary: boolean;
+}
+
+export interface PropertyDetailData {
+  id: string;
+  title: string;
+  description: string;
+  property_type: string;
+  property_type_display: string;
+  price: string | number;
+  currency: string;
+  is_negotiable: boolean;
+  address: string;
+  city: string;
+  state: string;
+  area: string;
+  bedrooms: number;
+  bathrooms: number;
+  toilets: number;
+  is_serviced: boolean;
+  is_furnished: boolean;
+  status: string;
+  status_display: string;
+  is_featured: boolean;
+  images: PropertyImageData[];
+  created_at: string;
+  updated_at: string;
+}
+
+export async function fetchPropertyDetail(
+  propertyId: string
+): Promise<ApiSuccessResponse<PropertyDetailData>> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/properties/properties/${propertyId}/`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      const errorMessage =
+        data?.message ||
+        data?.detail ||
+        (typeof data?.errors === "object" && data?.errors !== null
+          ? Object.entries(data.errors)
+              .map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(", ") : val}`)
+              .join(" | ")
+          : "This listing could not be loaded.");
+      throw new ApiClientError(errorMessage, response.status, data?.errors);
+    }
+
+    return data as ApiSuccessResponse<PropertyDetailData>;
+  } catch (error) {
+    if (error instanceof ApiClientError) {
+      throw error;
+    }
+
+    throw new ApiClientError(
+      "Unable to connect to Primekey server. Please check your network connection.",
+      0
+    );
+  }
+}
+
+export interface PropertyInquiryPayload {
+  full_name: string;
+  phone: string;
+  email?: string;
+  inquiry_message: string;
+  ndpr_consent: boolean;
+}
+
+export interface PropertyInquiryResult {
+  id: string;
+  status: string;
+  priority_score: number;
+  tier: string;
+  property_title: string;
+}
+
+/**
+ * Submit a buyer inquiry for a specific listing from its detail page.
+ */
+export async function submitPropertyInquiry(
+  propertyId: string,
+  payload: PropertyInquiryPayload
+): Promise<ApiSuccessResponse<PropertyInquiryResult>> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/properties/properties/${propertyId}/inquiries/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      const errorMessage =
+        data?.message ||
+        data?.detail ||
+        (typeof data?.errors === "object" && data?.errors !== null
+          ? Object.entries(data.errors)
+              .map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(", ") : val}`)
+              .join(" | ")
+          : "Failed to submit your inquiry. Please try again.");
+
+      throw new ApiClientError(errorMessage, response.status, data?.errors);
+    }
+
+    return data as ApiSuccessResponse<PropertyInquiryResult>;
+  } catch (error) {
+    if (error instanceof ApiClientError) {
+      throw error;
+    }
+
+    throw new ApiClientError(
+      "Unable to connect to Primekey server. Please check your network connection.",
+      0
+    );
+  }
 }
 
 /**
@@ -1179,7 +1359,15 @@ export async function searchProperties(
       throw new ApiClientError(errorMessage, response.status, data?.errors);
     }
 
-    return data as ApiSuccessResponse<SearchPropertiesResponse>;
+    const raw = data as ApiSuccessResponse<{ results: BackendPropertyRow[]; count: number; next: string | null; previous: string | null }> & { results?: BackendPropertyRow[]; count?: number; next?: string | null; previous?: string | null };
+    const payload = (raw.data ?? raw) as { results?: BackendPropertyRow[]; count?: number; next?: string | null; previous?: string | null };
+    const mapped: SearchPropertiesResponse = {
+      results: (payload.results || []).map(mapBackendProperty),
+      count: payload.count || 0,
+      next: payload.next || null,
+      previous: payload.previous || null,
+    };
+    return { success: raw.success ?? true, message: raw.message || 'OK', data: mapped } as ApiSuccessResponse<SearchPropertiesResponse>;
   } catch (error) {
     if (error instanceof ApiClientError) {
       throw error;

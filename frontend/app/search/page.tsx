@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { SearchBar } from '@/components/search/SearchBar';
 import { FilterDropdown } from '@/components/search/FilterDropdown';
 import { PriceRange } from '@/components/search/PriceRange';
@@ -83,6 +84,7 @@ const MOCK_PROPERTIES: Property[] = [
 ];
 
 export default function SearchPage() {
+  const router = useRouter();
   const [filters, setFilters] = useState<SearchFilterValues>({
     location: '',
     propertyType: 'any',
@@ -126,7 +128,7 @@ export default function SearchPage() {
       setSearchError('Using fallback data. Some results may be limited.');
       
       // Fallback to client-side filtering with mock data
-      const targetLocation = (filters.location || '').toLowerCase().trim();
+      const targetLocation = (updatedFilters.location || '').toLowerCase().trim();
       const filtered = MOCK_PROPERTIES.filter((p) => {
         const matchesLocation =
           !targetLocation ||
@@ -134,13 +136,13 @@ export default function SearchPage() {
           p.city.toLowerCase().includes(targetLocation) ||
           p.state.toLowerCase().includes(targetLocation);
 
-        const matchesPrice = p.price >= filters.minPrice && p.price <= filters.maxPrice;
-        const matchesType = filters.propertyType === 'any' || p.propertyType === filters.propertyType;
+        const matchesPrice = p.price >= updatedFilters.minPrice && p.price <= updatedFilters.maxPrice;
+        const matchesType = updatedFilters.propertyType === 'any' || p.propertyType === updatedFilters.propertyType;
         const matchesBeds =
-          filters.bedrooms === 'any' ||
-          (filters.bedrooms === '5'
+          updatedFilters.bedrooms === 'any' ||
+          (updatedFilters.bedrooms === '5'
             ? p.bedrooms >= 5
-            : p.bedrooms === Number(filters.bedrooms));
+            : p.bedrooms === Number(updatedFilters.bedrooms));
 
         return matchesLocation && matchesPrice && matchesType && matchesBeds;
       });
@@ -341,7 +343,7 @@ export default function SearchPage() {
             </div>
             <PropertyGrid
               properties={properties}
-              onSelectProperty={(id) => console.log('Viewing property:', id)}
+              onSelectProperty={(id) => router.push(`/property/${id}`)}
               onRequireAuth={handleRequireAuth}
             />
           </div>

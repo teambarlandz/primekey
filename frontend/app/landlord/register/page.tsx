@@ -36,7 +36,10 @@ export default function LandlordRegisterPage() {
   const form = useForm<LandlordRegistrationValues>({
     resolver: zodResolver(landlordRegistrationSchema),
     defaultValues: {
+      fullName: '',
+      phone: '',
       email: '',
+      idNumber: '',
       propertyCount: 1,
       ndprConsent: false,
     },

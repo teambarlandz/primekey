@@ -6,8 +6,8 @@ describe('Primekey Homes - Critical User Paths', () => {
 
   describe('Landing Page', () => {
     it('loads successfully with hero section', () => {
-      cy.contains('h1', 'Discover Premium Properties').should('be.visible');
-      cy.contains('button', 'Browse properties').should('be.visible');
+      cy.contains('h1', 'Find your next home').should('be.visible');
+      cy.contains('a', 'Browse properties').should('be.visible');
     });
 
     it('navigates to search page', () => {
@@ -29,20 +29,19 @@ describe('Primekey Homes - Critical User Paths', () => {
     });
 
     it('filters properties by location', () => {
-      cy.get('input[placeholder*="Search location"]').type('Lekki');
+      cy.get('input[placeholder*="Abeokuta"]').type('Lekki');
       cy.contains('button', 'Apply Filters').click();
-      // Results should filter (mock data)
       cy.contains('Available Properties').should('be.visible');
     });
 
     it('opens concierge modal when no results', () => {
-      // Type a location that won't match mock data
-      cy.get('input[placeholder*="Search location"]').clear().type('NonExistentLocation123');
+      // Type a location that won't match any listing
+      cy.get('input[placeholder*="Abeokuta"]').clear().type('NonExistentLocation123');
       cy.contains('button', 'Apply Filters').click();
       // Should show empty state with concierge CTA
-      cy.contains('No properties found').should('be.visible');
-      cy.contains('button', 'Get Concierge Help').click();
-      cy.contains('h2', '2-Week Concierge Match').should('be.visible');
+      cy.contains('No instant public listings').should('be.visible');
+      cy.contains('button', 'Request Concierge Match').click();
+      cy.contains("We'll Find Your Property").should('be.visible');
     });
   });
 
@@ -51,16 +50,16 @@ describe('Primekey Homes - Critical User Paths', () => {
       cy.visit('/search');
       cy.waitForPageLoad();
       // Force empty results to open concierge
-      cy.get('input[placeholder*="Search location"]').clear().type('NonExistentLocation123');
+      cy.get('input[placeholder*="Abeokuta"]').clear().type('NonExistentLocation123');
       cy.contains('button', 'Apply Filters').click();
-      cy.contains('button', 'Get Concierge Help').click();
-      cy.contains('h2', '2-Week Concierge Match').should('be.visible');
+      cy.contains('button', 'Request Concierge Match').click();
+      cy.contains("We'll Find Your Property").should('be.visible');
     });
 
     it('shows validation errors for empty required fields', () => {
-      cy.contains('button', 'Submit Request').click();
-      cy.contains('Full name is required').should('be.visible');
-      cy.contains('Phone number is required').should('be.visible');
+      cy.contains('button', 'Activate Concierge Sourcing').click();
+      cy.contains('Full name must be at least 2 characters').should('be.visible');
+      cy.contains('Please enter a valid Nigerian phone number').should('be.visible');
       cy.contains('You must accept the NDPR privacy policy').should('be.visible');
     });
 
@@ -73,9 +72,9 @@ describe('Primekey Homes - Critical User Paths', () => {
         preferredLocation: 'Lekki Phase 1',
         ndprConsent: true,
       });
-      cy.contains('button', 'Submit Request').click();
+      cy.contains('button', 'Activate Concierge Sourcing').click();
       cy.wait('@conciergeSubmit');
-      cy.contains('Concierge lead registered successfully').should('be.visible');
+      cy.contains('Concierge Activated!').should('be.visible');
     });
 
     it('shows error for invalid phone', () => {
@@ -86,7 +85,7 @@ describe('Primekey Homes - Critical User Paths', () => {
         preferredLocation: 'Lekki Phase 1',
         ndprConsent: true,
       });
-      cy.contains('button', 'Submit Request').click();
+      cy.contains('button', 'Activate Concierge Sourcing').click();
       cy.contains('valid Nigerian phone number').should('be.visible');
     });
   });
@@ -103,9 +102,9 @@ describe('Primekey Homes - Critical User Paths', () => {
     });
 
     it('navigates to registration form', () => {
-      cy.contains('a', 'List your property free').click();
+      cy.contains('a', 'List your property free').first().click();
       cy.url().should('include', '/landlord/register');
-      cy.contains('h2', 'Landlord Registration').should('be.visible');
+      cy.contains('h1', 'Landlord Registration').should('be.visible');
     });
   });
 
@@ -117,15 +116,15 @@ describe('Primekey Homes - Critical User Paths', () => {
 
     it('shows validation errors for empty required fields', () => {
       cy.contains('button', 'Submit Registration').click();
-      cy.contains('Full name is required').should('be.visible');
-      cy.contains('Phone number is required').should('be.visible');
+      cy.contains('Full name must be at least 2 characters').should('be.visible');
+      cy.contains('Please enter a valid Nigerian phone number').should('be.visible');
       cy.contains('You must accept the NDPR privacy policy').should('be.visible');
     });
 
     it('submits valid landlord registration', () => {
       cy.intercept('POST', '**/landlords/register/', {
         statusCode: 201,
-        body: { success: true, message: 'Registration submitted for verification.', data: { verification_status: 'pending' } },
+        body: { success: true, message: 'Registration submitted for verification.', data: { id: 'landlord-1', verification_status: 'pending' } },
       }).as('landlordRegister');
 
       cy.fillLandlordRegistrationForm({
@@ -139,7 +138,7 @@ describe('Primekey Homes - Critical User Paths', () => {
       });
       cy.contains('button', 'Submit Registration').click();
       cy.wait('@landlordRegister');
-      cy.contains('Registration submitted for verification').should('be.visible');
+      cy.url().should('include', '/landlord/intake');
     });
 
     it('rejects registration without consent', () => {

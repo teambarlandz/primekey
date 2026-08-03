@@ -9,21 +9,30 @@ Cypress.Commands.add('waitForPageLoad', () => {
 });
 
 Cypress.Commands.add('fillConciergeForm', (data) => {
-  if (data.fullName) cy.get('[name="fullName"]').type(data.fullName);
-  if (data.phone) cy.get('[name="phone"]').type(data.phone);
-  if (data.email) cy.get('[name="email"]').type(data.email);
-  if (data.preferredLocation) cy.get('[name="preferredLocation"]').type(data.preferredLocation);
-  if (data.ndprConsent) cy.get('[name="ndprConsent"]').check();
+  if (data.fullName) cy.get('#fullName').type(data.fullName);
+  if (data.phone) cy.get('#phone').type(data.phone);
+  if (data.email) cy.get('#email').type(data.email);
+  if (data.preferredLocation) cy.get('#preferredLocation').type(data.preferredLocation);
+  if (data.ndprConsent) cy.get('#ndprConsent').click({ force: true });
 });
 
 Cypress.Commands.add('fillLandlordRegistrationForm', (data) => {
   if (data.fullName) cy.get('[name="fullName"]').type(data.fullName);
   if (data.phone) cy.get('[name="phone"]').type(data.phone);
   if (data.email) cy.get('[name="email"]').type(data.email);
-  if (data.idType) cy.get('[name="idType"]').select(data.idType);
+  if (data.idType) {
+    const idTypeLabels: Record<string, string> = {
+      nin: 'National ID (NIN)',
+      passport: 'International Passport',
+      driver_license: "Driver's License",
+      voter_card: "Permanent Voter's Card",
+    };
+    cy.get('[aria-label="Select ID type"]').click({ force: true });
+    cy.contains('[role="option"]', idTypeLabels[data.idType] || data.idType).click({ force: true });
+  }
   if (data.idNumber) cy.get('[name="idNumber"]').type(data.idNumber);
   if (data.propertyCount) cy.get('[name="propertyCount"]').clear().type(String(data.propertyCount));
-  if (data.ndprConsent) cy.get('[name="ndprConsent"]').check();
+  if (data.ndprConsent) cy.get('#ndprConsent').click({ force: true });
 });
 
 // Mock API responses for consistent testing

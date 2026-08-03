@@ -119,6 +119,8 @@ class PropertyInquirySubmitView(APIView):
             serializer.validated_data['bedrooms'] = str(prop.bedrooms)
 
             lead = serializer.save()
+            lead.listing = prop
+            lead.save(update_fields=["listing", "updated_at"])
 
             score_obj = LeadScoringService.if_needed_score_lead(lead)
             lead.start_sla_clock()

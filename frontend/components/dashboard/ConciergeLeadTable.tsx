@@ -69,6 +69,7 @@ export const ConciergeLeadTable: React.FC<ConciergeLeadTableProps> = ({ leads })
             <th className="p-4">Lead</th>
             <th className="p-4">Tier</th>
             <th className="p-4">Score</th>
+            <th className="p-4">Listing</th>
             <th className="p-4">Target</th>
             <th className="p-4">Budget</th>
             <th className="p-4">Status</th>
@@ -79,7 +80,7 @@ export const ConciergeLeadTable: React.FC<ConciergeLeadTableProps> = ({ leads })
         <tbody>
           {leads.length === 0 ? (
             <tr>
-              <td colSpan={8} className="p-8 text-center text-[#4a607a] font-body">
+              <td colSpan={9} className="p-8 text-center text-[#4a607a] font-body">
                 No concierge leads yet.
               </td>
             </tr>
@@ -96,6 +97,16 @@ export const ConciergeLeadTable: React.FC<ConciergeLeadTableProps> = ({ leads })
                   <span className="inline-flex items-center gap-1 font-semibold font-heading" style={{ color: BRAND_COLOR }}>
                     {lead.priority_score}
                   </span>
+                </td>
+                <td className="p-4 max-w-[200px]">
+                  {lead.listing_title ? (
+                    <>
+                      <p className="text-xs font-semibold text-[#22376e] font-body truncate">{lead.listing_title}</p>
+                      <p className="text-[11px] text-[#4a607a] font-body truncate">{lead.inquiry_message}</p>
+                    </>
+                  ) : (
+                    <span className="text-xs text-[#4a607a] font-body">—</span>
+                  )}
                 </td>
                 <td className="p-4">
                   <p className="text-[#22376e] font-body">{lead.preferred_location}</p>

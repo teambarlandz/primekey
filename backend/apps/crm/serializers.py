@@ -53,6 +53,18 @@ class PropertyInquirySerializer(serializers.ModelSerializer):
             )
         return value
 
+    def validate(self, attrs):
+        message = (attrs.get("inquiry_message") or "").strip()
+        if len(message) < 2:
+            raise serializers.ValidationError({
+                "inquiry_message": "Please tell us a little about what you're looking for."
+            })
+        if attrs.get("ndpr_consent") is not True:
+            raise serializers.ValidationError({
+                "ndpr_consent": "You must accept the NDPR privacy policy to make an inquiry."
+            })
+        return attrs
+
     def create(self, validated_data):
         request = self.context.get('request')
         lead = ConciergeLead.objects.create(**validated_data)

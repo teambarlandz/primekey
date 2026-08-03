@@ -14,7 +14,7 @@ interface Landmark {
 interface PropertyMapProps {
   title: string;
   location: string;
-  coordinates: {
+  coordinates?: {
     lat: number;
     lng: number;
   };
@@ -92,10 +92,12 @@ export const PropertyMap: React.FC<PropertyMapProps> = ({
             </div>
 
             {/* Map Controls Floating Badge */}
-            <div className="absolute bottom-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-slate-200 text-[11px] font-body text-slate-600 flex items-center gap-2 shadow-xs">
-              <Navigation className="w-3.5 h-3.5 text-[#04164a]" />
-              <span>{coordinates.lat.toFixed(4)}° N, {coordinates.lng.toFixed(4)}° E</span>
-            </div>
+            {coordinates && (
+              <div className="absolute bottom-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-slate-200 text-[11px] font-body text-slate-600 flex items-center gap-2 shadow-xs">
+                <Navigation className="w-3.5 h-3.5 text-[#04164a]" />
+                <span>{coordinates.lat.toFixed(4)}° N, {coordinates.lng.toFixed(4)}° E</span>
+              </div>
+            )}
           </div>
         )}
 
