@@ -170,11 +170,11 @@ function LoginContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f3f0ff] lg:flex lg:h-screen lg:overflow-hidden">
+    <div className="min-h-screen bg-[#f3f0ff] lg:flex">
       {/* ─────────────────────────────────────────────────────────────
-          LEFT: Brand Showcase Panel (desktop)
+          LEFT: Brand Showcase Panel (desktop, pinned on scroll)
           ───────────────────────────────────────────────────────────── */}
-      <aside className="hidden lg:flex lg:w-[50%] xl:w-[48%] relative lg:h-full shrink-0 flex-col justify-between p-12 xl:p-16 overflow-hidden">
+      <aside className="hidden lg:flex lg:flex-col lg:justify-between lg:w-[48%] xl:w-[46%] relative lg:sticky lg:top-0 lg:h-screen shrink-0 overflow-hidden">
         {/* Background property image + navy overlay */}
         <div className="absolute inset-0" aria-hidden="true">
           <Image
@@ -286,11 +286,11 @@ function LoginContent() {
       {/* ─────────────────────────────────────────────────────────────
           RIGHT: Sign In Panel
           ───────────────────────────────────────────────────────────── */}
-      <div className="flex-1 relative overflow-y-auto">
+      <div className="flex-1 relative lg:flex lg:items-center">
         {/* Decorative glows */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[560px] h-[560px] bg-purple-200/40 rounded-full blur-3xl pointer-events-none" aria-hidden="true" />
 
-        <div className="w-full max-w-lg relative z-10 m-auto px-4 sm:px-8 py-12">
+        <div className="w-full max-w-md relative z-10 m-auto px-4 sm:px-8 py-12">
           {/* Brand Header (mobile only — left panel is hidden) */}
           <div className="lg:hidden text-center mb-10 login-anim opacity-0">
             <Link href="/" className="flex items-center justify-center gap-3 mb-6" aria-label="Primekey Homes home">
@@ -316,7 +316,7 @@ function LoginContent() {
 
           {/* Sign In Card */}
           <Card className="w-full bg-white/95 backdrop-blur-md border-purple-100/80 shadow-2xl rounded-3xl login-anim opacity-0">
-            <CardHeader className="text-center pb-4 pt-8">
+            <CardHeader className="text-center pb-6 pt-8 px-6 sm:px-8">
               <div className="w-14 h-14 rounded-2xl bg-[#f3f0ff] flex items-center justify-center text-[#04164a] mx-auto mb-4">
                 <ShieldCheck className="w-7 h-7" />
               </div>
@@ -327,7 +327,7 @@ function LoginContent() {
                 We'll send a 6-digit code to your phone
               </p>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 px-6 sm:px-8 pb-8">
               {apiError && (
                 <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2 text-rose-700 text-xs font-body">
                   <AlertCircle className="w-4 h-4 shrink-0" />
@@ -425,9 +425,13 @@ function LoginContent() {
                 </form>
               )}
 
-              <div className="border-t border-purple-100 pt-4 font-body text-[11px] text-slate-500 flex items-center gap-2 justify-center">
-                <Lock className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <span>NDPR Compliant. Your information is protected under Nigerian data privacy laws.</span>
+              <div className="border-t border-purple-100 pt-4">
+                <p className="font-body text-xs sm:text-[13px] text-slate-600 flex items-center gap-2 justify-center leading-relaxed">
+                  <Lock className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>
+                    NDPR Compliant. Your information is protected under Nigerian data privacy laws.
+                  </span>
+                </p>
               </div>
             </CardContent>
           </Card>
