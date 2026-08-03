@@ -9,6 +9,7 @@ from pathlib import Path
 from datetime import timedelta
 
 import environ
+from django.urls import reverse_lazy
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -41,6 +42,10 @@ ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 # Application definition
 
 INSTALLED_APPS = [
+    # Third-party apps (must load before django.contrib.admin)
+    "unfold",
+    "unfold.contrib.filters",
+    "unfold.contrib.forms",
     # Django core apps
     "django.contrib.admin",
     "django.contrib.auth",
@@ -272,3 +277,77 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+
+# django-unfold admin theme
+UNFOLD = {
+    "SITE_TITLE": "Primekey Homes Admin",
+    "SITE_HEADER": "Primekey Homes",
+    "SITE_SUBHEADER": "Backoffice",
+    "SITE_URL": "/",
+    "SITE_ICON": None,
+    "SITE_ICON_WIDTH": 40,
+    "SITE_ICON_HEIGHT": 40,
+    "SITE_SYMBOL": "home_work",
+    "DASHBOARD_CALLBACK": None,
+    "LOGIN": {
+        "image": None,
+    },
+    "STYLES": [],
+    "SCRIPTS": [],
+    "COLORS": {
+        "primary": {
+            "50": "240 249 255",
+            "100": "224 242 254",
+            "200": "186 230 253",
+            "300": "125 211 252",
+            "400": "56 189 248",
+            "500": "14 165 233",
+            "600": "2 132 199",
+            "700": "3 105 161",
+            "800": "7 89 133",
+            "900": "12 74 110",
+            "950": "8 47 73",
+        },
+    },
+    "SIDEBAR": {
+        "show_search": True,
+        "show_all_applications": True,
+        "navigation": [
+            {
+                "title": "Operations",
+                "separator": True,
+                "items": [
+                    {"title": "Dashboard", "icon": "dashboard", "link": reverse_lazy("admin:index")},
+                    {"title": "Properties", "icon": "home_work", "link": reverse_lazy("admin:properties_property_changelist")},
+                    {"title": "Concierge Leads", "icon": "support_agent", "link": reverse_lazy("admin:crm_conciergelead_changelist")},
+                ],
+            },
+            {
+                "title": "People",
+                "items": [
+                    {"title": "Users", "icon": "group", "link": reverse_lazy("admin:auth_user_changelist")},
+                    {"title": "Groups", "icon": "workspaces", "link": reverse_lazy("admin:auth_group_changelist")},
+                    {"title": "Agents", "icon": "badge", "link": reverse_lazy("admin:dashboard_agentprofile_changelist")},
+                    {"title": "Landlords", "icon": "real_estate_agent", "link": reverse_lazy("admin:landlords_landlordprofile_changelist")},
+                ],
+            },
+            {
+                "title": "Compliance",
+                "items": [
+                    {"title": "Consent Logs", "icon": "verified_user", "link": reverse_lazy("admin:compliance_consentlog_changelist")},
+                    {"title": "Export Requests", "icon": "download", "link": reverse_lazy("admin:compliance_exportrequest_changelist")},
+                    {"title": "Erasure Requests", "icon": "delete", "link": reverse_lazy("admin:compliance_erasurerequest_changelist")},
+                    {"title": "Anonymization Logs", "icon": "history_edu", "link": reverse_lazy("admin:compliance_anonymizationlog_changelist")},
+                ],
+            },
+            {
+                "title": "Communication",
+                "items": [
+                    {"title": "WhatsApp Threads", "icon": "chat", "link": reverse_lazy("admin:messaging_whatsappthread_changelist")},
+                    {"title": "Notifications", "icon": "notifications", "link": reverse_lazy("admin:notifications_notification_changelist")},
+                ],
+            },
+        ],
+    },
+}
