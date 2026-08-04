@@ -4,12 +4,14 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django_ratelimit.decorators import ratelimit
 from django.utils.decorators import method_decorator
 
 from .models import OTPCode
 from .serializers import SendOTPSerializer, VerifyOTPSerializer
+from .services import send_otp_sms
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -50,20 +52,24 @@ class SendOTPView(APIView):
             user_agent=request.META.get('HTTP_USER_AGENT', ''),
         )
 
-        # In production, send via SMS provider (Termii, Twilio, etc.)
-        # For development, log the code
-        logger.info(f"OTP for {phone}: {otp.code}")
+        # Send via SMS provider (falls back to console logging in dev)
+        sms_sent = send_otp_sms(phone, otp.code)
+        if not sms_sent:
+            logger.error("Failed to send OTP to %s", phone)
+
+        response_data = {
+            "phone": phone,
+            "purpose": purpose,
+            "expires_in_minutes": 5,
+        }
+        # Include code in dev when no real SMS provider is configured
+        if not getattr(settings, "SMS_PROVIDER", ""):
+            response_data["dev_code"] = otp.code
 
         return Response({
             "success": True,
             "message": "OTP sent successfully. Please check your phone.",
-            "data": {
-                "phone": phone,
-                "purpose": purpose,
-                "expires_in_minutes": 5,
-                # Only include code in development
-                "dev_code": otp.code,
-            }
+            "data": response_data,
         }, status=status.HTTP_200_OK)
 
 

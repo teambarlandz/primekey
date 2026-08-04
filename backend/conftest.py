@@ -24,6 +24,10 @@ settings.Q_CLUSTER = {
     "sync": True,
 }
 
+# Allow testserver host for Django test client
+if "testserver" not in settings.ALLOWED_HOSTS:
+    settings.ALLOWED_HOSTS = list(settings.ALLOWED_HOSTS) + ["testserver"]
+
 django.setup()
 
 import pytest
