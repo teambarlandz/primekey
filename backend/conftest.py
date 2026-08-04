@@ -28,6 +28,9 @@ settings.Q_CLUSTER = {
 if "testserver" not in settings.ALLOWED_HOSTS:
     settings.ALLOWED_HOSTS = list(settings.ALLOWED_HOSTS) + ["testserver"]
 
+# Disable SSL redirect during tests (test client uses HTTP, not HTTPS)
+settings.SECURE_SSL_REDIRECT = False
+
 django.setup()
 
 import pytest

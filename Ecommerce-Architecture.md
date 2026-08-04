@@ -344,14 +344,17 @@ delivery_slots (
 
 ## Django Admin Design
 
-### Two Interfaces
+### Three Interfaces
 
-| Interface | Audience | Access |
-|-----------|----------|--------|
-| **Django Admin** (existing, django-unfold) | PrimeKey staff | Full system access |
-| **Vendor Portal** (extends django-unfold) | Registered vendors | View-only for their own data |
+| Interface | Audience | Tech | Access |
+|-----------|----------|------|--------|
+| **Django Admin** (existing, django-unfold) | PrimeKey staff only | Django | Full system access |
+| **Vendor Portal** (Next.js `/vendor/*`) | Registered vendors | Next.js | Scoped to their own data |
+| **Buyer Frontend** (existing `/`) | Buyers | Next.js | Public catalog + auth actions |
 
-### Admin Role Hierarchy
+**Key principle:** Django admin is for PrimeKey operations only. Vendors never see Django admin. They get a polished Next.js experience matching the buyer frontend quality.
+
+### Admin Role Hierarchy (PrimeKey Staff)
 
 ```
 Super Admin (CEO/CTO)
@@ -394,12 +397,12 @@ Super Admin (CEO/CTO)
 ## API Endpoints
 
 ```
-# Public catalog
+# Public catalog (buyer frontend)
 GET    /api/v1/catalog/categories/
 GET    /api/v1/catalog/products/
 GET    /api/v1/catalog/products/{slug}/
 
-# Buyer (authenticated)
+# Buyer (authenticated, buyer frontend)
 POST   /api/v1/cart/items/
 GET    /api/v1/cart/
 POST   /api/v1/orders/checkout/
@@ -407,15 +410,19 @@ GET    /api/v1/orders/
 GET    /api/v1/orders/{id}/
 POST   /api/v1/reviews/
 
-# Vendor portal (django-unfold)
-GET    /api/v1/vendor/products/
-POST   /api/v1/vendor/products/
-PATCH  /api/v1/vendor/products/{id}/
-GET    /api/v1/vendor/orders/
-PATCH  /api/v1/vendor/orders/{id}/fulfill/
-GET    /api/v1/vendor/payouts/
+# Vendor portal (Next.js /vendor/* frontend)
+POST   /api/v1/vendor/auth/login/          # OTP-based vendor login
+GET    /api/v1/vendor/dashboard/            # Summary stats
+GET    /api/v1/vendor/products/             # List vendor's products
+POST   /api/v1/vendor/products/             # Create product (goes to draft)
+PATCH  /api/v1/vendor/products/{id}/        # Update product
+GET    /api/v1/vendor/orders/               # List vendor's orders
+PATCH  /api/v1/vendor/orders/{id}/fulfill/  # Mark order as shipped
+GET    /api/v1/vendor/payouts/              # View payout history
+GET    /api/v1/vendor/profile/              # Vendor profile
+PATCH  /api/v1/vendor/profile/              # Update profile
 
-# Admin (django-unfold)
+# Admin (Django admin only — PrimeKey staff)
 GET    /api/v1/admin/vendors/
 PATCH  /api/v1/admin/vendors/{id}/approve/
 GET    /api/v1/admin/products/
@@ -432,8 +439,8 @@ GET    /api/v1/admin/logistics/shipments/
 ### 1. Product Approval: Manual Admin Approval
 Every product goes to `status=draft` on creation. Admin must approve before it goes live. This ensures quality control for building materials where wrong products can cause structural failures.
 
-### 2. Vendor Portal: Extend Django Admin (django-unfold)
-Use django-unfold's role-based access to create a vendor-facing section. Faster to build than a separate frontend. Vendors get a scoped view of their own products, orders, and payouts. Admin has supreme power over all vendor data.
+### 2. Vendor Portal: Separate Next.js Frontend (`/vendor/*`)
+Vendors get a dedicated Next.js portal at `/vendor/*` with their own layout, auth, and dashboard. This provides a polished experience matching the buyer frontend. Django admin remains PrimeKey-only. Vendor API endpoints are scoped — vendors can only access their own data via authenticated + role-checked views.
 
 ### 3. Pricing: Flexible
 - **PrimeKey sets price**: Vendor submits cost, PrimeKey sets retail price (highest control)
@@ -487,9 +494,10 @@ Building materials have wildly different attributes (cement has grade/weight/bag
 - [ ] Delivery tracking and status updates
 
 ### Phase 4: Vendor Portal (Week 7-8)
-- [ ] Django-unfold vendor section
-- [ ] Vendor product management
-- [ ] Vendor order fulfillment
+- [ ] Next.js `/vendor/*` pages — login, dashboard, products, orders, payouts
+- [ ] Vendor API endpoints (scoped to authenticated vendor)
+- [ ] Vendor product management (create, edit, update stock)
+- [ ] Vendor order fulfillment (mark as shipped)
 - [ ] Vendor payout tracking
 
 ### Phase 5: Reviews & Polish (Week 9-10)
