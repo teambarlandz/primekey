@@ -306,45 +306,79 @@ export interface SendOtpResponse {
  * Request an OTP code (agent_login purpose for agents).
  */
 export async function sendOtp(phone: string, purpose: "login" | "agent_login" | "register" = "login"): Promise<SendOtpResponse> {
-  const response = await fetch(`${API_BASE_URL}/auth/otp/send/`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
-    body: JSON.stringify({ phone, purpose }),
-  });
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/otp/send/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
+      body: JSON.stringify({ phone, purpose }),
+    });
 
-  const data = await response.json().catch(() => null);
-  if (!response.ok) {
-    const message = data?.message || data?.detail || "Failed to send OTP.";
-    throw new ApiClientError(message, response.status, data?.errors);
+    const data = await response.json().catch(() => null);
+    if (!response.ok) {
+      const message =
+        data?.message ||
+        data?.detail ||
+        (typeof data?.errors === "object" && data?.errors !== null
+          ? Object.entries(data.errors)
+              .map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(", ") : val}`)
+              .join(" | ")
+          : "Failed to send OTP. Please try again.");
+      throw new ApiClientError(message, response.status, data?.errors);
+    }
+    return data as SendOtpResponse;
+  } catch (error) {
+    if (error instanceof ApiClientError) {
+      throw error;
+    }
+    throw new ApiClientError(
+      "Unable to connect to Primekey server. Please check your network connection.",
+      0
+    );
   }
-  return data as SendOtpResponse;
 }
 
 /**
  * Verify an OTP and store the returned agent JWT session.
  */
 export async function verifyAgentOtp(phone: string, code: string): Promise<AgentSessionProfile> {
-  const response = await fetch(`${API_BASE_URL}/auth/otp/verify/`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
-    body: JSON.stringify({ phone, code, purpose: "agent_login" }),
-  });
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/otp/verify/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
+      body: JSON.stringify({ phone, code, purpose: "agent_login" }),
+    });
 
-  const data = await response.json().catch(() => null);
-  if (!response.ok) {
-    const message = data?.message || data?.detail || "OTP verification failed.";
-    throw new ApiClientError(message, response.status, data?.errors);
+    const data = await response.json().catch(() => null);
+    if (!response.ok) {
+      const message =
+        data?.message ||
+        data?.detail ||
+        (typeof data?.errors === "object" && data?.errors !== null
+          ? Object.entries(data.errors)
+              .map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(", ") : val}`)
+              .join(" | ")
+          : "OTP verification failed. Please try again.");
+      throw new ApiClientError(message, response.status, data?.errors);
+    }
+
+    const auth = data.data as AuthResponse;
+    const profile: AgentSessionProfile = {
+      id: auth.user.id,
+      phone: auth.user.phone,
+      full_name: auth.user.full_name,
+      role: auth.user.role,
+    };
+    saveAgentSession(auth.access, auth.refresh, profile);
+    return profile;
+  } catch (error) {
+    if (error instanceof ApiClientError) {
+      throw error;
+    }
+    throw new ApiClientError(
+      "Unable to connect to Primekey server. Please check your network connection.",
+      0
+    );
   }
-
-  const auth = data.data as AuthResponse;
-  const profile: AgentSessionProfile = {
-    id: auth.user.id,
-    phone: auth.user.phone,
-    full_name: auth.user.full_name,
-    role: auth.user.role,
-  };
-  saveAgentSession(auth.access, auth.refresh, profile);
-  return profile;
 }
 
 export async function refreshAgentAccessToken(): Promise<boolean> {

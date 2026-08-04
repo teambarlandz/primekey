@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
@@ -8,21 +8,14 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import {
   ShieldCheck,
-  Phone,
   Lock,
-  ArrowRight,
-  RotateCcw,
-  CheckCircle2,
-  AlertCircle,
   Zap,
   HeartHandshake,
   Star,
   Quote,
   KeyRound,
 } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { OtpAuthCard } from '@/components/auth/OtpAuthCard';
 import { submitOTP, verifyOTP } from '@/lib/api-client';
 
 const BRAND_COLOR = '#04164a';
@@ -59,14 +52,6 @@ function LoginContent() {
   const callbackUrl = searchParams.get('callbackUrl') || '/';
   const pendingAction = searchParams.get('action') || 'access your account';
 
-  const [step, setStep] = useState<'phone' | 'otp'>('phone');
-  const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [resendTimer, setResendTimer] = useState(60);
-  const [phoneError, setPhoneError] = useState('');
-  const [apiError, setApiError] = useState('');
-
   useGSAP(() => {
     const ctx = gsap.context(() => {
       gsap.fromTo('.login-anim',
@@ -76,98 +61,6 @@ function LoginContent() {
     });
     return () => ctx.revert();
   }, []);
-
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (step === 'otp' && resendTimer > 0) {
-      timer = setInterval(() => setResendTimer((prev) => prev - 1), 1000);
-    }
-    return () => clearInterval(timer);
-  }, [step, resendTimer]);
-
-  const validateNigerianPhone = (num: string) => {
-    const cleaned = num.replace(/\s+/g, '');
-    const regex = /^(?:\+234|234|0)[789][01]\d{8}$/;
-    return regex.test(cleaned);
-  };
-
-  const sendOtp = async (phoneNumber: string) => {
-    setApiError('');
-    if (!validateNigerianPhone(phoneNumber)) {
-      setPhoneError('Please enter a valid Nigerian phone number (e.g., 08012345678)');
-      return;
-    }
-    setPhoneError('');
-    setIsSubmitting(true);
-
-    try {
-      const response = await submitOTP(phoneNumber, 'login');
-      const responseData = response.data as { dev_code?: string } | undefined;
-      if (responseData?.dev_code) {
-        console.log('DEV OTP Code:', responseData.dev_code);
-      }
-      setIsSubmitting(false);
-      setStep('otp');
-      setResendTimer(60);
-    } catch (error: any) {
-      setIsSubmitting(false);
-      setPhoneError(error.message || 'Failed to send OTP. Please try again.');
-    }
-  };
-
-  const handleSendOtp = (e: React.FormEvent) => {
-    e.preventDefault();
-    sendOtp(phone);
-  };
-
-  const handleOtpChange = (index: number, value: string) => {
-    if (value.length > 1) return;
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
-
-    if (value && index < 5) {
-      const nextInput = document.getElementById(`otp-input-${index + 1}`);
-      nextInput?.focus();
-    }
-  };
-
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setApiError('');
-    const fullCode = otp.join('');
-    if (fullCode.length < 6) return;
-
-    setIsSubmitting(true);
-
-    try {
-      const response = await verifyOTP(phone, fullCode, 'login');
-      const verifyData = response.data as { access: string; refresh: string; user: { id: string; phone: string; is_new_user: boolean } } | undefined;
-      if (!verifyData) throw new Error('Invalid response from server');
-      const { access, refresh, user } = verifyData;
-
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('access_token', access);
-        localStorage.setItem('refresh_token', refresh);
-        localStorage.setItem('user', JSON.stringify(user));
-      }
-
-      setIsSubmitting(false);
-      router.push(callbackUrl);
-      router.refresh();
-    } catch (error: any) {
-      setIsSubmitting(false);
-      setApiError(error.message || 'Invalid code. Please try again.');
-    }
-  };
-
-  const handleReset = () => {
-    setStep('phone');
-    setPhone('');
-    setOtp(['', '', '', '', '', '']);
-    setPhoneError('');
-    setApiError('');
-  };
 
   return (
     <div className="min-h-screen bg-[#f3f0ff] lg:flex">
@@ -315,126 +208,40 @@ function LoginContent() {
           </div>
 
           {/* Sign In Card */}
-          <Card className="w-full bg-white/95 backdrop-blur-md border-purple-100/80 shadow-2xl rounded-3xl login-anim opacity-0">
-            <CardHeader className="text-center pb-6 pt-8 px-6 sm:px-8">
-              <div className="w-14 h-14 rounded-2xl bg-[#f3f0ff] flex items-center justify-center text-[#04164a] mx-auto mb-4">
-                <ShieldCheck className="w-7 h-7" />
-              </div>
-              <CardTitle className="font-heading text-2xl" style={{ color: BRAND_COLOR }}>
-                Quick Sign In
-              </CardTitle>
-              <p className="text-sm text-slate-600 font-body mt-1">
-                We'll send a 6-digit code to your phone
+          <OtpAuthCard
+            config={{
+              icon: <ShieldCheck className="w-7 h-7" />,
+              title: 'Quick Sign In',
+              subtitle: "We'll send a 6-digit code to your phone",
+              phoneLabel: 'Nigerian Phone Number',
+              verifyButtonLabel: 'Verify & Sign In',
+            }}
+            sendOtp={(phone) => submitOTP(phone, 'login')}
+            verifyOtp={(phone, code) => verifyOTP(phone, code, 'login')}
+            onSuccess={(result) => {
+              const verifyData = result?.data as
+                | { access: string; refresh: string; user: { id: string; phone: string; is_new_user: boolean } }
+                | undefined;
+              if (verifyData) {
+                localStorage.setItem('access_token', verifyData.access);
+                localStorage.setItem('refresh_token', verifyData.refresh);
+                localStorage.setItem('user', JSON.stringify(verifyData.user));
+              }
+              router.push(callbackUrl);
+              router.refresh();
+            }}
+            inputPrefix="otp"
+            cardClassName="login-anim opacity-0"
+          >
+            <div className="border-t border-purple-100 pt-4">
+              <p className="font-body text-xs sm:text-[13px] text-slate-600 flex items-center gap-2 justify-center leading-relaxed">
+                <Lock className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>
+                  NDPR Compliant. Your information is protected under Nigerian data privacy laws.
+                </span>
               </p>
-            </CardHeader>
-            <CardContent className="space-y-6 px-6 sm:px-8 pb-8">
-              {apiError && (
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2 text-rose-700 text-xs font-body">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{apiError}</span>
-                </div>
-              )}
-
-              {/* STEP 1: Phone Number Input */}
-              {step === 'phone' && (
-                <form onSubmit={handleSendOtp} className="space-y-5">
-                  <div className="space-y-1.5">
-                    <label className="font-body text-xs font-semibold text-[#04164a]">
-                      Nigerian Phone Number
-                    </label>
-                    <div className="relative">
-                      <Phone className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
-                      <Input
-                        type="tel"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="08012345678 or +234..."
-                        className="pl-10 h-11 border-slate-200 font-body focus:ring-[#04164a]/20 rounded-xl"
-                        autoComplete="tel"
-                        disabled={isSubmitting}
-                      />
-                    </div>
-                    {phoneError && (
-                      <p className="font-body text-xs text-rose-600 pt-1">{phoneError}</p>
-                    )}
-                  </div>
-
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting || !phone}
-                    className="w-full bg-[#04164a] hover:bg-[#04164a]/90 text-white font-heading h-11 rounded-xl flex items-center justify-center gap-2 transition-all duration-200"
-                  >
-                    {isSubmitting ? 'Sending Code...' : 'Send Verification Code'}
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
-                </form>
-              )}
-
-              {/* STEP 2: 6-Digit OTP Input */}
-              {step === 'otp' && (
-                <form onSubmit={handleVerifyOtp} className="space-y-5">
-                  <div className="space-y-2">
-                    <p className="font-body text-xs text-slate-500 text-center">
-                      We sent a 6-digit code to <strong className="text-slate-800">{phone}</strong>
-                    </p>
-                    <div className="flex gap-2 justify-between py-2">
-                      {otp.map((digit, idx) => (
-                        <Input
-                          key={idx}
-                          id={`otp-input-${idx}`}
-                          type="text"
-                          maxLength={1}
-                          value={digit}
-                          onChange={(e) => handleOtpChange(idx, e.target.value)}
-                          className="w-11 h-12 text-center font-heading text-lg font-bold border-slate-200 focus:border-[#04164a] focus:ring-1 focus:ring-[#04164a] rounded-xl"
-                          autoComplete="one-time-code"
-                          inputMode="numeric"
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting || otp.join('').length < 6}
-                    className="w-full bg-[#04164a] hover:bg-[#04164a]/90 text-white font-heading h-11 rounded-xl flex items-center justify-center gap-2 transition-all duration-200"
-                  >
-                    {isSubmitting ? 'Verifying...' : 'Verify & Sign In'}
-                    <CheckCircle2 className="w-4 h-4" />
-                  </Button>
-
-                  <div className="flex items-center justify-between font-body text-xs pt-2">
-                    <button
-                      type="button"
-                      onClick={handleReset}
-                      className="text-slate-500 hover:text-[#04164a] underline"
-                    >
-                      Change Phone
-                    </button>
-
-                    <button
-                      type="button"
-                      disabled={resendTimer > 0}
-                      onClick={() => { sendOtp(phone); }}
-                      className="text-[#04164a] font-semibold disabled:text-slate-400 flex items-center gap-1"
-                    >
-                      <RotateCcw className="w-3 h-3" />
-                      {resendTimer > 0 ? `Resend in ${resendTimer}s` : 'Resend Code'}
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              <div className="border-t border-purple-100 pt-4">
-                <p className="font-body text-xs sm:text-[13px] text-slate-600 flex items-center gap-2 justify-center leading-relaxed">
-                  <Lock className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>
-                    NDPR Compliant. Your information is protected under Nigerian data privacy laws.
-                  </span>
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </OtpAuthCard>
 
           {/* Footer Links */}
           <div className="text-center mt-6 space-y-2 login-anim opacity-0">
