@@ -29,6 +29,9 @@ import {
   ChevronRight,
   SlidersHorizontal,
   Home,
+  MapPin,
+  Briefcase,
+  Clock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -515,11 +518,51 @@ export default function SearchPage() {
 
         <div className="space-y-2">
           <h1 className="font-heading text-3xl md:text-4xl font-bold text-[#04164a]">
-            Discover Premium Properties
+            Find Your Perfect Property
           </h1>
           <p className="font-body text-slate-600 text-sm md:text-base">
-            Explore verified listings across Lagos, Abuja, Port Harcourt, and prime locations in Nigeria.
+            Browse homes, land, offices, and commercial spaces across Nigeria's prime locations.
           </p>
+        </div>
+
+        {/* Category Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { label: 'Residential', desc: 'Houses, flats & duplexes', icon: <Home className="w-5 h-5" />, filter: { propertyType: 'any' as const, purpose: 'all' as const } },
+            { label: 'Land', desc: 'Plots & acres', icon: <MapPin className="w-5 h-5" />, filter: { propertyType: 'land' as const, purpose: 'sale' as const } },
+            { label: 'Office Space', desc: 'Workspaces & co-working', icon: <Briefcase className="w-5 h-5" />, filter: { propertyType: 'commercial' as const, purpose: 'rent' as const } },
+            { label: 'Short Let', desc: 'Serviced apartments', icon: <Clock className="w-5 h-5" />, filter: { propertyType: 'short_let' as const, purpose: 'short_let' as const } },
+          ].map((cat) => {
+            const isActive =
+              (cat.filter.propertyType === 'any' && filters.propertyType === 'any' && filters.purpose === cat.filter.purpose) ||
+              (cat.filter.propertyType !== 'any' && filters.propertyType === cat.filter.propertyType);
+            return (
+              <button
+                key={cat.label}
+                type="button"
+                onClick={() => {
+                  const next = { ...filters, ...cat.filter, page: 1 };
+                  setFilters(next);
+                  executeSearch(next);
+                }}
+                className={`group flex flex-col items-center gap-2 p-5 rounded-2xl border transition-all duration-200 text-center ${
+                  isActive
+                    ? 'bg-[#04164a] border-[#04164a] text-white shadow-md'
+                    : 'bg-white/90 border-slate-200 text-[#04164a] hover:border-[#04164a]/30 hover:shadow-sm'
+                }`}
+              >
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                  isActive ? 'bg-white/20' : 'bg-[#f3f0ff]'
+                }`}>
+                  {cat.icon}
+                </div>
+                <div>
+                  <p className="font-heading text-sm font-bold">{cat.label}</p>
+                  <p className={`text-xs mt-0.5 ${isActive ? 'text-white/70' : 'text-slate-500'}`}>{cat.desc}</p>
+                </div>
+              </button>
+            );
+          })}
         </div>
 
         {/* Buy / Rent / Short-Let Toggle */}
