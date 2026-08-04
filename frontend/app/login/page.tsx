@@ -178,7 +178,7 @@ function LoginContent() {
         {/* Background property image + navy overlay */}
         <div className="absolute inset-0" aria-hidden="true">
           <Image
-            src="/assets/hero-primekey-homes.jpg"
+            src="/assets/Interior-1.jpg"
             alt=""
             fill
             sizes="48vw"

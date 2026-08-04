@@ -214,7 +214,7 @@ export default function LandlordPage() {
             <div className="relative mt-4 lg:mt-0 pb-6 pr-2 sm:pr-6">
               <div className="landlord-anim opacity-0 relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white/60">
                 <Image
-                  src="/assets/hero-primekey-homes.jpg"
+                  src="/assets/Homeowner.jpg"
                   alt="Property owner reviewing verified offers on Primekey Homes dashboard"
                   width={720}
                   height={560}

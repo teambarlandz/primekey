@@ -201,7 +201,7 @@ export default function AboutPage() {
 
             <div className="section-anim opacity-0 relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white/60">
               <Image
-                src="/assets/hero-primekey-homes.jpg"
+                src="/assets/Interior-2.jpg"
                 alt="Primekey Homes verified property in a prime Nigerian location"
                 width={720}
                 height={560}
