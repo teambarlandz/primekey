@@ -9,31 +9,20 @@ import { ANIMATION_TOKENS, prefersReducedMotion } from '@/lib/animations';
 
 const BRAND_COLOR = '#04164a';
 
-const HERO_IMAGES = [
+const HERO_SLIDES = [
   {
     src: '/assets/hero-primekey-homes.jpg',
     alt: 'Modern luxury residence in Lagos with contemporary architecture',
-    caption: 'Luxury living in Lekki',
+    headline: 'Find your next home —',
+    headlineItalic: 'without the hassle.',
+    subtext: 'Buy, rent, or list verified properties in minutes — with zero brokerage and full legal support.',
   },
   {
     src: '/assets/Hero-2.jpg',
-    alt: 'Premium property listing in Abuja',
-    caption: 'Premium homes in Abuja',
-  },
-  {
-    src: '/assets/Interior-1.jpg',
-    alt: 'Elegant interior living space',
-    caption: 'Stunning interiors',
-  },
-  {
-    src: '/assets/Interior-2.jpg',
-    alt: 'Modern apartment interior design',
-    caption: 'Contemporary design',
-  },
-  {
-    src: '/assets/Interior 3.jpg',
-    alt: 'Spacious living room with natural light',
-    caption: 'Spacious living',
+    alt: 'Premium property in Abuja with modern finishing',
+    headline: 'Your dream property is —',
+    headlineItalic: 'just a click away.',
+    subtext: 'Explore thousands of verified listings across Lagos, Abuja, and Port Harcourt with dedicated support.',
   },
 ];
 
@@ -52,7 +41,7 @@ export default function Hero() {
   }, [current, isTransitioning]);
 
   const next = useCallback(() => {
-    goTo((current + 1) % HERO_IMAGES.length);
+    goTo((current + 1) % HERO_SLIDES.length);
   }, [current, goTo]);
 
   // Auto-rotate
@@ -65,8 +54,8 @@ export default function Hero() {
   // Keyboard navigation
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') goTo((current - 1 + HERO_IMAGES.length) % HERO_IMAGES.length);
-      if (e.key === 'ArrowRight') goTo((current + 1) % HERO_IMAGES.length);
+      if (e.key === 'ArrowLeft') goTo((current - 1 + HERO_SLIDES.length) % HERO_SLIDES.length);
+      if (e.key === 'ArrowRight') goTo((current + 1) % HERO_SLIDES.length);
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
@@ -104,6 +93,8 @@ export default function Hero() {
     return () => ctx.revert();
   }, []);
 
+  const slide = HERO_SLIDES[current];
+
   return (
     <section 
       className="relative pt-12 pb-16 lg:pt-20 lg:pb-28 bg-[#f3f0ff] overflow-hidden" 
@@ -133,15 +124,20 @@ export default function Hero() {
           
           <h1 
             id="hero-headline" 
-            className="hero-anim opacity-0 text-4xl sm:text-5xl lg:text-6xl font-bold font-heading leading-[1.15] tracking-tight"
+            className="hero-anim opacity-0 text-4xl sm:text-5xl lg:text-6xl font-bold font-heading leading-[1.15] tracking-tight min-h-[140px] sm:min-h-[180px]"
             style={{ color: BRAND_COLOR }}
           >
-            Find your next home —{' '}
-            <span className="italic font-normal font-body opacity-90">without the hassle.</span>
+            <span key={`headline-${current}`} className="animate-fade-in-up block">
+              {slide.headline}{' '}
+              <span className="italic font-normal font-body opacity-90">{slide.headlineItalic}</span>
+            </span>
           </h1>
           
-          <p className="hero-anim opacity-0 text-lg md:text-xl text-[#4a607a] font-body max-w-lg leading-relaxed">
-            Buy, rent, or list verified properties in minutes — with zero brokerage and full legal support.
+          <p 
+            key={`subtext-${current}`}
+            className="hero-anim opacity-0 text-lg md:text-xl text-[#4a607a] font-body max-w-lg leading-relaxed min-h-[56px] animate-fade-in-up"
+          >
+            {slide.subtext}
           </p>
 
           <div className="hero-anim opacity-0 flex flex-col sm:flex-row gap-4 pt-2">
@@ -182,7 +178,7 @@ export default function Hero() {
         <div className="hero__media relative mt-4 lg:mt-0 pb-6 pr-2 sm:pr-6">
           <div className="hero-anim opacity-0 relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white/60 aspect-[720/560]">
             {/* Image layer */}
-            {HERO_IMAGES.map((img, idx) => (
+            {HERO_SLIDES.map((img, idx) => (
               <Image
                 key={img.src}
                 src={img.src}
@@ -196,18 +192,11 @@ export default function Hero() {
               />
             ))}
 
-            {/* Caption overlay */}
-            <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/50 to-transparent p-5 pt-10">
-              <p className="text-white text-sm font-heading font-semibold drop-shadow-md">
-                {HERO_IMAGES[current].caption}
-              </p>
-            </div>
-
             {/* Navigation arrows */}
             <button
               type="button"
-              onClick={() => goTo((current - 1 + HERO_IMAGES.length) % HERO_IMAGES.length)}
-              className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/80 backdrop-blur-md flex items-center justify-center text-[#04164a] hover:bg-white transition-all shadow-md opacity-0 group-hover:opacity-100 focus:opacity-100"
+              onClick={() => goTo((current - 1 + HERO_SLIDES.length) % HERO_SLIDES.length)}
+              className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/80 backdrop-blur-md flex items-center justify-center text-[#04164a] hover:bg-white transition-all shadow-md"
               aria-label="Previous image"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -216,8 +205,8 @@ export default function Hero() {
             </button>
             <button
               type="button"
-              onClick={() => goTo((current + 1) % HERO_IMAGES.length)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/80 backdrop-blur-md flex items-center justify-center text-[#04164a] hover:bg-white transition-all shadow-md opacity-0 group-hover:opacity-100 focus:opacity-100"
+              onClick={() => goTo((current + 1) % HERO_SLIDES.length)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/80 backdrop-blur-md flex items-center justify-center text-[#04164a] hover:bg-white transition-all shadow-md"
               aria-label="Next image"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -228,14 +217,14 @@ export default function Hero() {
 
           {/* Dot indicators */}
           <div className="flex items-center justify-center gap-2 mt-4" role="tablist" aria-label="Hero images">
-            {HERO_IMAGES.map((img, idx) => (
+            {HERO_SLIDES.map((img, idx) => (
               <button
                 key={img.src}
                 type="button"
                 onClick={() => goTo(idx)}
                 role="tab"
                 aria-selected={idx === current}
-                aria-label={img.caption}
+                aria-label={img.alt}
                 className={`h-2 rounded-full transition-all duration-300 ${
                   idx === current
                     ? 'bg-[#04164a] w-7'

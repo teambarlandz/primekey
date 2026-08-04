@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
@@ -26,6 +26,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { submitOTP, verifyOTP } from '@/lib/api-client';
 
 const BRAND_COLOR = '#04164a';
+
+const LOGIN_IMAGES = [
+  '/assets/Interior-1.jpg',
+  '/assets/Interior-2.jpg',
+  '/assets/Interior 3.jpg',
+  '/assets/Interor-4.jpg',
+];
+
+const IMAGE_TRANSITION_DURATION = 600;
 
 const TRUST_FEATURES = [
   { icon: <ShieldCheck className="w-5 h-5" />, label: '27-point verified listings' },
@@ -66,6 +75,22 @@ function LoginContent() {
   const [resendTimer, setResendTimer] = useState(60);
   const [phoneError, setPhoneError] = useState('');
   const [apiError, setApiError] = useState('');
+  const [currentImage, setCurrentImage] = useState(0);
+  const [isImagePaused, setIsImagePaused] = useState(false);
+
+  const goToImage = useCallback((index: number) => {
+    setCurrentImage(index);
+  }, []);
+
+  const nextImage = useCallback(() => {
+    setCurrentImage((prev) => (prev + 1) % LOGIN_IMAGES.length);
+  }, []);
+
+  useEffect(() => {
+    if (isImagePaused) return;
+    const timer = setInterval(nextImage, 4000);
+    return () => clearInterval(timer);
+  }, [isImagePaused, nextImage]);
 
   useGSAP(() => {
     const ctx = gsap.context(() => {
@@ -174,17 +199,26 @@ function LoginContent() {
       {/* ─────────────────────────────────────────────────────────────
           LEFT: Brand Showcase Panel (desktop, pinned on scroll)
           ───────────────────────────────────────────────────────────── */}
-      <aside className="hidden lg:flex lg:flex-col lg:justify-between lg:w-[48%] xl:w-[46%] relative lg:sticky lg:top-0 lg:h-screen shrink-0 overflow-hidden">
+      <aside 
+        className="hidden lg:flex lg:flex-col lg:justify-between lg:w-[48%] xl:w-[46%] relative lg:sticky lg:top-0 lg:h-screen shrink-0 overflow-hidden"
+        onMouseEnter={() => setIsImagePaused(true)}
+        onMouseLeave={() => setIsImagePaused(false)}
+      >
         {/* Background property image + navy overlay */}
         <div className="absolute inset-0" aria-hidden="true">
-          <Image
-            src="/assets/Interior-1.jpg"
-            alt=""
-            fill
-            sizes="48vw"
-            className="object-cover"
-            priority
-          />
+          {LOGIN_IMAGES.map((img, idx) => (
+            <Image
+              key={img}
+              src={img}
+              alt=""
+              fill
+              sizes="48vw"
+              className={`object-cover absolute inset-0 transition-opacity duration-[600ms] ease-in-out ${
+                idx === currentImage ? 'opacity-100' : 'opacity-0'
+              }`}
+              priority={idx === 0}
+            />
+          ))}
           <div className="absolute inset-0 bg-gradient-to-br from-[#04164a]/97 via-[#0a2a6b]/88 to-[#04164a]/95" />
         </div>
 
@@ -280,6 +314,24 @@ function LoginContent() {
               </div>
             </figcaption>
           </figure>
+        </div>
+
+        {/* Image carousel dot indicators */}
+        <div className="relative z-10 flex items-center justify-center gap-2 pb-6" role="tablist" aria-label="Login background images">
+          {LOGIN_IMAGES.map((img, idx) => (
+            <button
+              key={img}
+              type="button"
+              onClick={() => goToImage(idx)}
+              role="tab"
+              aria-selected={idx === currentImage}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                idx === currentImage
+                  ? 'bg-white w-6'
+                  : 'bg-white/30 w-1.5 hover:bg-white/50'
+              }`}
+            />
+          ))}
         </div>
       </aside>
 
