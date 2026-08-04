@@ -53,9 +53,13 @@ PERMISSION_TARGETS = {
 # Permission verbs per role per model target.
 ROLE_PERMISSIONS = {
     "ceo": {
+        "all": [
+            "auth.user",
+            "auth.group",
+        ],
         "view_all": [model for models in list(PERMISSION_TARGETS.values()) for model in models],
         "change": ["crm.conciergelead"],
-        "exclude": ["otp_auth.otpcode", "auth.user", "auth.group"],
+        "exclude": ["otp_auth.otpcode"],
     },
     "cto": {
         "all": [
