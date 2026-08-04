@@ -20,7 +20,6 @@ env = environ.Env(
     ALLOWED_HOSTS=(list, []),
     CORS_ALLOWED_ORIGINS=(list, ["http://localhost:3000", "http://127.0.0.1:3000"]),
     CORS_ALLOW_CREDENTIALS=(bool, True),
-    DATABASE_URL=(str, f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
     REDIS_URL=(str, "redis://localhost:6379/0"),
     REDIS_CACHE_URL=(str, "redis://localhost:6379/1"),
     DJANGO_Q_REDIS_URL=(str, "redis://localhost:6379/2"),
@@ -193,6 +192,7 @@ CACHES = {
             "IGNORE_EXCEPTIONS": True,
             "SOCKET_CONNECT_TIMEOUT": 5,
             "SOCKET_TIMEOUT": 5,
+            "CONNECTION_POOL_KWARGS": {"protocol": 2},
         },
         "KEY_PREFIX": "primekey",
         "TIMEOUT": 300,
@@ -202,6 +202,7 @@ CACHES = {
         "LOCATION": REDIS_CACHE_URL,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "CONNECTION_POOL_KWARGS": {"protocol": 2},
         },
         "KEY_PREFIX": "primekey_session",
     },

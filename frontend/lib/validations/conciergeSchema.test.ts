@@ -34,7 +34,7 @@ describe('conciergeFormSchema', () => {
       '+2348012345678',
       '2348012345678',
       '080-1234-5678',
-      '(080) 123-4567',
+      '(080) 1234-5678',
     ];
     for (const phone of validPhones) {
       const result = conciergeFormSchema.safeParse({ ...validBase, phone });

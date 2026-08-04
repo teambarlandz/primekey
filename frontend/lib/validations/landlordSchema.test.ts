@@ -46,7 +46,7 @@ describe('landlordRegistrationSchema', () => {
       '2348012345678',
       '+234 801 234 5678',
       '080-1234-5678',
-      '(080) 123-4567',
+      '(080) 1234-5678',
     ];
     for (const phone of validPhones) {
       const result = landlordRegistrationSchema.safeParse({ ...validBase, phone });
