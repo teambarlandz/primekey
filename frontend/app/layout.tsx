@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins, Lora } from "next/font/google";
+import { Toaster } from "sonner";
+import { PageTransition } from "@/components/PageTransition";
 import "./globals.css";
 
 // ──────────────────────────────────────────────────────────────
@@ -56,7 +58,20 @@ export default function RootLayout({
       className={`${poppins.variable} ${lora.variable}`}
     >
       <body className={`${lora.className} antialiased`}>
-        {children}
+        <PageTransition>{children}</PageTransition>
+        <Toaster
+          position="bottom-right"
+          toastOptions={{
+            duration: 3000,
+            style: {
+              background: '#04164a',
+              color: '#fff',
+              borderRadius: '16px',
+              fontFamily: 'var(--font-body)',
+              fontSize: '14px',
+            },
+          }}
+        />
       </body>
     </html>
   );

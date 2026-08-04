@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Check, Lock, Star } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -68,7 +69,9 @@ export default function FinalCTA() {
     // Simulate API call
     setTimeout(() => {
       form.reset();
-      alert('Thank you! A Primekey Homes expert will call you shortly.');
+      toast.success('Callback requested!', {
+        description: 'A Primekey Homes expert will call you shortly.',
+      });
     }, 1500);
   }
 

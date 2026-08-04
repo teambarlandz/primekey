@@ -38,6 +38,16 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
     setIsFavorited(!isFavorited);
   };
 
+  const [justFavorited, setJustFavorited] = useState(false);
+
+  const triggerFavorite = (e: React.MouseEvent) => {
+    handleFavoriteClick(e);
+    if (isAuthenticated || isFavorited) {
+      setJustFavorited(true);
+      setTimeout(() => setJustFavorited(false), 400);
+    }
+  };
+
   const handleBookTourClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onSelectProperty(property.id);
@@ -73,11 +83,13 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
         {/* Favorite Heart Trigger (Auth Protected) */}
         <button
           type="button"
-          onClick={handleFavoriteClick}
-          className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-md hover:bg-white text-slate-700 hover:text-rose-600 transition-all shadow-sm"
+          onClick={triggerFavorite}
+          className={`absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-md hover:bg-white text-slate-700 hover:text-rose-600 transition-all shadow-sm ${
+            justFavorited ? 'animate-heart-pulse' : ''
+          }`}
           aria-label="Save to Favorites"
         >
-          <Heart className={`w-4 h-4 ${isFavorited ? 'fill-rose-600 text-rose-600' : ''}`} />
+          <Heart className={`w-4 h-4 transition-all duration-200 ${isFavorited ? 'fill-rose-600 text-rose-600 scale-110' : ''}`} />
         </button>
 
         {/* Price Tag Overlay */}

@@ -53,6 +53,7 @@ export const PropertyIntakeForm: React.FC<PropertyIntakeFormProps> = ({
 }) => {
   const [step, setStep] = useState(0);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [direction, setDirection] = useState<'forward' | 'backward'>('forward');
 
   const form = useForm<PropertyIntakeValues>({
     resolver: zodResolver(propertyIntakeSchema),
@@ -75,11 +76,15 @@ export const PropertyIntakeForm: React.FC<PropertyIntakeFormProps> = ({
   const handleNext = async () => {
     setSubmitError(null);
     const valid = await validateStep(step);
-    if (valid) setStep((s) => Math.min(s + 1, STEPS.length - 1));
+    if (valid) {
+      setDirection('forward');
+      setStep((s) => Math.min(s + 1, STEPS.length - 1));
+    }
   };
 
   const handleBack = () => {
     setSubmitError(null);
+    setDirection('backward');
     setStep((s) => Math.max(s - 1, 0));
   };
 
@@ -136,6 +141,9 @@ export const PropertyIntakeForm: React.FC<PropertyIntakeFormProps> = ({
             </div>
           )}
 
+          <div className={`transition-all duration-300 ease-out ${
+            direction === 'forward' ? 'animate-[slideInRight_0.3s_ease-out]' : 'animate-[slideInLeft_0.3s_ease-out]'
+          }`} key={step}>
           {/* STEP 1 — Property details */}
           {step === 0 && (
             <div className="space-y-5">
@@ -432,6 +440,7 @@ export const PropertyIntakeForm: React.FC<PropertyIntakeFormProps> = ({
               </div>
             </div>
           )}
+          </div>
 
           {/* Navigation */}
           <div className="flex items-center justify-between pt-2">

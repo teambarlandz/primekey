@@ -17,7 +17,9 @@ import {
   ChevronLeft,
   Loader2,
   AlertCircle,
+  Link2,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AuthInterceptSheet } from '@/components/auth/AuthInterceptSheet';
@@ -44,6 +46,25 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState('');
   const [isFavorited, setIsFavorited] = useState(false);
+  const [justFavorited, setJustFavorited] = useState(false);
+
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard?.writeText(window.location.href);
+      toast.success('Link copied!', {
+        description: 'Property link has been copied to your clipboard.',
+        icon: <Link2 className="w-4 h-4" />,
+      });
+    } catch {
+      toast.error('Failed to copy link');
+    }
+  };
+
+  const handleToggleFavorite = () => {
+    setIsFavorited(!isFavorited);
+    setJustFavorited(true);
+    setTimeout(() => setJustFavorited(false), 400);
+  };
 
   const loadProperty = useCallback(async () => {
     setIsLoading(true);
@@ -146,15 +167,17 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
               variant="outline"
               size="sm"
               onClick={() => handleProtectedAction('Save to Favorites')}
-              className="bg-background border-border text-foreground hover:text-rose-600 rounded-xl"
+              className={`bg-background border-border text-foreground hover:text-rose-600 rounded-xl transition-all ${
+                justFavorited ? 'animate-heart-pulse' : ''
+              }`}
             >
-              <Heart className={`w-4 h-4 ${isFavorited ? 'fill-rose-600 text-rose-600' : ''}`} />
+              <Heart className={`w-4 h-4 transition-all duration-200 ${isFavorited ? 'fill-rose-600 text-rose-600 scale-110' : ''}`} />
               <span className="hidden sm:inline">Save</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigator.clipboard?.writeText(window.location.href)}
+              onClick={handleShare}
               className="bg-background border-border text-foreground rounded-xl"
             >
               <Share2 className="w-4 h-4" />
