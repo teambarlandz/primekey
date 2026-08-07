@@ -1,0 +1,43 @@
+# Git
+.git
+.gitignore
+.github
+
+# Secrets
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.example
+frontend/.env.local
+
+# Node
+node_modules
+frontend/node_modules
+frontend/.next
+frontend/coverage
+frontend/cypress/videos
+frontend/cypress/screenshots
+frontend/tsconfig.tsbuildinfo
+
+# Python
+backend/venv
+backend/.venv
+venv
+__pycache__
+*.pyc
+.pytest_cache
+.mypy_cache
+.ruff_cache
+backend/staticfiles
+backend/media
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea
+.vscode
+
+# Docker
+docker-compose.yml
+nginx/ssl

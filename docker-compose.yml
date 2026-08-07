@@ -39,8 +39,8 @@ services:
   # Backend API
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: primekey-backend
     environment:
       DEBUG: "False"
@@ -75,8 +75,8 @@ services:
   # Django Q Worker for background tasks
   worker:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: primekey-worker
     command: python manage.py qcluster
     environment:
@@ -106,14 +106,14 @@ services:
           cpus: '0.25'
           memory: 256M
 
-  # Frontend
+  # Frontend (Next.js standalone server)
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api/v1}
     container_name: primekey-frontend
-    environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://backend:8000/api}
     depends_on:
       - backend
     networks:
@@ -128,24 +128,29 @@ services:
           cpus: '0.25'
           memory: 256M
 
-  # Nginx Reverse Proxy (optional - for production with SSL)
-  # nginx:
-  #   image: nginx:alpine
-  #   container_name: primekey-nginx
-  #   ports:
-  #     - "80:80"
-  #     - "443:443"
-  #   volumes:
-  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-  #     - ./nginx/ssl:/etc/nginx/ssl:ro
-  #     - static_volume:/var/www/static:ro
-  #     - media_volume:/var/www/media:ro
-  #   depends_on:
-  #     - frontend
-  #     - backend
-  #   networks:
-  #     - primekey-network
-  #   restart: unless-stopped
+  # Nginx Reverse Proxy (edge) - serves static/media and proxies app + API
+  nginx:
+    image: nginx:alpine
+    container_name: primekey-nginx
+    ports:
+      - "80:80"
+      # - "443:443"   # enable once TLS certs are provisioned
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      # - ./nginx/ssl:/etc/nginx/ssl:ro   # enable once TLS certs are provisioned
+      - static_volume:/var/www/static:ro
+      - media_volume:/var/www/media:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - primekey-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
 
 volumes:
   postgres_data:

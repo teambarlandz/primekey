@@ -1,8 +1,12 @@
-# Frontend Dockerfile - Multi-stage build for production
+# Frontend Dockerfile - Multi-stage build for Next.js standalone output
 FROM node:20-alpine as builder
 
 # Set working directory
 WORKDIR /app
+
+# Public API base URL baked in at build time (relative path works behind the edge nginx)
+ARG NEXT_PUBLIC_API_URL=/api/v1
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
 # Copy package files
 COPY frontend/package*.json ./
@@ -13,19 +17,27 @@ RUN npm ci
 # Copy source code
 COPY frontend/ .
 
-# Build the application
+# Build the application (standalone output)
 RUN npm run build
 
-# Production stage - using nginx to serve static files
-FROM nginx:alpine as production
+# Production stage - run the standalone Node server
+FROM node:20-alpine as production
 
-# Copy nginx configuration
-COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+WORKDIR /app
 
-# Copy built assets from builder
-COPY --from=builder /app/.next/standalone /usr/share/nginx/html
-COPY --from=builder /app/.next/static /usr/share/nginx/html/_next/static
-COPY --from=builder /app/public /usr/share/nginx/html
+ENV NODE_ENV=production
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3000
+
+# Copy standalone server and its pruned node_modules
+COPY --from=builder /app/.next/standalone ./
+
+# Copy static assets and public files
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+
+# Run as non-root user
+USER node
 
 # Expose port
 EXPOSE 3000
@@ -34,5 +46,5 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start the Next.js standalone server
+CMD ["node", "server.js"]
