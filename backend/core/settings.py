@@ -86,7 +86,7 @@ ROOT_URLCONF = "core.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "core" / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -290,7 +290,7 @@ UNFOLD = {
     "SITE_ICON_WIDTH": 40,
     "SITE_ICON_HEIGHT": 40,
     "SITE_SYMBOL": "home_work",
-    "DASHBOARD_CALLBACK": None,
+    "DASHBOARD_CALLBACK": "core.admin.dashboard_callback",
     "LOGIN": {
         "image": None,
     },

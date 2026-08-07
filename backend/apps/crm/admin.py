@@ -1,6 +1,11 @@
 from django.contrib import admin
 from django.utils import timezone
 from unfold.admin import ModelAdmin
+from unfold.contrib.filters.admin import (
+    ChoicesDropdownFilter,
+    RangeNumericListFilter,
+)
+from unfold.decorators import display
 
 from .models import ConciergeLead, ConsentLog, LeadScore, SLAAlert
 
@@ -13,16 +18,17 @@ class ConciergeLeadAdmin(ModelAdmin):
         "email",
         "preferred_location",
         "property_type",
-        "status",
-        "tier",
+        "status_badge",
+        "tier_badge",
         "assigned_agent",
+        "sla_state",
         "sla_deadline",
         "created_at",
     )
     list_filter = (
-        "status",
-        "property_type",
-        "ndpr_consent",
+        ("status", ChoicesDropdownFilter),
+        ("property_type", ChoicesDropdownFilter),
+        ("ndpr_consent", ChoicesDropdownFilter),
         "created_at",
     )
     search_fields = ("full_name", "phone", "email", "preferred_location")
@@ -30,14 +36,53 @@ class ConciergeLeadAdmin(ModelAdmin):
     autocomplete_fields = ("assigned_agent", "listing")
     ordering = ("-created_at",)
     list_per_page = 50
+    list_fullwidth = True
+    list_filter_submit = True
+    show_full_result_count = True
 
-    def tier(self, obj):
+    @display(
+        label={
+            "active_sla_queue": "warning",
+            "assigned": "info",
+            "contacted": "primary",
+            "closed_won": "success",
+            "closed_lost": "danger",
+            "erased_ndpr": "neutral",
+        }
+    )
+    def status_badge(self, obj):
+        return obj.status
+
+    status_badge.short_description = "Status"
+
+    @display(label={"HOT": "danger", "WARM": "warning", "COLD": "info"})
+    def tier_badge(self, obj):
         try:
             return obj.score_breakdown.tier
         except LeadScore.DoesNotExist:
             return "—"
 
-    tier.short_description = "Tier"
+    tier_badge.short_description = "Tier"
+
+    @display(
+        label={
+            "ok": "success",
+            "due_soon": "warning",
+            "breached": "danger",
+            "n/a": "neutral",
+        }
+    )
+    def sla_state(self, obj):
+        if not obj.sla_deadline:
+            return "n/a"
+        if obj.sla_breached_at:
+            return "breached"
+        remaining = obj.sla_deadline - timezone.now()
+        if remaining.total_seconds() <= 3600:
+            return "due_soon"
+        return "ok"
+
+    sla_state.short_description = "SLA"
 
     fieldsets = (
         ("Contact Information", {"fields": ("full_name", "phone", "email")}),
@@ -57,7 +102,7 @@ class LeadScoreAdmin(ModelAdmin):
     list_display = (
         "lead",
         "total_score",
-        "tier",
+        "tier_badge",
         "budget_match_score",
         "location_match_score",
         "property_type_match_score",
@@ -66,27 +111,43 @@ class LeadScoreAdmin(ModelAdmin):
         "urgency_score",
         "calculated_at",
     )
-    list_filter = ("tier",)
+    list_filter = (("tier", ChoicesDropdownFilter),)
     search_fields = ("lead__full_name", "lead__phone", "lead__email")
     readonly_fields = ("calculated_at",)
     autocomplete_fields = ("lead",)
     ordering = ("-calculated_at",)
+    list_fullwidth = True
+    list_filter_submit = True
+
+    @display(label={"HOT": "danger", "WARM": "warning", "COLD": "info"})
+    def tier_badge(self, obj):
+        return obj.tier
+
+    tier_badge.short_description = "Tier"
 
 
 @admin.register(SLAAlert)
 class SLAAlertAdmin(ModelAdmin):
-    list_display = ("lead", "severity", "acknowledged", "created_at")
-    list_filter = ("severity", "acknowledged", "created_at")
+    list_display = ("lead", "severity_badge", "acknowledged", "created_at")
+    list_filter = (("severity", ChoicesDropdownFilter), "acknowledged", "created_at")
     search_fields = ("lead__full_name", "lead__phone", "message")
     autocomplete_fields = ("lead",)
     ordering = ("-created_at",)
     list_editable = ("acknowledged",)
+    list_filter_submit = True
+
+    @display(label={"warning": "warning", "critical": "danger"})
+    def severity_badge(self, obj):
+        return obj.severity
+
+    severity_badge.short_description = "Severity"
 
 
 @admin.register(ConsentLog)
 class ConsentLogAdmin(ModelAdmin):
     list_display = ("lead", "phone", "email", "action", "ip_address", "created_at")
-    list_filter = ("action", "created_at")
+    list_filter = (("action", ChoicesDropdownFilter), "created_at")
     search_fields = ("lead__full_name", "phone", "email", "ip_address")
     readonly_fields = ("id", "created_at")
     ordering = ("-created_at",)
+    list_filter_submit = True

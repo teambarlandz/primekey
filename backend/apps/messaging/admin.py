@@ -1,5 +1,7 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin
+from unfold.contrib.filters.admin import ChoicesDropdownFilter
+from unfold.decorators import display
 
 from .models import WhatsAppMessage, WhatsAppThread
 
@@ -22,9 +24,16 @@ class WhatsAppThreadAdmin(ModelAdmin):
 
 @admin.register(WhatsAppMessage)
 class WhatsAppMessageAdmin(ModelAdmin):
-    list_display = ("thread", "direction", "body", "created_at")
-    list_filter = ("direction", "created_at")
+    list_display = ("thread", "direction_badge", "body", "created_at")
+    list_filter = (("direction", ChoicesDropdownFilter), "created_at")
     search_fields = ("body", "thread__phone", "thread__display_name")
     readonly_fields = ("id", "created_at")
     ordering = ("-created_at",)
     list_per_page = 100
+    list_filter_submit = True
+
+    @display(label={"inbound": "info", "outbound": "primary"})
+    def direction_badge(self, obj):
+        return obj.direction
+
+    direction_badge.short_description = "Direction"
