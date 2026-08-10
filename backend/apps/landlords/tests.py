@@ -1,9 +1,20 @@
 import pytest
+from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 
 from .models import LandlordProfile, PropertyIntake, Appointment, DocumentVault
 
 pytestmark = pytest.mark.django_db
+
+User = get_user_model()
+
+
+def landlord_client(landlord):
+    """Authenticated client whose user owns the given landlord profile (phone match)."""
+    user = User.objects.create_user(username=landlord.phone, password="x")
+    client = APIClient()
+    client.force_authenticate(user=user)
+    return client
 
 
 VALID_PAYLOAD = {
@@ -220,14 +231,15 @@ class TestAppointmentCreation:
 
     def test_appointment_reschedule_to_conflicting_slot_rejected(self):
         landlord = make_landlord()
-        first = APIClient().post(
+        client = landlord_client(landlord)
+        first = client.post(
             "/api/v1/landlords/appointments/",
             valid_appointment_payload(landlord.id),
             format="json",
         )
         assert first.status_code == 201
 
-        other = APIClient().post(
+        other = client.post(
             "/api/v1/landlords/appointments/",
             {
                 **valid_appointment_payload(landlord.id),
@@ -239,7 +251,7 @@ class TestAppointmentCreation:
         assert other.status_code == 201
         other_id = other.data["data"]["id"]
 
-        reschedule = APIClient().patch(
+        reschedule = client.patch(
             f"/api/v1/landlords/appointments/{other_id}/",
             {"preferred_date": "2026-09-01", "time_slot": "11:00 AM"},
             format="json",
@@ -248,7 +260,8 @@ class TestAppointmentCreation:
 
     def test_appointment_update_rejects_unknown_field(self):
         landlord = make_landlord()
-        appointment = APIClient().post(
+        client = landlord_client(landlord)
+        appointment = client.post(
             "/api/v1/landlords/appointments/",
             valid_appointment_payload(landlord.id),
             format="json",
@@ -256,7 +269,7 @@ class TestAppointmentCreation:
         assert appointment.status_code == 201
         appointment_id = appointment.data["data"]["id"]
 
-        response = APIClient().patch(
+        response = client.patch(
             f"/api/v1/landlords/appointments/{appointment_id}/",
             {"tour_type": "in_person"},
             format="json",
@@ -280,9 +293,24 @@ class TestAppointmentCreation:
             format="json",
         )
 
-        response = APIClient().get(f"/api/v1/landlords/landlords/{landlord.id}/appointments/")
+        client = landlord_client(landlord)
+        response = client.get(f"/api/v1/landlords/landlords/{landlord.id}/appointments/")
         assert response.status_code == 200
         assert len(response.data["data"]) == 2
+
+    def test_appointment_list_forbidden_for_other_user(self):
+        landlord = make_landlord()
+        other = User.objects.create_user(username="08000000000", password="x")
+        client = APIClient()
+        client.force_authenticate(user=other)
+
+        response = client.get(f"/api/v1/landlords/landlords/{landlord.id}/appointments/")
+        assert response.status_code == 403
+
+    def test_appointment_list_requires_auth(self):
+        landlord = make_landlord()
+        response = APIClient().get(f"/api/v1/landlords/landlords/{landlord.id}/appointments/")
+        assert response.status_code == 401
 
 
 class TestDocumentVault:
@@ -342,10 +370,23 @@ class TestDocumentVault:
         with open(__file__, "rb") as f:
             self._upload(landlord.id, doc_type="government_id", file=f)
 
-        response = APIClient().get(f"/api/v1/landlords/landlords/{landlord.id}/documents/")
+        client = landlord_client(landlord)
+        response = client.get(f"/api/v1/landlords/landlords/{landlord.id}/documents/")
         assert response.status_code == 200
         assert len(response.data["data"]) == 2
 
+    def test_document_list_forbidden_for_other_user(self):
+        landlord = make_landlord()
+        with open(__file__, "rb") as f:
+            self._upload(landlord.id, file=f)
+
+        other = User.objects.create_user(username="08000000000", password="x")
+        client = APIClient()
+        client.force_authenticate(user=other)
+        response = client.get(f"/api/v1/landlords/landlords/{landlord.id}/documents/")
+        assert response.status_code == 403
+
     def test_document_list_unknown_landlord_404(self):
-        response = APIClient().get("/api/v1/landlords/landlords/00000000-0000-0000-0000-000000000000/documents/")
+        client = landlord_client(make_landlord())
+        response = client.get("/api/v1/landlords/landlords/00000000-0000-0000-0000-000000000000/documents/")
         assert response.status_code == 404

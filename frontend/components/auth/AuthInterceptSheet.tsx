@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { submitOTP, verifyOTP } from '@/lib/api-client';
+import { submitOTP, verifyOTP, saveUserSession } from '@/lib/api-client';
 
 const BRAND_COLOR = '#04164a';
 
@@ -105,11 +105,9 @@ export const AuthInterceptSheet: React.FC<AuthInterceptSheetProps> = ({
       if (!verifyData) throw new Error('Invalid response from server');
       const { access, refresh, user } = verifyData;
       
-      // Store tokens
+      // Store tokens (session-scoped - cleared when the tab closes)
       if (typeof window !== 'undefined') {
-        localStorage.setItem('access_token', access);
-        localStorage.setItem('refresh_token', refresh);
-        localStorage.setItem('user', JSON.stringify(user));
+        saveUserSession(access, refresh, user);
       }
       
       setIsSubmitting(false);

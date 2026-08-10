@@ -1,5 +1,7 @@
 import os
+import secrets
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.core.management.base import BaseCommand
@@ -187,13 +189,21 @@ class Command(BaseCommand):
             # Password resolution order:
             #   1. CLI flag (--ceo-password)  -> highest priority
             #   2. Environment variable (CEO_PASSWORD)  -> loaded from .env or shell
-            #   3. Temporary placeholder (ChangeMe-ROLE!)  -> must be changed after first login
+            #   3. Development placeholder (ChangeMe-ROLE!)  -> DEBUG only
+            #   4. Random one-time password  -> production (printed once, never stored)
             env_var = f"{role.upper()}_PASSWORD"
-            password = (
-                options.get(f"{role}_password")
-                or os.environ.get(env_var, "")
-                or f"ChangeMe-{role.upper()}!"
-            )
+            password = options.get(f"{role}_password") or os.environ.get(env_var, "")
+            if not password:
+                if settings.DEBUG:
+                    password = f"ChangeMe-{role.upper()}!"
+                else:
+                    password = secrets.token_urlsafe(18)
+                    self.stdout.write(
+                        self.style.WARNING(
+                            f"No password provided for {username}; a one-time password was generated. "
+                            f"Save it now, it cannot be retrieved later: {password}"
+                        )
+                    )
 
             user, created = User.objects.get_or_create(
                 username=username,

@@ -20,6 +20,7 @@ urlpatterns = [
 
     # API v1 endpoints
     path('api/v1/crm/', include('apps.crm.urls', namespace='crm')),
+    path('api/v1/careers/', include('apps.careers.urls', namespace='careers')),
     path('api/v1/properties/', include('apps.properties.urls', namespace='properties')),
     path('api/v1/landlords/', include('apps.landlords.urls', namespace='landlords')),
     path('api/v1/compliance/', include('apps.compliance.urls', namespace='compliance')),

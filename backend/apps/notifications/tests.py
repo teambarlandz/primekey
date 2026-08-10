@@ -30,14 +30,25 @@ def make_landlord():
 @pytest.fixture
 def agent_client():
     user = User.objects.create_user(username="08050000000", password="testpass123")
-    AgentProfile.objects.create(user=user, phone="08050000000", full_name="Test Agent")
+    AgentProfile.objects.create(user=user, phone="08050000000", full_name="Test Agent", role="manager")
     client = APIClient()
     client.force_authenticate(user=user)
     return client
 
 
+@pytest.fixture
+def landlord_client(make_landlord):
+    def _client(landlord=None):
+        landlord = landlord or make_landlord()
+        user = User.objects.create_user(username=landlord.phone, password="testpass123")
+        client = APIClient()
+        client.force_authenticate(user=user)
+        return client
+    return _client
+
+
 @pytest.mark.django_db
-def test_list_notifications_for_landlord(make_landlord):
+def test_list_notifications_for_landlord(make_landlord, landlord_client):
     landlord = make_landlord()
     Notification.objects.create(
         recipient_type="landlord",
@@ -53,7 +64,7 @@ def test_list_notifications_for_landlord(make_landlord):
         is_read=True,
     )
 
-    response = APIClient().get(
+    response = landlord_client(landlord).get(
         f"/api/v1/notifications/?recipient_type=landlord&recipient_id={landlord.id}"
     )
     assert response.status_code == 200
@@ -62,7 +73,26 @@ def test_list_notifications_for_landlord(make_landlord):
 
 
 @pytest.mark.django_db
-def test_list_agent_notifications_without_recipient_id(make_landlord):
+def test_list_notifications_forbidden_for_other_user(make_landlord):
+    landlord = make_landlord()
+    Notification.objects.create(
+        recipient_type="landlord",
+        recipient_id=landlord.id,
+        title="Listing approved",
+        message="Your listing was approved.",
+    )
+
+    other = User.objects.create_user(username="08099999999", password="testpass123")
+    client = APIClient()
+    client.force_authenticate(user=other)
+    response = client.get(
+        f"/api/v1/notifications/?recipient_type=landlord&recipient_id={landlord.id}"
+    )
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_list_agent_notifications_without_recipient_id(make_landlord, agent_client):
     landlord = make_landlord()
     Notification.objects.create(
         recipient_type="agent",
@@ -71,19 +101,19 @@ def test_list_agent_notifications_without_recipient_id(make_landlord):
         message="A landlord updated their appointment.",
     )
 
-    response = APIClient().get("/api/v1/notifications/?recipient_type=agent")
+    response = agent_client.get("/api/v1/notifications/?recipient_type=agent")
     assert response.status_code == 200
     assert len(response.data["data"]) == 1
 
 
 @pytest.mark.django_db
-def test_requires_recipient_type():
-    response = APIClient().get("/api/v1/notifications/")
+def test_requires_recipient_type(agent_client):
+    response = agent_client.get("/api/v1/notifications/")
     assert response.status_code == 400
 
 
 @pytest.mark.django_db
-def test_mark_notification_read(make_landlord):
+def test_mark_notification_read(make_landlord, landlord_client):
     landlord = make_landlord()
     notification = Notification.objects.create(
         recipient_type="landlord",
@@ -92,7 +122,7 @@ def test_mark_notification_read(make_landlord):
         message="Message",
     )
 
-    response = APIClient().patch(
+    response = landlord_client(landlord).patch(
         f"/api/v1/notifications/{notification.id}/",
         {"is_read": True},
         format="json",

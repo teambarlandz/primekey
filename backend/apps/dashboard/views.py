@@ -9,7 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from apps.landlords.models import LandlordProfile, PropertyIntake, Appointment, DocumentVault
 from apps.crm.models import ConciergeLead
 from apps.notifications.services import create_notification
-from .permissions import IsAgent
+from .permissions import IsAgent, IsManager
 from .serializers import (
     DashboardLandlordSerializer,
     DashboardIntakeSerializer,
@@ -24,6 +24,7 @@ from .serializers import (
 )
 
 AGENT_PERMISSIONS = [IsAuthenticated, IsAgent]
+MANAGER_PERMISSIONS = [IsAuthenticated, IsManager]
 
 
 class DashboardSummaryView(APIView):
@@ -95,7 +96,7 @@ class DashboardAppointmentListView(APIView):
 
 
 class LandlordVerificationUpdateView(APIView):
-    permission_classes = AGENT_PERMISSIONS
+    permission_classes = MANAGER_PERMISSIONS
 
     def patch(self, request, pk):
         try:
@@ -134,7 +135,7 @@ class LandlordVerificationUpdateView(APIView):
 
 
 class IntakeStatusUpdateView(APIView):
-    permission_classes = AGENT_PERMISSIONS
+    permission_classes = MANAGER_PERMISSIONS
 
     def patch(self, request, pk):
         try:
@@ -251,7 +252,7 @@ class DashboardDocumentListView(APIView):
 
 
 class DocumentReviewView(APIView):
-    permission_classes = AGENT_PERMISSIONS
+    permission_classes = MANAGER_PERMISSIONS
 
     def patch(self, request, pk):
         try:

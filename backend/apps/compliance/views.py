@@ -6,12 +6,16 @@ from django.utils import timezone
 from django.db import transaction
 from django.db.models import Q
 from django.conf import settings
+from django.utils.decorators import method_decorator
+from django_ratelimit.decorators import ratelimit
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 
+from core.security import get_client_ip
+from apps.dashboard.permissions import IsStaffOrAgent
 from .models import (
     ConsentLog, ExportRequest, ErasureRequest, AnonymizationLog
 )
@@ -25,6 +29,27 @@ from apps.crm.models import ConciergeLead, ConsentLog as CRMConsentLog
 from apps.properties.models import Property
 
 
+def _email_ip_key(group, request):
+    """Rate-limit bucket per email + client IP."""
+    return f"{get_client_ip(request)}:{request.data.get('email', 'unknown')}"
+
+
+def _request_owned_by(request, export_request):
+    """Whether the authenticated user owns a data subject request."""
+    user = request.user
+    if not user.is_authenticated:
+        return False
+    if export_request.phone and export_request.phone == user.username:
+        return True
+    if (
+        export_request.email
+        and user.email
+        and export_request.email.lower() == user.email.lower()
+    ):
+        return True
+    return False
+
+
 class StandardPagination(PageNumberPagination):
     page_size = 50
     page_size_query_param = 'page_size'
@@ -36,9 +61,9 @@ class StandardPagination(PageNumberPagination):
 class ConsentLogListView(APIView):
     """
     GET /api/v1/compliance/consent-logs/
-    List consent logs (authenticated).
+    List consent logs (staff or agent only - contains PII).
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsStaffOrAgent]
     
     def get(self, request):
         queryset = ConsentLog.objects.all()
@@ -109,7 +134,8 @@ class ExportRequestVerifyView(APIView):
     Verify export request with 6-digit code.
     """
     permission_classes = [AllowAny]
-    
+
+    @method_decorator(ratelimit(key=_email_ip_key, rate='10/m', method='POST'))
     def post(self, request):
         serializer = ExportRequestVerifySerializer(data=request.data)
         if serializer.is_valid():
@@ -143,9 +169,9 @@ class ExportRequestVerifyView(APIView):
 class ExportRequestStatusView(APIView):
     """
     GET /api/v1/compliance/export/<uuid:pk>/
-    Check export request status and get download URL.
+    Check export request status and get download URL (owner only).
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     
     def get(self, request, pk):
         try:
@@ -154,6 +180,12 @@ class ExportRequestStatusView(APIView):
             return Response(
                 {"success": False, "message": "Export request not found."},
                 status=status.HTTP_404_NOT_FOUND
+            )
+        
+        if not _request_owned_by(request, export_request):
+            return Response(
+                {"success": False, "message": "You can only view your own export requests."},
+                status=status.HTTP_403_FORBIDDEN
             )
         
         return Response(ExportRequestSerializer(export_request).data)
@@ -192,7 +224,8 @@ class ErasureRequestVerifyView(APIView):
     Verify erasure request with 6-digit code.
     """
     permission_classes = [AllowAny]
-    
+
+    @method_decorator(ratelimit(key=_email_ip_key, rate='10/m', method='POST'))
     def post(self, request):
         serializer = ErasureRequestVerifySerializer(data=request.data)
         if serializer.is_valid():
@@ -226,9 +259,9 @@ class ErasureRequestVerifyView(APIView):
 class ErasureRequestStatusView(APIView):
     """
     GET /api/v1/compliance/erase/<uuid:pk>/
-    Check erasure request status.
+    Check erasure request status (owner only).
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     
     def get(self, request, pk):
         try:
@@ -239,6 +272,12 @@ class ErasureRequestStatusView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
+        if not _request_owned_by(request, erasure_request):
+            return Response(
+                {"success": False, "message": "You can only view your own erasure requests."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
         return Response(ErasureRequestSerializer(erasure_request).data)
 
 
@@ -247,9 +286,9 @@ class ErasureRequestStatusView(APIView):
 class AnonymizationLogListView(APIView):
     """
     GET /api/v1/compliance/anonymization-logs/
-    List anonymization audit logs (authenticated).
+    List anonymization audit logs (staff or agent only).
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsStaffOrAgent]
     
     def get(self, request):
         queryset = AnonymizationLog.objects.all()
@@ -281,3 +320,60 @@ class AnonymizationLogListView(APIView):
         page = paginator.paginate_queryset(queryset, request)
         serializer = AnonymizationLogSerializer(page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+
+# ===================== EXPORT DOWNLOAD =====================
+
+class ExportDownloadView(APIView):
+    """
+    GET /api/v1/compliance/export/download/<uuid:pk>/
+    Download a completed data export (owner only, until expiry).
+    The file lives outside MEDIA_ROOT so it is never served by nginx directly.
+    """
+    permission_classes = [IsAuthenticated]
+
+    @method_decorator(ratelimit(key='ip', rate='5/m', method='GET'), name='get')
+    def get(self, request, pk):
+        try:
+            export_request = ExportRequest.objects.get(pk=pk)
+        except ExportRequest.DoesNotExist:
+            return Response(
+                {"success": False, "message": "Export request not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if not _request_owned_by(request, export_request):
+            return Response(
+                {"success": False, "message": "You can only download your own export."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if export_request.status != 'completed':
+            return Response(
+                {"success": False, "message": "Export is not ready for download."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if export_request.expires_at and timezone.now() > export_request.expires_at:
+            return Response(
+                {"success": False, "message": "Export download link has expired."},
+                status=status.HTTP_410_GONE,
+            )
+
+        file_path = settings.EXPORT_STORAGE_DIR / f"{export_request.id}.json"
+        if not file_path.exists():
+            return Response(
+                {"success": False, "message": "Export file not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        from django.http import FileResponse
+
+        response = FileResponse(
+            open(file_path, 'rb'),
+            content_type='application/json',
+        )
+        response['Content-Disposition'] = (
+            f'attachment; filename="primekey-data-export-{export_request.id}.json"'
+        )
+        return response

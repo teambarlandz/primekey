@@ -33,6 +33,7 @@ import {
   updateAppointment,
   getAgentProfile,
   isAgentLoggedIn,
+  ensureValidAgentToken,
   clearAgentSession,
   DashboardSummary,
   DashboardLandlord,
@@ -118,8 +119,64 @@ export default function AgentDashboardPage() {
       router.replace('/dashboard/agent/login');
       return;
     }
-    setAuthed(true);
+    // Refresh the access token if it is expired/expiring so the session
+    // stays usable without re-login.
+    ensureValidAgentToken().then((ok) => {
+      if (!ok) {
+        clearAgentSession();
+        router.replace('/dashboard/agent/login');
+        return;
+      }
+      setAuthed(true);
+    });
   }, [router]);
+
+  // Idle timeout: sign out after 30 minutes of inactivity.
+  useEffect(() => {
+    if (authed !== true) return;
+    const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
+    let timer: NodeJS.Timeout | null = null;
+
+    const signOut = () => {
+      clearAgentSession();
+      setAgentProfile(null);
+      setAuthed(null);
+      router.replace('/dashboard/agent/login');
+    };
+
+    const resetTimer = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(signOut, IDLE_TIMEOUT_MS);
+    };
+
+    const events: Array<keyof WindowEventMap> = ['pointerdown', 'keydown', 'touchstart', 'scroll'];
+    events.forEach((event) => window.addEventListener(event, resetTimer));
+    resetTimer();
+
+    return () => {
+      if (timer) clearTimeout(timer);
+      events.forEach((event) => window.removeEventListener(event, resetTimer));
+    };
+  }, [authed, router]);
+
+  // Re-validate the token whenever the tab regains focus.
+  useEffect(() => {
+    if (authed !== true) return;
+    const onFocus = () => {
+      ensureValidAgentToken().then((ok) => {
+        if (!ok) {
+          clearAgentSession();
+          setAgentProfile(null);
+          setAuthed(null);
+          router.replace('/dashboard/agent/login');
+        }
+      });
+    };
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [authed, router]);
+
+  const isManager = agentProfile?.role === 'manager' || agentProfile?.role === 'admin';
 
   const handleLogout = () => {
     clearAgentSession();
@@ -129,6 +186,12 @@ export default function AgentDashboardPage() {
   };
 
   const loadAll = async () => {
+    const tokenOk = await ensureValidAgentToken();
+    if (!tokenOk) {
+      clearAgentSession();
+      router.replace('/dashboard/agent/login');
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -581,14 +644,14 @@ export default function AgentDashboardPage() {
                   <LeadTable
                     leads={filteredLeads}
                     onView={setSelectedLead}
-                    onVerify={handleVerify}
+                    onVerify={isManager ? handleVerify : undefined}
                     busyId={busyId}
                   />
                 </div>
               )}
               {tab === 'intakes' && (
                 <div className="dash-anim opacity-0">
-                  <IntakeTable intakes={filteredIntakes} onReview={handleReview} busyId={busyId} />
+                  <IntakeTable intakes={filteredIntakes} onReview={isManager ? handleReview : undefined} busyId={busyId} />
                 </div>
               )}
               {tab === 'appointments' && (
@@ -607,7 +670,7 @@ export default function AgentDashboardPage() {
               )}
               {tab === 'documents' && (
                 <div className="dash-anim opacity-0">
-                  <DocumentReviewTable documents={filteredDocuments} onReload={loadAll} />
+                  <DocumentReviewTable documents={filteredDocuments} onReload={loadAll} canReview={isManager} />
                 </div>
               )}
               {tab === 'whatsapp' && (

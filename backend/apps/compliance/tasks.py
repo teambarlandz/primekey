@@ -138,8 +138,13 @@ def compile_export_data(export_request_id: str):
         # Calculate hash for integrity
         data_hash = hashlib.sha256(export_json.encode()).hexdigest()
         
-        # In production, upload to secure storage (S3, etc.) and generate signed URL
-        # For now, we'll note it's ready for download
+        # Persist the file outside MEDIA_ROOT so nginx never serves it directly.
+        export_dir = settings.EXPORT_STORAGE_DIR
+        export_dir.mkdir(parents=True, exist_ok=True)
+        file_path = export_dir / f"{export_request.id}.json"
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(export_json)
+        
         export_request.records_count = records_count
         export_request.status = 'completed'
         export_request.completed_at = timezone.now()

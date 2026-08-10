@@ -238,7 +238,9 @@ export type LandlordRegistrationPayload = {
 const BASE_URL_RAW = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 const API_BASE_URL = BASE_URL_RAW.replace(/\/+$/, "");
 
-// --- Agent auth token helpers (localStorage-backed) ---
+// --- Agent auth token helpers (sessionStorage-backed) ---
+// Tokens live in sessionStorage so they die with the browser tab:
+// closing the tab ends the agent session instead of persisting for days.
 const AGENT_ACCESS_KEY = "primekey_agent_access";
 const AGENT_REFRESH_KEY = "primekey_agent_refresh";
 const AGENT_PROFILE_KEY = "primekey_agent_profile";
@@ -250,19 +252,37 @@ export interface AgentSessionProfile {
   role: "agent" | "manager" | "admin";
 }
 
+function decodeJwtPayload(token: string): { exp?: number } | null {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return null;
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+    return JSON.parse(atob(padded));
+  } catch {
+    return null;
+  }
+}
+
+export function isTokenExpired(token: string, leewaySeconds = 30): boolean {
+  const payload = decodeJwtPayload(token);
+  if (!payload || typeof payload.exp !== 'number') return false;
+  return Date.now() / 1000 + leewaySeconds >= payload.exp;
+}
+
 export function getAgentAccessToken(): string | null {
   if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(AGENT_ACCESS_KEY);
+  return window.sessionStorage.getItem(AGENT_ACCESS_KEY);
 }
 
 export function getAgentRefreshToken(): string | null {
   if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(AGENT_REFRESH_KEY);
+  return window.sessionStorage.getItem(AGENT_REFRESH_KEY);
 }
 
 export function getAgentProfile(): AgentSessionProfile | null {
   if (typeof window === "undefined") return null;
-  const raw = window.localStorage.getItem(AGENT_PROFILE_KEY);
+  const raw = window.sessionStorage.getItem(AGENT_PROFILE_KEY);
   if (!raw) return null;
   try {
     return JSON.parse(raw) as AgentSessionProfile;
@@ -272,24 +292,76 @@ export function getAgentProfile(): AgentSessionProfile | null {
 }
 
 export function isAgentLoggedIn(): boolean {
-  return getAgentAccessToken() !== null;
+  const token = getAgentAccessToken();
+  if (!token) return false;
+  return !isTokenExpired(token);
 }
 
 export function saveAgentSession(access: string, refresh: string, profile: AgentSessionProfile): void {
-  window.localStorage.setItem(AGENT_ACCESS_KEY, access);
-  window.localStorage.setItem(AGENT_REFRESH_KEY, refresh);
-  window.localStorage.setItem(AGENT_PROFILE_KEY, JSON.stringify(profile));
+  window.sessionStorage.setItem(AGENT_ACCESS_KEY, access);
+  window.sessionStorage.setItem(AGENT_REFRESH_KEY, refresh);
+  window.sessionStorage.setItem(AGENT_PROFILE_KEY, JSON.stringify(profile));
 }
 
 export function clearAgentSession(): void {
-  window.localStorage.removeItem(AGENT_ACCESS_KEY);
-  window.localStorage.removeItem(AGENT_REFRESH_KEY);
-  window.localStorage.removeItem(AGENT_PROFILE_KEY);
+  window.sessionStorage.removeItem(AGENT_ACCESS_KEY);
+  window.sessionStorage.removeItem(AGENT_REFRESH_KEY);
+  window.sessionStorage.removeItem(AGENT_PROFILE_KEY);
 }
 
 function authHeaders(): Record<string, string> {
   const token = getAgentAccessToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+// --- Public (landlord/buyer) user session helpers (sessionStorage-backed) ---
+const USER_ACCESS_KEY = "primekey_user_access";
+const USER_REFRESH_KEY = "primekey_user_refresh";
+const USER_PROFILE_KEY = "primekey_user_profile";
+
+export interface UserSessionProfile {
+  id: string;
+  phone: string;
+  is_new_user?: boolean;
+}
+
+export function saveUserSession(access: string, refresh: string, user: UserSessionProfile): void {
+  window.sessionStorage.setItem(USER_ACCESS_KEY, access);
+  window.sessionStorage.setItem(USER_REFRESH_KEY, refresh);
+  window.sessionStorage.setItem(USER_PROFILE_KEY, JSON.stringify(user));
+}
+
+export function getUserAccessToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.sessionStorage.getItem(USER_ACCESS_KEY);
+}
+
+export function getUserRefreshToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.sessionStorage.getItem(USER_REFRESH_KEY);
+}
+
+export function getUserProfile(): UserSessionProfile | null {
+  if (typeof window === "undefined") return null;
+  const raw = window.sessionStorage.getItem(USER_PROFILE_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as UserSessionProfile;
+  } catch {
+    return null;
+  }
+}
+
+export function isUserLoggedIn(): boolean {
+  const token = getUserAccessToken();
+  if (!token) return false;
+  return !isTokenExpired(token);
+}
+
+export function clearUserSession(): void {
+  window.sessionStorage.removeItem(USER_ACCESS_KEY);
+  window.sessionStorage.removeItem(USER_REFRESH_KEY);
+  window.sessionStorage.removeItem(USER_PROFILE_KEY);
 }
 
 export interface AuthResponse {
@@ -397,9 +469,21 @@ export async function refreshAgentAccessToken(): Promise<boolean> {
     return false;
   }
 
-  window.localStorage.setItem(AGENT_ACCESS_KEY, data.access);
-  if (data.refresh) window.localStorage.setItem(AGENT_REFRESH_KEY, data.refresh);
+  window.sessionStorage.setItem(AGENT_ACCESS_KEY, data.access);
+  if (data.refresh) window.sessionStorage.setItem(AGENT_REFRESH_KEY, data.refresh);
   return true;
+}
+
+/**
+ * Ensures a fresh agent access token is available, refreshing it if it is
+ * expired or about to expire. Returns false if the session is unusable.
+ */
+export async function ensureValidAgentToken(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  const token = getAgentAccessToken();
+  if (!token) return false;
+  if (!isTokenExpired(token)) return true;
+  return refreshAgentAccessToken();
 }
 
 export interface ApiSuccessResponse<T = unknown> {
@@ -1358,6 +1442,44 @@ export async function submitPropertyInquiry(
 /**
  * Search properties from the backend API
  */
+export interface JobOpening {
+  id: string;
+  title: string;
+  team: string;
+  location: string;
+  employment_type: string;
+  employment_type_display: string;
+  summary: string;
+  application_email: string;
+}
+
+export interface JobOpeningsResponse {
+  success: boolean;
+  count: number;
+  results: JobOpening[];
+}
+
+/**
+ * Fetch active job openings for the careers page.
+ */
+export async function fetchJobOpenings(): Promise<JobOpening[]> {
+  const response = await fetch(`${API_BASE_URL}/careers/openings/`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const errorMessage = data?.message || data?.detail || "Failed to load job openings.";
+    throw new ApiClientError(errorMessage, response.status, data?.errors);
+  }
+
+  const payload = data as JobOpeningsResponse | { data?: JobOpeningsResponse };
+  const body = ((payload as { data?: JobOpeningsResponse }).data ?? payload) as JobOpeningsResponse;
+  return (body.results ?? []) as JobOpening[];
+}
+
 export async function searchProperties(
   filters: SearchFilterValues,
   page = 1,

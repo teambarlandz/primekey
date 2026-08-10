@@ -17,6 +17,7 @@ const LIST_PROPERTY_LINKS: NavDropdownItem[] = [
 
 const COMPANY_LINKS: NavDropdownItem[] = [
   { label: 'About Us', href: '/about' },
+  { label: 'Careers', href: '/careers' },
   { label: 'FAQ', href: '/faq' },
   { label: 'Contact', href: '/contact' },
 ];

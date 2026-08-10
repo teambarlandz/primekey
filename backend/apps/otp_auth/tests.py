@@ -26,6 +26,9 @@ def send_and_verify(client, phone, purpose):
 
 
 class TestAgentLogin:
+    @pytest.fixture(autouse=True)
+    def _debug_mode(self, settings):
+        settings.DEBUG = True
     def test_agent_login_returns_tokens_and_role(self):
         user = User.objects.create_user(username="08070000000", password="x")
         agent = AgentProfile.objects.create(

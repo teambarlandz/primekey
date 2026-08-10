@@ -24,9 +24,10 @@ const STATUS_STYLES: Record<string, string> = {
 interface DocumentReviewTableProps {
   documents: DocumentVaultEntry[];
   onReload: () => Promise<void>;
+  canReview?: boolean;
 }
 
-export const DocumentReviewTable: React.FC<DocumentReviewTableProps> = ({ documents, onReload }) => {
+export const DocumentReviewTable: React.FC<DocumentReviewTableProps> = ({ documents, onReload, canReview = true }) => {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
@@ -109,7 +110,7 @@ export const DocumentReviewTable: React.FC<DocumentReviewTableProps> = ({ docume
                 </td>
                 <td className="p-4 whitespace-nowrap">{new Date(doc.uploaded_at).toLocaleDateString('en-NG')}</td>
                 <td className="p-4">
-                  {doc.review_status === 'pending' ? (
+                  {doc.review_status === 'pending' && canReview ? (
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleReview(doc.id, 'approved')}

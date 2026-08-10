@@ -16,7 +16,7 @@ import {
   KeyRound,
 } from 'lucide-react';
 import { OtpAuthCard } from '@/components/auth/OtpAuthCard';
-import { submitOTP, verifyOTP } from '@/lib/api-client';
+import { submitOTP, verifyOTP, saveUserSession } from '@/lib/api-client';
 
 const BRAND_COLOR = '#04164a';
 
@@ -223,9 +223,7 @@ function LoginContent() {
                 | { access: string; refresh: string; user: { id: string; phone: string; is_new_user: boolean } }
                 | undefined;
               if (verifyData) {
-                localStorage.setItem('access_token', verifyData.access);
-                localStorage.setItem('refresh_token', verifyData.refresh);
-                localStorage.setItem('user', JSON.stringify(verifyData.user));
+                saveUserSession(verifyData.access, verifyData.refresh, verifyData.user);
               }
               router.push(callbackUrl);
               router.refresh();

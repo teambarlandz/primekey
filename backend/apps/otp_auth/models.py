@@ -1,13 +1,18 @@
 import uuid
-import random
 from django.db import models
 from django.utils import timezone
 from django.conf import settings
+
+from core.security import generate_secure_code, hash_code
 
 
 class OTPCode(models.Model):
     """
     One-time password code for phone authentication.
+
+    Only a SHA-256 hash of the code is stored in the database; the plaintext
+    is available on the in-memory ``_plaintext_code`` attribute immediately
+    after creation (used only to surface ``dev_code`` in development).
     """
     PURPOSE_CHOICES = [
         ('login', 'Login / Sign In'),
@@ -18,7 +23,7 @@ class OTPCode(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     phone = models.CharField(max_length=20, db_index=True)
-    code = models.CharField(max_length=6)
+    code = models.CharField(max_length=64, help_text="SHA-256 hash of the 6-digit code")
     purpose = models.CharField(max_length=20, choices=PURPOSE_CHOICES, default='login')
     
     # Expiry
@@ -45,10 +50,15 @@ class OTPCode(models.Model):
     def __str__(self):
         return f"OTP for {self.phone} ({self.purpose}) - {'Used' if self.used else 'Active'}"
 
+    @staticmethod
+    def hash_code(code):
+        """Return the SHA-256 hex digest of a plaintext code."""
+        return hash_code(code)
+
     @classmethod
     def generate_code(cls):
-        """Generate a 6-digit numeric code."""
-        return ''.join(str(random.randint(0, 9)) for _ in range(6))
+        """Generate a cryptographically secure 6-digit numeric code."""
+        return generate_secure_code(6)
 
     @classmethod
     def create_otp(cls, phone, purpose='login', expiry_minutes=5, ip_address=None, user_agent=None):
@@ -59,14 +69,16 @@ class OTPCode(models.Model):
         code = cls.generate_code()
         expires_at = timezone.now() + timezone.timedelta(minutes=expiry_minutes)
         
-        return cls.objects.create(
+        otp = cls.objects.create(
             phone=phone,
-            code=code,
+            code=hash_code(code),
             purpose=purpose,
             expires_at=expires_at,
             ip_address=ip_address,
             user_agent=user_agent,
         )
+        otp._plaintext_code = code
+        return otp
 
     def verify(self, code):
         """Verify the provided code against this OTP."""
@@ -82,7 +94,7 @@ class OTPCode(models.Model):
         self.attempts += 1
         self.save(update_fields=['attempts'])
         
-        if self.code != code:
+        if self.hash_code(code) != self.code:
             return False, "Invalid code"
         
         self.used = True

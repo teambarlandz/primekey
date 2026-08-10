@@ -1,4 +1,7 @@
+from django.utils import timezone
 from rest_framework import serializers
+
+from core.security import generate_secure_code, hash_code
 from .models import (
     ConsentLog, ExportRequest, ErasureRequest, AnonymizationLog
 )
@@ -46,25 +49,16 @@ class ExportRequestCreateSerializer(serializers.ModelSerializer):
         return attrs
     
     def create(self, validated_data):
-        import random
-        import string
-        from django.utils import timezone
-        from django.core.mail import send_mail
-        
-        # Generate 6-digit verification code
-        code = ''.join(random.choices(string.digits, k=6))
-        validated_data['verification_code'] = code
+        # Generate a cryptographically secure 6-digit verification code.
+        # Only its SHA-256 hash is persisted.
+        code = generate_secure_code(6)
+        validated_data['verification_code'] = hash_code(code)
         validated_data['verification_sent_at'] = timezone.now()
         
         export_request = ExportRequest.objects.create(**validated_data)
         
-        # TODO: Send verification email/SMS
-        # send_mail(
-        #     subject='Verify Your Data Export Request',
-        #     message=f'Your verification code is: {code}',
-        #     from_email=settings.DEFAULT_FROM_EMAIL,
-        #     recipient_list=[export_request.email],
-        # )
+        # TODO: Send the plaintext code to the subject's email/SMS provider.
+        # The code is deliberately not stored or returned anywhere.
         
         return export_request
 
@@ -77,23 +71,27 @@ class ExportRequestVerifySerializer(serializers.Serializer):
     code = serializers.CharField(max_length=6, min_length=6)
     
     def validate(self, attrs):
-        try:
-            export_request = ExportRequest.objects.get(
-                email=attrs['email'],
-                verification_code=attrs['code'],
-                status='pending'
-            )
-        except ExportRequest.DoesNotExist:
-            raise serializers.ValidationError("Invalid or expired verification code.")
+        export_request = ExportRequest.objects.filter(
+            email=attrs['email'],
+            status='pending',
+        ).order_by('-created_at').first()
+        
+        if export_request is None:
+            raise serializers.ValidationError("No pending export request found for this email.")
         
         if export_request.verification_attempts >= 5:
             raise serializers.ValidationError("Too many failed attempts. Request a new code.")
         
         # Check code expiry (15 minutes)
         if export_request.verification_sent_at:
-            from django.utils import timezone
             if (timezone.now() - export_request.verification_sent_at).total_seconds() > 900:
                 raise serializers.ValidationError("Verification code has expired.")
+        
+        export_request.verification_attempts += 1
+        export_request.save(update_fields=['verification_attempts'])
+        
+        if export_request.verification_code != hash_code(attrs['code']):
+            raise serializers.ValidationError("Invalid or expired verification code.")
         
         attrs['export_request'] = export_request
         return attrs
@@ -129,18 +127,16 @@ class ErasureRequestCreateSerializer(serializers.ModelSerializer):
         return attrs
     
     def create(self, validated_data):
-        import random
-        import string
-        from django.utils import timezone
-        
-        # Generate 6-digit verification code
-        code = ''.join(random.choices(string.digits, k=6))
-        validated_data['verification_code'] = code
+        # Generate a cryptographically secure 6-digit verification code.
+        # Only its SHA-256 hash is persisted.
+        code = generate_secure_code(6)
+        validated_data['verification_code'] = hash_code(code)
         validated_data['verification_sent_at'] = timezone.now()
         
         erasure_request = ErasureRequest.objects.create(**validated_data)
         
-        # TODO: Send verification email/SMS
+        # TODO: Send the plaintext code to the subject's email/SMS provider.
+        
         return erasure_request
 
 
@@ -152,17 +148,26 @@ class ErasureRequestVerifySerializer(serializers.Serializer):
     code = serializers.CharField(max_length=6, min_length=6)
     
     def validate(self, attrs):
-        try:
-            erasure_request = ErasureRequest.objects.get(
-                email=attrs['email'],
-                verification_code=attrs['code'],
-                status='pending'
-            )
-        except ErasureRequest.DoesNotExist:
-            raise serializers.ValidationError("Invalid or expired verification code.")
+        erasure_request = ErasureRequest.objects.filter(
+            email=attrs['email'],
+            status='pending',
+        ).order_by('-created_at').first()
+        
+        if erasure_request is None:
+            raise serializers.ValidationError("No pending erasure request found for this email.")
         
         if erasure_request.verification_attempts >= 5:
             raise serializers.ValidationError("Too many failed attempts. Request a new code.")
+        
+        if erasure_request.verification_sent_at:
+            if (timezone.now() - erasure_request.verification_sent_at).total_seconds() > 900:
+                raise serializers.ValidationError("Verification code has expired.")
+        
+        erasure_request.verification_attempts += 1
+        erasure_request.save(update_fields=['verification_attempts'])
+        
+        if erasure_request.verification_code != hash_code(attrs['code']):
+            raise serializers.ValidationError("Invalid or expired verification code.")
         
         attrs['erasure_request'] = erasure_request
         return attrs

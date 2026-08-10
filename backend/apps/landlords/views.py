@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from .models import LandlordProfile, PropertyIntake, Appointment, DocumentVault
+from .access import can_access_landlord
 from .serializers import (
     LandlordProfileSerializer,
     PropertyIntakeSerializer,
@@ -49,6 +50,11 @@ class LandlordProfileDetailView(APIView):
                 {"success": False, "message": "Profile not found"},
                 status=status.HTTP_404_NOT_FOUND,
             )
+        if not can_access_landlord(request.user, profile):
+            return Response(
+                {"success": False, "message": "You can only access your own profile."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         serializer = LandlordProfileSerializer(profile)
         return Response(serializer.data)
 
@@ -75,7 +81,19 @@ class PropertyIntakeListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, landlord_pk):
-        intakes = PropertyIntake.objects.filter(landlord_id=landlord_pk)
+        try:
+            landlord = LandlordProfile.objects.get(pk=landlord_pk)
+        except LandlordProfile.DoesNotExist:
+            return Response(
+                {"success": False, "message": "Landlord not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        if not can_access_landlord(request.user, landlord):
+            return Response(
+                {"success": False, "message": "You can only access your own listings."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        intakes = PropertyIntake.objects.filter(landlord=landlord)
         serializer = PropertyIntakeSerializer(intakes, many=True)
         return Response({"success": True, "data": serializer.data})
 
@@ -99,24 +117,29 @@ class AppointmentCreateView(APIView):
 
 
 class AppointmentListView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, landlord_pk):
         try:
-            LandlordProfile.objects.get(pk=landlord_pk)
+            landlord = LandlordProfile.objects.get(pk=landlord_pk)
         except LandlordProfile.DoesNotExist:
             return Response(
                 {"success": False, "message": "Landlord not found"},
                 status=status.HTTP_404_NOT_FOUND,
             )
-        appointments = Appointment.objects.filter(landlord_id=landlord_pk)
+        if not can_access_landlord(request.user, landlord):
+            return Response(
+                {"success": False, "message": "You can only access your own appointments."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        appointments = Appointment.objects.filter(landlord=landlord)
         serializer = AppointmentSerializer(appointments, many=True)
         return Response({"success": True, "data": serializer.data})
 
 
 @method_decorator(ratelimit(key='ip', rate='10/m', method='PATCH'), name='patch')
 class AppointmentUpdateView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def patch(self, request, pk):
         try:
@@ -125,6 +148,12 @@ class AppointmentUpdateView(APIView):
             return Response(
                 {"success": False, "message": "Appointment not found"},
                 status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if not can_access_landlord(request.user, appointment.landlord):
+            return Response(
+                {"success": False, "message": "You can only update your own appointments."},
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         allowed_fields = {"status", "preferred_date", "time_slot"}
@@ -244,16 +273,21 @@ class DocumentUploadView(APIView):
 
 
 class DocumentListView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, landlord_pk):
         try:
-            LandlordProfile.objects.get(pk=landlord_pk)
+            landlord = LandlordProfile.objects.get(pk=landlord_pk)
         except LandlordProfile.DoesNotExist:
             return Response(
                 {"success": False, "message": "Landlord not found"},
                 status=status.HTTP_404_NOT_FOUND,
             )
-        documents = DocumentVault.objects.filter(landlord_id=landlord_pk)
+        if not can_access_landlord(request.user, landlord):
+            return Response(
+                {"success": False, "message": "You can only access your own documents."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        documents = DocumentVault.objects.filter(landlord=landlord)
         serializer = DocumentVaultSerializer(documents, many=True, context={'request': request})
         return Response({"success": True, "data": serializer.data})

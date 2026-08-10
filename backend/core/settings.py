@@ -9,6 +9,7 @@ from pathlib import Path
 from datetime import timedelta
 
 import environ
+from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse_lazy
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -37,6 +38,17 @@ DEBUG = env("DEBUG")
 
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 
+# Fail fast in production if critical security settings are left at insecure defaults
+if not DEBUG:
+    if SECRET_KEY == "django-insecure-dev-key-change-in-production":
+        raise ImproperlyConfigured(
+            "SECRET_KEY must be overridden when DEBUG=False. Set SECRET_KEY in the environment."
+        )
+    if not ALLOWED_HOSTS:
+        raise ImproperlyConfigured(
+            "ALLOWED_HOSTS must be set when DEBUG=False."
+        )
+
 
 # Application definition
 
@@ -54,12 +66,14 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Third-party apps
     "rest_framework",
+    "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     "drf_spectacular",
     "django_ratelimit",
     "django_q",
     # Local project apps
     "apps.crm",
+    "apps.careers",
     "apps.properties",
     "apps.landlords",
     "apps.compliance",
@@ -72,6 +86,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
+    "core.middleware.TrustedProxyIPMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -79,6 +94,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "core.middleware.IdleSessionMiddleware",
 ]
 
 ROOT_URLCONF = "core.urls"
@@ -149,6 +165,9 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# Protected storage for NDPR data exports (never served by nginx)
+EXPORT_STORAGE_DIR = BASE_DIR / "exports"
+
 
 CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
 CORS_ALLOW_CREDENTIALS = env("CORS_ALLOW_CREDENTIALS")
@@ -158,7 +177,7 @@ CORS_ALLOW_CREDENTIALS = env("CORS_ALLOW_CREDENTIALS")
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.AllowAny",
+        "rest_framework.permissions.IsAuthenticated",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -212,8 +231,13 @@ CACHES = {
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "sessions"
 
-# Rate limiting (django-ratelimit uses cache backend)
-RATELIMIT_USE_CACHE = "default"
+# Session lifecycle hardening
+SESSION_COOKIE_AGE = 8 * 60 * 60  # 8 hours absolute lifetime
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_IDLE_TIMEOUT_SECONDS = 30 * 60  # 30 minutes of inactivity
 
 # Django Q2 Configuration for background tasks
 DJANGO_Q_REDIS_URL = env("DJANGO_Q_REDIS_URL")
@@ -268,6 +292,8 @@ SIMPLE_JWT = {
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Security settings for production
+SECURE_REFERRER_POLICY = "same-origin"
+
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SECURE_HSTS_SECONDS = 31536000

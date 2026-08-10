@@ -10,6 +10,7 @@ from rest_framework.test import APIClient
 from rest_framework import status
 
 from .models import ConsentLog, ExportRequest, ErasureRequest, AnonymizationLog
+from core.security import hash_code
 from .serializers import (
     ConsentLogSerializer,
     ExportRequestSerializer, ExportRequestCreateSerializer, ExportRequestVerifySerializer,
@@ -52,7 +53,7 @@ class ExportRequestFactory:
             'email': 'user@example.com',
             'phone': '08031234567',
             'status': 'pending',
-            'verification_code': '123456',
+            'verification_code': hash_code('123456'),
             'verification_sent_at': timezone.now(),
         }
         if overrides:
@@ -67,7 +68,7 @@ class ErasureRequestFactory:
             'email': 'user@example.com',
             'phone': '08031234567',
             'status': 'pending',
-            'verification_code': '654321',
+            'verification_code': hash_code('654321'),
             'verification_sent_at': timezone.now(),
         }
         if overrides:
@@ -128,7 +129,7 @@ class TestExportRequestModel:
     def test_create(self, db):
         req = ExportRequestFactory.create()
         assert req.status == 'pending'
-        assert req.verification_code == '123456'
+        assert req.verification_code == hash_code('123456')
         assert isinstance(req.id, uuid.UUID)
 
     def test_str(self, db):
@@ -145,7 +146,7 @@ class TestErasureRequestModel:
     def test_create(self, db):
         req = ErasureRequestFactory.create()
         assert req.status == 'pending'
-        assert req.verification_code == '654321'
+        assert req.verification_code == hash_code('654321')
 
     def test_str(self, db):
         req = ErasureRequestFactory.create()
@@ -198,7 +199,7 @@ class TestExportRequestCreateSerializer:
         assert serializer.is_valid()
         req = serializer.save()
         assert req.verification_code is not None
-        assert len(req.verification_code) == 6
+        assert len(req.verification_code) == 64
         assert req.verification_sent_at is not None
 
 
@@ -254,7 +255,7 @@ class TestErasureRequestCreateSerializer:
         assert serializer.is_valid()
         req = serializer.save()
         assert req.verification_code is not None
-        assert len(req.verification_code) == 6
+        assert len(req.verification_code) == 64
 
 
 class TestErasureRequestVerifySerializer:
@@ -344,17 +345,34 @@ class TestExportRequestVerifyView:
 
 
 class TestExportRequestStatusView:
+    def _owner_client(self):
+        client = APIClient()
+        user = User.objects.create_user(username='08031234567', password='pass')
+        client.force_authenticate(user=user)
+        return client
+
     def test_get_status(self, db):
         req = ExportRequestFactory.create()
-        client = APIClient()
-        response = client.get(f'/api/v1/compliance/export/{req.id}/')
+        response = self._owner_client().get(f'/api/v1/compliance/export/{req.id}/')
         assert response.status_code == status.HTTP_200_OK
         assert response.data['status'] == 'pending'
 
     def test_not_found(self, db):
-        client = APIClient()
-        response = client.get(f'/api/v1/compliance/export/{uuid.uuid4()}/')
+        response = self._owner_client().get(f'/api/v1/compliance/export/{uuid.uuid4()}/')
         assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_forbidden_for_other_user(self, db):
+        req = ExportRequestFactory.create()
+        client = APIClient()
+        other = User.objects.create_user(username='otheruser', password='pass')
+        client.force_authenticate(user=other)
+        response = client.get(f'/api/v1/compliance/export/{req.id}/')
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_requires_auth(self, db):
+        req = ExportRequestFactory.create()
+        response = APIClient().get(f'/api/v1/compliance/export/{req.id}/')
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 class TestErasureRequestCreateView:
@@ -388,12 +406,25 @@ class TestErasureRequestVerifyView:
 
 
 class TestErasureRequestStatusView:
+    def _owner_client(self):
+        client = APIClient()
+        user = User.objects.create_user(username='08031234567', password='pass')
+        client.force_authenticate(user=user)
+        return client
+
     def test_get_status(self, db):
         req = ErasureRequestFactory.create()
-        client = APIClient()
-        response = client.get(f'/api/v1/compliance/erase/{req.id}/')
+        response = self._owner_client().get(f'/api/v1/compliance/erase/{req.id}/')
         assert response.status_code == status.HTTP_200_OK
         assert response.data['status'] == 'pending'
+
+    def test_forbidden_for_other_user(self, db):
+        req = ErasureRequestFactory.create()
+        client = APIClient()
+        other = User.objects.create_user(username='otheruser', password='pass')
+        client.force_authenticate(user=other)
+        response = client.get(f'/api/v1/compliance/erase/{req.id}/')
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
 class TestConsentLogListView:
@@ -408,7 +439,7 @@ class TestConsentLogListView:
         ConsentLogFactory.create()
         ConsentLogFactory.create({'email': 'other@example.com', 'purpose': 'marketing_emails'})
         client = APIClient()
-        user = User.objects.create_user(username='admin', password='pass')
+        user = User.objects.create_user(username='admin', password='pass', is_staff=True)
         client.force_authenticate(user=user)
         response = client.get(self.URL)
         assert response.status_code == status.HTTP_200_OK
@@ -418,7 +449,7 @@ class TestConsentLogListView:
         ConsentLogFactory.create()
         ConsentLogFactory.create({'email': 'other@example.com', 'purpose': 'marketing_emails'})
         client = APIClient()
-        user = User.objects.create_user(username='admin', password='pass')
+        user = User.objects.create_user(username='admin', password='pass', is_staff=True)
         client.force_authenticate(user=user)
         response = client.get(self.URL, {'purpose': 'marketing_emails'})
         assert response.status_code == status.HTTP_200_OK
@@ -436,7 +467,7 @@ class TestAnonymizationLogListView:
     def test_lists_logs(self, db):
         AnonymizationLogFactory.create()
         client = APIClient()
-        user = User.objects.create_user(username='admin', password='pass')
+        user = User.objects.create_user(username='admin', password='pass', is_staff=True)
         client.force_authenticate(user=user)
         response = client.get(self.URL)
         assert response.status_code == status.HTTP_200_OK

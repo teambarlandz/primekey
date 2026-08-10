@@ -35,6 +35,14 @@ def agent_client(make_agent):
 
 
 @pytest.fixture
+def manager_client(make_agent):
+    agent = make_agent(role="manager")
+    client = APIClient()
+    client.force_authenticate(user=agent.user)
+    return client
+
+
+@pytest.fixture
 def make_landlord():
     def _make(**overrides):
         data = {
@@ -181,11 +189,11 @@ def test_dashboard_appointments_include_landlord_details(make_landlord, agent_cl
 
 
 @pytest.mark.django_db
-def test_update_landlord_verification(make_landlord, agent_client):
+def test_update_landlord_verification(make_landlord, manager_client):
     landlord = make_landlord()
     assert landlord.verification_status == "pending"
 
-    response = agent_client.patch(
+    response = manager_client.patch(
         f"/api/v1/dashboard/landlords/{landlord.id}/verification/",
         {"verification_status": "approved"},
         format="json",
@@ -196,9 +204,9 @@ def test_update_landlord_verification(make_landlord, agent_client):
 
 
 @pytest.mark.django_db
-def test_update_landlord_verification_invalid(make_landlord, agent_client):
+def test_update_landlord_verification_invalid(make_landlord, manager_client):
     landlord = make_landlord()
-    response = agent_client.patch(
+    response = manager_client.patch(
         f"/api/v1/dashboard/landlords/{landlord.id}/verification/",
         {"verification_status": "not_a_status"},
         format="json",
@@ -207,9 +215,9 @@ def test_update_landlord_verification_invalid(make_landlord, agent_client):
 
 
 @pytest.mark.django_db
-def test_update_landlord_verification_not_found(agent_client):
+def test_update_landlord_verification_not_found(manager_client):
     import uuid
-    response = agent_client.patch(
+    response = manager_client.patch(
         f"/api/v1/dashboard/landlords/{uuid.uuid4()}/verification/",
         {"verification_status": "approved"},
         format="json",
@@ -218,7 +226,18 @@ def test_update_landlord_verification_not_found(agent_client):
 
 
 @pytest.mark.django_db
-def test_update_intake_status(make_landlord, agent_client):
+def test_agent_cannot_approve_landlord(make_landlord, agent_client):
+    landlord = make_landlord()
+    response = agent_client.patch(
+        f"/api/v1/dashboard/landlords/{landlord.id}/verification/",
+        {"verification_status": "approved"},
+        format="json",
+    )
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_update_intake_status(make_landlord, manager_client):
     landlord = make_landlord()
     intake = PropertyIntake.objects.create(
         landlord=landlord,
@@ -235,7 +254,7 @@ def test_update_intake_status(make_landlord, agent_client):
     )
     assert intake.status == "draft"
 
-    response = agent_client.patch(
+    response = manager_client.patch(
         f"/api/v1/dashboard/intakes/{intake.id}/",
         {"status": "approved"},
         format="json",
@@ -440,11 +459,11 @@ def test_dashboard_documents_require_agent():
 
 
 @pytest.mark.django_db
-def test_review_document_approved(make_landlord, agent_client):
+def test_review_document_approved(make_landlord, manager_client):
     landlord = make_landlord()
     document = _make_document(landlord)
 
-    response = agent_client.patch(
+    response = manager_client.patch(
         f"/api/v1/dashboard/documents/{document.id}/",
         {"review_status": "approved", "review_notes": "Looks legitimate"},
         format="json",
@@ -456,11 +475,11 @@ def test_review_document_approved(make_landlord, agent_client):
 
 
 @pytest.mark.django_db
-def test_review_document_rejected_invalid_status(make_landlord, agent_client):
+def test_review_document_rejected_invalid_status(make_landlord, manager_client):
     landlord = make_landlord()
     document = _make_document(landlord)
 
-    response = agent_client.patch(
+    response = manager_client.patch(
         f"/api/v1/dashboard/documents/{document.id}/",
         {"review_status": "maybe"},
         format="json",
@@ -469,13 +488,26 @@ def test_review_document_rejected_invalid_status(make_landlord, agent_client):
 
 
 @pytest.mark.django_db
-def test_review_document_not_found(agent_client):
-    response = agent_client.patch(
+def test_review_document_not_found(manager_client):
+    response = manager_client.patch(
         "/api/v1/dashboard/documents/00000000-0000-0000-0000-000000000000/",
         {"review_status": "approved"},
         format="json",
     )
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_agent_cannot_review_document(make_landlord, agent_client):
+    landlord = make_landlord()
+    document = _make_document(landlord)
+
+    response = agent_client.patch(
+        f"/api/v1/dashboard/documents/{document.id}/",
+        {"review_status": "approved"},
+        format="json",
+    )
+    assert response.status_code == 403
 
 
 
