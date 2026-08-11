@@ -1,8 +1,12 @@
-{% extends "admin/login.html" %}
 {% load i18n static %}
-
-{% block extrahead %}
-    {{ block.super }}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:"en-us" }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="nofollow, noindex">
+    <title>{% block title %}{% translate 'Log in' %} | Primekey Homes{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'admin/img/logo.svg' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
@@ -15,20 +19,25 @@
             --pk-lavender-border: #e4e0f5;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+        }
 
         body {
             font-family: 'Lora', Georgia, serif;
-            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            min-height: 100vh;
             background: linear-gradient(135deg, #04164a 0%, #1d326f 50%, #31487A 100%);
             position: relative;
-            overflow: hidden;
+            overflow-x: hidden;
+            padding: 20px;
         }
 
-        /* Decorative background glow */
         body::before {
             content: '';
             position: absolute;
@@ -53,50 +62,39 @@
             pointer-events: none;
         }
 
-        #container {
+        .login-wrapper {
             width: 100%;
             max-width: 420px;
-            padding: 20px;
             position: relative;
             z-index: 1;
         }
 
-        #header {
-            background: none !important;
-            border: none !important;
-            padding: 0 !important;
-            margin-bottom: 24px;
+        .login-logo {
             text-align: center;
+            margin-bottom: 32px;
         }
 
-        #header a:link,
-        #header a:visited {
-            color: white;
-            text-decoration: none;
+        .login-logo svg {
+            height: 64px;
+            width: auto;
         }
 
-        #branding {
-            text-align: center;
-        }
-
-        #branding h1 {
+        .login-logo h1 {
             font-family: 'Poppins', system-ui, sans-serif;
             font-weight: 700;
-            font-size: 22px;
+            font-size: 24px;
             color: white;
-            margin-bottom: 4px;
-            letter-spacing: -0.01em;
+            margin-bottom: 6px;
         }
 
-        #branding h2 {
+        .login-logo p {
             font-family: 'Lora', Georgia, serif;
             font-weight: 400;
-            font-size: 13px;
+            font-size: 14px;
             color: rgba(255, 255, 255, 0.6);
-            letter-spacing: 0.02em;
         }
 
-        #content {
+        .login-card {
             background: rgba(255, 255, 255, 0.92);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
@@ -106,14 +104,20 @@
             padding: 40px 36px;
         }
 
-        #content-main {
-            background: none;
-            border: none;
-            padding: 0;
+        .login-card h2 {
+            font-family: 'Poppins', system-ui, sans-serif;
+            font-weight: 600;
+            font-size: 18px;
+            color: var(--pk-navy);
+            text-align: center;
+            margin-bottom: 4px;
         }
 
-        #login-form {
-            margin: 0;
+        .login-card .subtitle {
+            text-align: center;
+            color: #4a607a;
+            font-size: 13px;
+            margin-bottom: 28px;
         }
 
         .form-row {
@@ -150,46 +154,14 @@
             box-shadow: 0 0 0 3px rgba(4, 22, 74, 0.08);
         }
 
-        .form-row input[type="text"]::placeholder,
-        .form-row input[type="password"]::placeholder {
-            color: #9ca3af;
-        }
-
-        .submit-row {
-            margin-top: 28px;
-            text-align: center;
-        }
-
-        .submit-row input[type="submit"] {
-            width: 100%;
-            height: 44px;
-            background: var(--pk-navy) !important;
-            color: white !important;
-            border: none !important;
-            border-radius: 9999px !important;
-            font-family: 'Poppins', system-ui, sans-serif !important;
-            font-weight: 600 !important;
-            font-size: 15px !important;
-            letter-spacing: 0.01em !important;
-            cursor: pointer !important;
-            box-shadow: 0 4px 14px rgba(4, 22, 74, 0.25) !important;
-            transition: all 0.2s ease !important;
-        }
-
-        .submit-row input[type="submit"]:hover {
-            box-shadow: 0 6px 20px rgba(4, 22, 74, 0.35) !important;
-            transform: translateY(-1px) !important;
-            opacity: 0.95 !important;
-        }
-
         .errornote {
-            background: rgba(198, 40, 40, 0.08) !important;
-            border: 1px solid rgba(198, 40, 40, 0.2) !important;
-            border-radius: 12px !important;
-            color: #c62828 !important;
-            padding: 12px 16px !important;
-            margin-bottom: 20px !important;
-            font-size: 13px !important;
+            background: rgba(198, 40, 40, 0.08);
+            border: 1px solid rgba(198, 40, 40, 0.2);
+            border-radius: 12px;
+            color: #c62828;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            font-size: 13px;
         }
 
         .errorlist {
@@ -204,48 +176,32 @@
             margin-top: 4px;
         }
 
-        #footer {
-            text-align: center;
-            margin-top: 24px;
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 12px;
+        .submit-row {
+            margin-top: 28px;
         }
 
-        #footer a {
-            color: rgba(255, 255, 255, 0.5);
-            text-decoration: none;
+        .submit-row input[type="submit"] {
+            width: 100%;
+            height: 44px;
+            background: var(--pk-navy);
+            color: white;
+            border: none;
+            border-radius: 9999px;
+            font-family: 'Poppins', system-ui, sans-serif;
+            font-weight: 600;
+            font-size: 15px;
+            letter-spacing: 0.01em;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(4, 22, 74, 0.25);
+            transition: all 0.2s ease;
         }
 
-        #footer a:hover {
-            color: rgba(255, 255, 255, 0.7);
+        .submit-row input[type="submit"]:hover {
+            box-shadow: 0 6px 20px rgba(4, 22, 74, 0.35);
+            transform: translateY(-1px);
+            opacity: 0.95;
         }
 
-        /* Logo area */
-        .login-logo {
-            margin-bottom: 24px;
-            text-align: center;
-        }
-
-        .login-logo img {
-            height: 56px;
-            width: auto;
-        }
-
-        .login-logo svg {
-            height: 56px;
-            width: auto;
-        }
-
-        /* Decorative line */
-        .login-divider {
-            width: 40px;
-            height: 3px;
-            background: var(--pk-accent-blue);
-            border-radius: 2px;
-            margin: 0 auto 24px;
-        }
-
-        /* Password reset link */
         .password-reset-link {
             text-align: center;
             margin-top: 16px;
@@ -263,29 +219,80 @@
             color: var(--pk-navy);
             text-decoration: underline;
         }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 24px;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 12px;
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 16px; }
+            .login-card { padding: 28px 24px; }
+            .login-logo svg { height: 48px; }
+            .login-logo h1 { font-size: 20px; }
+        }
     </style>
-{% endblock %}
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="login-logo">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 130 95" fill="none" height="64">
+                <path d="M0,2L45,95L77,48L130,49L102,0L0,2Z" fill="#ffffff"/>
+                <path d="M77,48L130,49L160,16L110,16Z" fill="rgba(255,255,255,0.7)"/>
+                <path d="M160,16L214,95L175,95L130,49L160,16Z" fill="#ffffff"/>
+            </svg>
+            <h1>Primekey Homes</h1>
+            <p>Backoffice Management Portal</p>
+        </div>
 
-{% block content_title %}
-    <div class="login-logo">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 214 111" fill="none" height="56">
-            <g fill="none">
-                <path d="M0,2L45,95L77,48L130,49L102,0L0,2Z" fill="#04164a"/>
-                <path d="M77,48L130,49L160,16L110,16Z" fill="#1d326f"/>
-                <path d="M160,16L214,95L175,95L130,49L160,16Z" fill="#04164a"/>
-                <text x="50" y="85" font-family="Poppins, sans-serif" font-weight="700" font-size="16" fill="#04164a">PRIMEKEY</text>
-            </g>
-        </svg>
+        <div class="login-card">
+            <h2>Welcome back</h2>
+            <p class="subtitle">Sign in to your account</p>
+
+            {% if form.errors and not form.non_field_errors %}
+                <p class="errornote">
+                    {% translate "Please correct the error below." %}
+                </p>
+            {% endif %}
+
+            {% if form.non_field_errors %}
+                {% for error in form.non_field_errors %}
+                    <p class="errornote">
+                        {{ error }}
+                    </p>
+                {% endfor %}
+            {% endif %}
+
+            <form action="{{ app_path }}" method="post" id="login-form">
+                {% csrf_token %}
+                <div class="form-row">
+                    {{ form.username.errors }}
+                    <label for="id_username">{% translate 'Username' %}</label>
+                    {{ form.username }}
+                </div>
+                <div class="form-row">
+                    {{ form.password.errors }}
+                    <label for="id_password">{% translate 'Password' %}</label>
+                    {{ form.password }}
+                    <input type="hidden" name="next" value="{{ next }}">
+                </div>
+                <div class="submit-row">
+                    <input type="submit" value="{% translate 'Sign in' %}">
+                </div>
+                {% url 'admin_password_reset' as password_reset_url %}
+                {% if password_reset_url %}
+                    <div class="password-reset-link">
+                        <a href="{{ password_reset_url }}">{% translate 'Forgotten your password or username?' %}</a>
+                    </div>
+                {% endif %}
+            </form>
+        </div>
+
+        <div class="login-footer">
+            &copy; 2026 Primekey Homes
+        </div>
     </div>
-    <div class="login-divider"></div>
-{% endblock %}
-
-{% block content %}
-    {{ block.super }}
-{% endblock %}
-
-{% block footer %}
-    <div id="footer">
-        &copy; 2026 Primekey Homes. Backoffice Management Portal.
-    </div>
-{% endblock %}
+</body>
+</html>
