@@ -40,6 +40,8 @@ class JobOpeningAdmin(CareersStaffRequiredMixin, ModelAdmin):
     list_per_page = 50
     list_fullwidth = True
     list_filter_submit = True
+    save_on_top = True
+    date_hierarchy = "created_at"
     fieldsets = (
         (None, {"fields": ("title", "team", "location", "employment_type")}),
         ("Details", {"fields": ("summary", "application_email")}),
@@ -79,6 +81,8 @@ class JobApplicationAdmin(CareersStaffRequiredMixin, ModelAdmin):
     list_per_page = 50
     list_fullwidth = True
     list_filter_submit = True
+    save_on_top = True
+    date_hierarchy = "created_at"
     fieldsets = (
         (None, {"fields": ("job_opening", "status")}),
         (
@@ -98,6 +102,18 @@ class JobApplicationAdmin(CareersStaffRequiredMixin, ModelAdmin):
             {"fields": ("id", "created_at", "updated_at")},
         ),
     )
+
+    actions = ["shortlist_selected", "reject_selected"]
+
+    @admin.action(description="Shortlist selected applicants")
+    def shortlist_selected(self, request, queryset):
+        updated = queryset.filter(status__in=["pending", "reviewed"]).update(status="shortlisted")
+        self.message_user(request, f"{updated} applicants shortlisted.")
+
+    @admin.action(description="Reject selected applicants")
+    def reject_selected(self, request, queryset):
+        updated = queryset.filter(status__in=["pending", "reviewed"]).update(status="rejected")
+        self.message_user(request, f"{updated} applicants rejected.")
 
     @display(
         label={

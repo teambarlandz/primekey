@@ -1,0 +1,49 @@
+{% extends "admin/base.html" %}
+{% load i18n static %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <link rel="icon" type="image/svg+xml" href="{% static 'admin/img/logo.svg' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+    <style>
+        /* Ensure Material Icons render correctly */
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+    </style>
+{% endblock %}
+
+{% block branding %}
+    <div id="branding" style="display: flex; align-items: center; gap: 12px;">
+        <a href="{% url 'admin:index' %}" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
+            <img src="{% static 'admin/img/logo.svg' %}" alt="Primekey Homes" style="height: 32px; width: auto;">
+            <span style="font-family: 'Poppins', system-ui, sans-serif; font-weight: 600; font-size: 15px; color: #04164a;">
+                {{ site_header|default:_('Primekey Homes') }}
+            </span>
+        </a>
+    </div>
+{% endblock %}
+
+{% block userlinks %}
+    {{ block.super }}
+    <span style="font-size: 11px; color: #4a607a; margin-left: 12px;">
+        Primekey Backoffice v1.0
+    </span>
+{% endblock %}

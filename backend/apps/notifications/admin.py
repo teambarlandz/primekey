@@ -19,6 +19,20 @@ class NotificationAdmin(ModelAdmin):
     ordering = ("-created_at",)
     list_per_page = 50
     list_filter_submit = True
+    save_on_top = True
+    date_hierarchy = "created_at"
+
+    actions = ["mark_read", "mark_unread"]
+
+    @admin.action(description="Mark selected as read")
+    def mark_read(self, request, queryset):
+        updated = queryset.filter(is_read=False).update(is_read=True)
+        self.message_user(request, f"{updated} notifications marked as read.")
+
+    @admin.action(description="Mark selected as unread")
+    def mark_unread(self, request, queryset):
+        updated = queryset.filter(is_read=True).update(is_read=False)
+        self.message_user(request, f"{updated} notifications marked as unread.")
 
     @display(label={True: "success", False: "neutral"})
     def read_badge(self, obj):

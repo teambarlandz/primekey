@@ -19,6 +19,8 @@ class OTPCodeAdmin(ModelAdmin):
     ordering = ("-created_at",)
     list_per_page = 50
     list_filter_submit = True
+    save_on_top = True
+    date_hierarchy = "created_at"
 
     @display(label={True: "danger", False: "success"})
     def used_badge(self, obj):

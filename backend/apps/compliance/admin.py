@@ -31,6 +31,8 @@ class ConsentLogAdmin(ModelAdmin):
     list_fullwidth = True
     list_filter_submit = True
     show_full_result_count = True
+    save_on_top = True
+    date_hierarchy = "created_at"
 
     @display(label={True: "success", False: "danger"})
     def consent_given(self, obj):
@@ -63,6 +65,8 @@ class ExportRequestAdmin(ModelAdmin):
     list_fullwidth = True
     list_filter_submit = True
     show_full_result_count = True
+    save_on_top = True
+    date_hierarchy = "created_at"
 
     @display(
         label={
@@ -99,6 +103,8 @@ class ErasureRequestAdmin(ModelAdmin):
     list_fullwidth = True
     list_filter_submit = True
     show_full_result_count = True
+    save_on_top = True
+    date_hierarchy = "created_at"
 
     @display(
         label={
@@ -128,6 +134,8 @@ class AnonymizationLogAdmin(ModelAdmin):
     readonly_fields = ("lead_id", "lead_phone", "lead_email", "fields_anonymized", "original_data_hash", "trigger", "triggered_by", "related_request_id", "created_at")
     ordering = ("-created_at",)
     list_filter_submit = True
+    save_on_top = True
+    date_hierarchy = "created_at"
 
     @display(
         label={

@@ -1,0 +1,291 @@
+{% extends "admin/login.html" %}
+{% load i18n static %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --pk-navy: #04164a;
+            --pk-navy-medium: #1d326f;
+            --pk-accent-blue: #8FB3E2;
+            --pk-lavender: #f3f0ff;
+            --pk-lavender-border: #e4e0f5;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Lora', Georgia, serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #04164a 0%, #1d326f 50%, #31487A 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Decorative background glow */
+        body::before {
+            content: '';
+            position: absolute;
+            top: -30%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(143, 179, 226, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        body::after {
+            content: '';
+            position: absolute;
+            bottom: -20%;
+            left: -15%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(243, 240, 255, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        #container {
+            width: 100%;
+            max-width: 420px;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        #header {
+            background: none !important;
+            border: none !important;
+            padding: 0 !important;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        #header a:link,
+        #header a:visited {
+            color: white;
+            text-decoration: none;
+        }
+
+        #branding {
+            text-align: center;
+        }
+
+        #branding h1 {
+            font-family: 'Poppins', system-ui, sans-serif;
+            font-weight: 700;
+            font-size: 22px;
+            color: white;
+            margin-bottom: 4px;
+            letter-spacing: -0.01em;
+        }
+
+        #branding h2 {
+            font-family: 'Lora', Georgia, serif;
+            font-weight: 400;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 0.02em;
+        }
+
+        #content {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--pk-lavender-border);
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px 36px;
+        }
+
+        #content-main {
+            background: none;
+            border: none;
+            padding: 0;
+        }
+
+        #login-form {
+            margin: 0;
+        }
+
+        .form-row {
+            margin-bottom: 20px;
+        }
+
+        .form-row label {
+            display: block;
+            font-family: 'Poppins', system-ui, sans-serif;
+            font-weight: 500;
+            font-size: 13px;
+            color: var(--pk-navy);
+            margin-bottom: 6px;
+        }
+
+        .form-row input[type="text"],
+        .form-row input[type="password"] {
+            width: 100%;
+            height: 44px;
+            padding: 10px 14px;
+            border: 1px solid var(--pk-lavender-border);
+            border-radius: 12px;
+            background: rgba(243, 240, 255, 0.3);
+            font-family: 'Lora', Georgia, serif;
+            font-size: 14px;
+            color: #1a1a1a;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .form-row input[type="text"]:focus,
+        .form-row input[type="password"]:focus {
+            border-color: var(--pk-navy-medium);
+            box-shadow: 0 0 0 3px rgba(4, 22, 74, 0.08);
+        }
+
+        .form-row input[type="text"]::placeholder,
+        .form-row input[type="password"]::placeholder {
+            color: #9ca3af;
+        }
+
+        .submit-row {
+            margin-top: 28px;
+            text-align: center;
+        }
+
+        .submit-row input[type="submit"] {
+            width: 100%;
+            height: 44px;
+            background: var(--pk-navy) !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 9999px !important;
+            font-family: 'Poppins', system-ui, sans-serif !important;
+            font-weight: 600 !important;
+            font-size: 15px !important;
+            letter-spacing: 0.01em !important;
+            cursor: pointer !important;
+            box-shadow: 0 4px 14px rgba(4, 22, 74, 0.25) !important;
+            transition: all 0.2s ease !important;
+        }
+
+        .submit-row input[type="submit"]:hover {
+            box-shadow: 0 6px 20px rgba(4, 22, 74, 0.35) !important;
+            transform: translateY(-1px) !important;
+            opacity: 0.95 !important;
+        }
+
+        .errornote {
+            background: rgba(198, 40, 40, 0.08) !important;
+            border: 1px solid rgba(198, 40, 40, 0.2) !important;
+            border-radius: 12px !important;
+            color: #c62828 !important;
+            padding: 12px 16px !important;
+            margin-bottom: 20px !important;
+            font-size: 13px !important;
+        }
+
+        .errorlist {
+            list-style: none;
+            padding: 0;
+            margin: 4px 0 0 0;
+        }
+
+        .errorlist li {
+            color: #c62828;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        #footer {
+            text-align: center;
+            margin-top: 24px;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 12px;
+        }
+
+        #footer a {
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+        }
+
+        #footer a:hover {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Logo area */
+        .login-logo {
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .login-logo img {
+            height: 56px;
+            width: auto;
+        }
+
+        .login-logo svg {
+            height: 56px;
+            width: auto;
+        }
+
+        /* Decorative line */
+        .login-divider {
+            width: 40px;
+            height: 3px;
+            background: var(--pk-accent-blue);
+            border-radius: 2px;
+            margin: 0 auto 24px;
+        }
+
+        /* Password reset link */
+        .password-reset-link {
+            text-align: center;
+            margin-top: 16px;
+        }
+
+        .password-reset-link a {
+            color: var(--pk-navy-medium);
+            font-size: 13px;
+            text-decoration: none;
+            font-family: 'Poppins', system-ui, sans-serif;
+            font-weight: 500;
+        }
+
+        .password-reset-link a:hover {
+            color: var(--pk-navy);
+            text-decoration: underline;
+        }
+    </style>
+{% endblock %}
+
+{% block content_title %}
+    <div class="login-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 214 111" fill="none" height="56">
+            <g fill="none">
+                <path d="M0,2L45,95L77,48L130,49L102,0L0,2Z" fill="#04164a"/>
+                <path d="M77,48L130,49L160,16L110,16Z" fill="#1d326f"/>
+                <path d="M160,16L214,95L175,95L130,49L160,16Z" fill="#04164a"/>
+                <text x="50" y="85" font-family="Poppins, sans-serif" font-weight="700" font-size="16" fill="#04164a">PRIMEKEY</text>
+            </g>
+        </svg>
+    </div>
+    <div class="login-divider"></div>
+{% endblock %}
+
+{% block content %}
+    {{ block.super }}
+{% endblock %}
+
+{% block footer %}
+    <div id="footer">
+        &copy; 2026 Primekey Homes. Backoffice Management Portal.
+    </div>
+{% endblock %}

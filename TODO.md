@@ -158,38 +158,38 @@ The frontend uses a premium real-estate aesthetic built on **Navy (`#04164a`)** 
 ## Phase 5: Admin Class Improvements
 
 ### 5.1 Consistency Across All Admin Classes
-- [ ] Add `save_on_top = True` to all ModelAdmin classes
-- [ ] Ensure `list_filter_submit = True` everywhere
-- [ ] Standardize `list_per_page = 50`
+- [x] Add `save_on_top = True` to all ModelAdmin classes
+- [x] Ensure `list_filter_submit = True` everywhere
+- [x] Standardize `list_per_page = 50`
 
 ### 5.2 Fieldset Enhancements
-- [ ] Review all fieldset groupings for clarity
-- [ ] Add `classes = ("collapse",)` to metadata sections
-- [ ] Use descriptive section headers matching frontend section titles
+- [x] Review all fieldset groupings for clarity
+- [x] Add `classes = ("collapse",)` to metadata sections
+- [x] Use descriptive section headers matching frontend section titles
 
 ### 5.3 Enhanced List Displays
-- [ ] Add `date_hierarchy = "created_at"` to all time-aware models
-- [ ] Add custom admin actions:
+- [x] Add `date_hierarchy = "created_at"` to all time-aware models
+- [x] Add custom admin actions:
   - ConciergeLead: bulk close, bulk assign
   - LandlordProfile: bulk approve, bulk reject
   - PropertyIntake: bulk approve
 
 ### 5.4 Inline Improvements
-- [ ] PropertyImage inline: show thumbnail preview in list
-- [ ] WhatsAppMessage inline: style direction badges inline
+- [x] PropertyImage inline: show thumbnail preview in list
+- [x] WhatsAppMessage inline: style direction badges inline
 
 ---
 
 ## Phase 6: Login Page — Branded Experience
 
 ### 6.1 Create `core/templates/admin/login.html`
-- [ ] Full-page gradient background: `linear-gradient(135deg, #04164a, #1d326f)`
-- [ ] Centered card with frosted glass effect: `bg-white/90 backdrop-blur-sm rounded-2xl`
-- [ ] Primekey Homes SVG logo centered above form
-- [ ] Tagline: "Backoffice Management Portal"
-- [ ] Rounded inputs matching frontend style (`rounded-xl`, lavender focus ring)
-- [ ] Pill-shaped submit button: `bg-[#04164a] text-white rounded-full`
-- [ ] Subtle decorative elements (matching frontend hero glow pattern)
+- [x] Full-page gradient background: `linear-gradient(135deg, #04164a, #1d326f)`
+- [x] Centered card with frosted glass effect: `bg-white/90 backdrop-blur-sm rounded-2xl`
+- [x] Primekey Homes SVG logo centered above form
+- [x] Tagline: "Backoffice Management Portal"
+- [x] Rounded inputs matching frontend style (`rounded-xl`, lavender focus ring)
+- [x] Pill-shaped submit button: `bg-[#04164a] text-white rounded-full`
+- [x] Subtle decorative elements (matching frontend hero glow pattern)
 
 ---
 

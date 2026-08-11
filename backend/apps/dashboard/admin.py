@@ -16,6 +16,7 @@ class AgentProfileAdmin(ModelAdmin):
     ordering = ("-created_at",)
     list_editable = ("is_active",)
     list_filter_submit = True
+    save_on_top = True
 
     @display(label={"agent": "info", "manager": "warning", "admin": "primary"})
     def role_badge(self, obj):

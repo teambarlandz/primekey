@@ -20,6 +20,7 @@ class WhatsAppThreadAdmin(ModelAdmin):
     readonly_fields = ("id", "created_at", "updated_at")
     ordering = ("-last_message_at", "-updated_at")
     inlines = (WhatsAppMessageInline,)
+    save_on_top = True
 
 
 @admin.register(WhatsAppMessage)
@@ -31,6 +32,7 @@ class WhatsAppMessageAdmin(ModelAdmin):
     ordering = ("-created_at",)
     list_per_page = 100
     list_filter_submit = True
+    save_on_top = True
 
     @display(label={"inbound": "info", "outbound": "primary"})
     def direction_badge(self, obj):

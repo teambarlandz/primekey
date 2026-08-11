@@ -30,6 +30,20 @@ class LandlordProfileAdmin(ModelAdmin):
     list_fullwidth = True
     list_filter_submit = True
     show_full_result_count = True
+    save_on_top = True
+    date_hierarchy = "created_at"
+
+    actions = ["approve_selected", "reject_selected"]
+
+    @admin.action(description="Approve selected landlords")
+    def approve_selected(self, request, queryset):
+        updated = queryset.filter(verification_status="pending").update(verification_status="approved")
+        self.message_user(request, f"{updated} landlords approved.")
+
+    @admin.action(description="Reject selected landlords")
+    def reject_selected(self, request, queryset):
+        updated = queryset.filter(verification_status="pending").update(verification_status="rejected")
+        self.message_user(request, f"{updated} landlords rejected.")
 
     @display(label={"pending": "warning", "approved": "success", "rejected": "danger"})
     def verification_badge(self, obj):
@@ -73,6 +87,20 @@ class PropertyIntakeAdmin(ModelAdmin):
     list_fullwidth = True
     list_filter_submit = True
     show_full_result_count = True
+    save_on_top = True
+    date_hierarchy = "created_at"
+
+    actions = ["approve_selected", "reject_selected"]
+
+    @admin.action(description="Approve selected intakes")
+    def approve_selected(self, request, queryset):
+        updated = queryset.filter(status="submitted").update(status="approved")
+        self.message_user(request, f"{updated} intakes approved.")
+
+    @admin.action(description="Reject selected intakes")
+    def reject_selected(self, request, queryset):
+        updated = queryset.filter(status="submitted").update(status="rejected")
+        self.message_user(request, f"{updated} intakes rejected.")
 
     @display(label={"draft": "neutral", "submitted": "info", "approved": "success", "rejected": "danger"})
     def status_badge(self, obj):
@@ -111,6 +139,19 @@ class AppointmentAdmin(ModelAdmin):
     ordering = ("-created_at",)
     date_hierarchy = "preferred_date"
     list_filter_submit = True
+    save_on_top = True
+
+    actions = ["confirm_selected", "cancel_selected"]
+
+    @admin.action(description="Confirm selected appointments")
+    def confirm_selected(self, request, queryset):
+        updated = queryset.filter(status="pending").update(status="confirmed")
+        self.message_user(request, f"{updated} appointments confirmed.")
+
+    @admin.action(description="Cancel selected appointments")
+    def cancel_selected(self, request, queryset):
+        updated = queryset.filter(status__in=["pending", "confirmed"]).update(status="cancelled")
+        self.message_user(request, f"{updated} appointments cancelled.")
 
     @display(label={"pending": "warning", "confirmed": "info", "completed": "success", "cancelled": "danger"})
     def status_badge(self, obj):
@@ -139,6 +180,19 @@ class DocumentVaultAdmin(ModelAdmin):
     autocomplete_fields = ("landlord", "intake")
     ordering = ("-uploaded_at",)
     list_filter_submit = True
+    save_on_top = True
+
+    actions = ["approve_selected", "reject_selected"]
+
+    @admin.action(description="Approve selected documents")
+    def approve_selected(self, request, queryset):
+        updated = queryset.filter(review_status="pending").update(review_status="approved")
+        self.message_user(request, f"{updated} documents approved.")
+
+    @admin.action(description="Reject selected documents")
+    def reject_selected(self, request, queryset):
+        updated = queryset.filter(review_status="pending").update(review_status="rejected")
+        self.message_user(request, f"{updated} documents rejected.")
 
     @display(label={"pending": "warning", "approved": "success", "rejected": "danger"})
     def review_badge(self, obj):
