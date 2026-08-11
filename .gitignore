@@ -48,3 +48,4 @@ Thumbs.db
 backend/media/
 backend/protected/
 backend/exports/
+backend/staticfiles/

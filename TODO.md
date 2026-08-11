@@ -1,238 +1,217 @@
-# Backend Admin UI/UX Makeover Plan
+# Admin Role & Permission Hardening Plan
 
-## Design Inspiration: Frontend → Backend Visual Consistency
+## Requirements Summary
 
-The frontend uses a premium real-estate aesthetic built on **Navy (`#04164a`)** + **Soft Lavender (`#f3f0ff`)** with **Poppins** headings, **Lora** body text, frosted-glass cards, and pill-shaped CTAs. The backend admin should mirror this identity.
-
----
-
-## Key Design Tokens (from Frontend)
-
-| Token | Value | Usage |
-|-------|-------|-------|
-| Primary Navy | `#04164a` | Sidebar, buttons, headings, KPI cards |
-| Medium Navy | `#1d326f` | Hover states, gradient endpoints |
-| Light Blue Accent | `#8FB3E2` | Focus rings, info badges |
-| Lavender Background | `#f3f0ff` | Admin body background |
-| Lavender Border | `#e4e0f5` | Card borders, input borders |
-| White Surface | `#ffffff` | Cards, modals, elevated surfaces |
-| Muted Text | `#4a607a` | Secondary/body text |
-| Success Green | `#1b5e20` | Approved/active states |
-| Error Red | `#c62828` | Destructive/breached states |
-| Warning Orange | `#e65100` | Pending/warning states |
-| Info Blue | `#0277bd` | Info/neutral states |
-| Hero Gradient | `135deg, #04164a → #1d326f` | Login page, header backgrounds |
-| Accent Gradient | `135deg, #FBC2EB → #78A3EB` | Decorative accents |
-| Font Heading | Poppins (600, 700) | Admin headings, badges |
-| Font Body | Lora (400, 500) | Admin body text, labels |
-| Border Radius | `0.5rem` (8px) base | Cards, inputs, buttons |
-| Card Pattern | `bg-white/90 backdrop-blur-sm border-purple-100` | Frosted glass cards |
-| Hover Lift | `hover:shadow-xl hover:-translate-y-1 transition-all` | Interactive cards |
+| # | Rule | Enforcement |
+|---|------|-------------|
+| R1 | Admin (superuser) has full superuser access — can do and undo everything | `is_superuser=True` |
+| R2 | CEO, CTO, COO have the same CRUD permissions as admin on all models | Group permissions (full CRUD) |
+| R3 | CEO, CTO, COO must NEVER be able to edit/remove the admin account | Custom `UserAdmin` object-level check |
+| R4 | Only Admin and CEO can view audit logs (LogEntry) | Custom `LogEntryAdmin` with permission gate |
+| R5 | Admin is invisible to other users in the user list | Custom `UserAdmin` queryset filters out superusers for non-superusers |
+| R6 | When admin logs in, full unrestricted access is restored | Superuser bypasses all Django permission checks natively |
 
 ---
 
 ## Current State
-- Django Unfold 0.102.0 already installed and configured
-- Custom dashboard with KPI cards and Chart.js charts
-- Status badges using Unfold's `@display` decorator
-- Basic sidebar navigation defined
-- No custom CSS/JS files — relying entirely on Unfold defaults
-- Login page is Unfold default (no branding)
+
+- **No superuser exists.** CEO/CTO/COO are all `is_staff=True` only.
+- CEO and CTO have full CRUD on `auth.user` + `auth.group` (can create/delete users).
+- COO has NO `auth.user` or `auth.group` access.
+- No custom `UserAdmin` — using Unfold's default.
+- No `LogEntry` admin registered.
+- Django's default `LogEntry` model tracks all admin actions but is not exposed in the admin UI.
 
 ---
 
-## Phase 1: Enhanced UNFOLD Configuration (`settings.py`)
+## Implementation Plan
 
-### 1.1 Color Palette — Match Frontend Navy/Lavender Identity
-- [x] Replace current sky-blue palette with navy-to-lavender palette matching frontend
-- [x] Map success/warning/danger/info to frontend state colors
+### Step 1: Create Superuser Account
 
-### 1.2 Branding & Identity
-- [x] Reference the frontend SVG logo as `SITE_ICON`
-- [x] Set `SITE_SYMBOL` to `"home"` (Material icon for consistency)
-- [x] Configure login page with gradient background matching `--gradient-hero`
+**File:** `backend/apps/dashboard/management/commands/setup_roles.py`
 
-### 1.3 Sidebar — Lavender-Tinted with Navy Accents
-- [x] Add `show_history: True` for recent action visibility
-- [x] Add `show_notifications: True` for in-admin notifications
-- [x] Group sections with clear visual hierarchy matching frontend nav
-- [ ] Add badge counts to sidebar items (e.g., pending leads, pending intakes)
+Add a new `ADMIN` account to `ROLE_ACCOUNTS`:
+```python
+{
+    "role": "admin",
+    "username": "admin",
+    "email": "admin@primekeyhomes.ng",
+    "name": "Administrator",
+    "is_superuser": True,  # <-- key difference
+}
+```
 
-### 1.4 Footer
-- [ ] Add custom footer: "Primekey Homes Backoffice" with copyright
-- [x] Set `preload_fonts` for Material Icons
-
----
-
-## Phase 2: Custom CSS — `core/static/admin/css/custom.css`
-
-### 2.1 Body & Layout — Lavender Background
-- [x] Set admin body background to `#f3f0ff` (lavender) matching frontend
-- [x] Add custom scrollbar styling (thin, navy-tinted)
-- [x] Set base font to Lora for body text via CSS override
-
-### 2.2 KPI Cards — Frosted Glass Pattern
-- [x] Apply frontend card pattern: `background: rgba(255,255,255,0.9); backdrop-filter: blur(8px); border: 1px solid #e4e0f5;`
-- [x] Add `border-radius: 12px` (matching frontend `rounded-xl`)
-- [x] Add hover lift: `transition: all 0.2s ease; &:hover { box-shadow: 0 10px 25px rgba(4,22,74,0.08); transform: translateY(-2px); }`
-- [x] Add colored left border accent per KPI type (success/warning/danger)
-- [x] Add subtle gradient overlay per card color
-
-### 2.3 Buttons — Pill-Shaped CTAs
-- [x] Style primary buttons: `background: #04164a; color: white; border-radius: 9999px; box-shadow: 0 2px 8px rgba(4,22,74,0.15);`
-- [x] Add hover: `box-shadow: 0 4px 12px rgba(4,22,74,0.25); opacity: 0.95;`
-- [x] Style secondary/outline buttons: `border: 1px solid rgba(4,22,74,0.2); color: #04164a; border-radius: 12px;`
-
-### 2.4 Form Inputs — Rounded with Lavender Tint
-- [x] Set input border-radius to `12px` matching frontend
-- [x] Add focus ring: `box-shadow: 0 0 0 3px rgba(4,22,74,0.1); border-color: #1d326f;`
-- [x] Style input backgrounds: `background: rgba(243,240,255,0.3);` (subtle lavender)
-
-### 2.5 Fieldsets — Clean Section Separators
-- [x] Add left border accent (`3px solid #04164a`) to fieldset headers
-- [x] Increase fieldset header font weight and size
-- [x] Add subtle background to fieldset containers
-
-### 2.6 Tables & Lists — Alternating Rows
-- [x] Add alternating row colors: `even: background rgba(243,240,255,0.3);`
-- [x] Style table headers with navy background and white text
-- [x] Add row hover effect: `background: rgba(143,179,226,0.08);`
-
-### 2.7 Badges — Pill-Shaped Status Indicators
-- [x] Override Unfold badge defaults to use `border-radius: 9999px`
-- [x] Map badge colors to frontend state colors:
-  - Success: `background: rgba(27,94,32,0.1); color: #1b5e20;`
-  - Warning: `background: rgba(230,81,0,0.1); color: #e65100;`
-  - Danger: `background: rgba(198,40,40,0.1); color: #c62828;`
-  - Info: `background: rgba(2,119,189,0.1); color: #0277bd;`
-
-### 2.8 Dark Mode — Navy-Based Dark Theme
-- [x] Dark background: `#0a0f1e` (deep navy-black)
-- [x] Dark surface: `#111827` (dark card background)
-- [x] Dark borders: `rgba(143,179,226,0.15)` (subtle blue tint)
-- [x] Ensure all badge colors have dark-mode contrast variants
+- `is_staff=True`, `is_active=True`, `is_superuser=True`
+- Not assigned to any group (superuser bypasses groups)
+- Password resolution: same CLI/env/debug/production pattern as CEO/CTO/COO
+- Idempotent: re-running syncs the account
 
 ---
 
-## Phase 3: Custom JavaScript — `core/static/admin/js/custom.js`
+### Step 2: Upgrade CEO/CTO/COO Group Permissions to Full CRUD
 
-### 3.1 Animations — GSAP-Inspired with CSS
-- [x] Staggered fade-in for KPI cards on page load (CSS `@keyframes` + `animation-delay`)
-- [x] Number count-up animation for KPI metrics using `IntersectionObserver`
-- [ ] Smooth hover transitions on all interactive elements
+**File:** `backend/apps/dashboard/management/commands/setup_roles.py`
 
-### 3.2 UX Enhancements
-- [x] Tooltip popovers on badge hover showing full status text
-- [x] Keyboard shortcut: `Ctrl+S` to save forms
-- [x] Smooth scroll behavior for in-page anchors
-- [x] Auto-dismiss Django messages after 5 seconds with fade-out
+Change `ROLE_PERMISSIONS` so CEO, CTO, and COO each get **full CRUD (add, change, delete, view)** on every model:
 
----
+```python
+ROLE_PERMISSIONS = {
+    "ceo": {
+        "all": [model for models in list(PERMISSION_TARGETS.values()) for model in models],
+        "exclude": [],
+    },
+    "cto": {
+        "all": [model for models in list(PERMISSION_TARGETS.values()) for model in models],
+        "exclude": [],
+    },
+    "coo": {
+        "all": [model for models in list(PERMISSION_TARGETS.values()) for model in models],
+        "exclude": [],
+    },
+}
+```
 
-## Phase 4: Dashboard Template Redesign (`core/templates/admin/index.html`)
-
-### 4.1 KPI Cards — Richer Design
-- [x] Add Material Icon per KPI (home_work, support_agent, warning, group, etc.)
-- [x] Apply frosted glass pattern from frontend cards
-- [x] Add colored top gradient bar per card
-- [x] Add trend arrow (↑/↓) next to metric if comparison data available
-- [x] Make cards clickable with hover lift effect
-
-### 4.2 Pipeline Value — Hero Treatment
-- [x] Apply hero gradient background: `linear-gradient(135deg, #04164a, #1d326f)`
-- [x] White text on dark background (matching frontend hero pattern)
-- [x] Add a subtle progress bar or visual gauge
-
-### 4.3 Charts — Refined Styling
-- [x] Match chart colors to frontend palette (navy, lavender, light blue)
-- [x] Add rounded bar corners via Chart.js options
-- [x] Improve responsive sizing
-- [x] Add subtle grid lines with lavender color
-
-### 4.4 Quick Actions Panel
-- [x] Add action buttons matching frontend CTA style (pill-shaped, navy bg)
-- [x] "Add Property", "View Leads", "Review Intakes" shortcuts
+**Why this works:** CEO/CTO/COO get every `add_`, `change_`, `delete_`, `view_` permission on every registered model. They can manage all data — except the superuser account (enforced in Step 3).
 
 ---
 
-## Phase 5: Admin Class Improvements
+### Step 3: Custom UserAdmin — Hide Superuser + Block Non-Superuser Edits
 
-### 5.1 Consistency Across All Admin Classes
-- [x] Add `save_on_top = True` to all ModelAdmin classes
-- [x] Ensure `list_filter_submit = True` everywhere
-- [x] Standardize `list_per_page = 50`
+**File:** `backend/apps/dashboard/admin.py` (new `UserAdmin` class)
 
-### 5.2 Fieldset Enhancements
-- [x] Review all fieldset groupings for clarity
-- [x] Add `classes = ("collapse",)` to metadata sections
-- [x] Use descriptive section headers matching frontend section titles
+Create a custom `UserAdmin` that replaces Unfold's default for `auth.User`:
 
-### 5.3 Enhanced List Displays
-- [x] Add `date_hierarchy = "created_at"` to all time-aware models
-- [x] Add custom admin actions:
-  - ConciergeLead: bulk close, bulk assign
-  - LandlordProfile: bulk approve, bulk reject
-  - PropertyIntake: bulk approve
+```python
+from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
+from django.contrib.auth import get_user_model
+from unfold.admin import ModelAdmin
 
-### 5.4 Inline Improvements
-- [x] PropertyImage inline: show thumbnail preview in list
-- [x] WhatsAppMessage inline: style direction badges inline
+User = get_user_model()
 
----
+@admin.register(User)
+class UserAdmin(ModelAdmin, DjangoUserAdmin):
+    # ... fieldsets, list_display, etc.
 
-## Phase 6: Login Page — Branded Experience
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if not request.user.is_superuser:
+            # R5: Hide admin from user list for non-superusers
+            qs = qs.filter(is_superuser=False)
+        return qs
 
-### 6.1 Create `core/templates/admin/login.html`
-- [x] Full-page gradient background: `linear-gradient(135deg, #04164a, #1d326f)`
-- [x] Centered card with frosted glass effect: `bg-white/90 backdrop-blur-sm rounded-2xl`
-- [x] Primekey Homes SVG logo centered above form
-- [x] Tagline: "Backoffice Management Portal"
-- [x] Rounded inputs matching frontend style (`rounded-xl`, lavender focus ring)
-- [x] Pill-shaped submit button: `bg-[#04164a] text-white rounded-full`
-- [x] Subtle decorative elements (matching frontend hero glow pattern)
+    def has_change_permission(self, request, obj=None):
+        if obj and obj.is_superuser and not request.user.is_superuser:
+            # R3: Non-superusers cannot edit the admin account
+            return False
+        return super().has_change_permission(request, obj)
 
----
+    def has_delete_permission(self, request, obj=None):
+        if obj and obj.is_superuser and not request.user.is_superuser:
+            # R3: Non-superusers cannot delete the admin account
+            return False
+        return super().has_delete_permission(request, obj)
 
-## Phase 7: Template-Level Polish
+    def has_view_permission(self, request, obj=None):
+        if obj and obj.is_superuser and not request.user.is_superuser:
+            # R5: Non-superusers cannot even view the admin account
+            return False
+        return super().has_view_permission(request, obj)
+```
 
-### 7.1 Base Template (`core/templates/admin/base_site.html`)
-- [x] Add custom favicon (from frontend public assets)
-- [x] Inject Google Fonts: Poppins (headings) + Lora (body)
-- [x] Add custom footer bar
-
-### 7.2 Change Form
-- [x] Cleaner fieldset spacing
-- [x] Visual separators between sections
-
-### 7.3 Delete Confirmation
-- [x] Warning banner with red accent
-- [x] Clearer messaging
+**Protection layers:**
+1. **Queryset filter** (R5): Non-superusers never see admin in the user list at all.
+2. **Object-level checks** (R3): Even if someone crafts a direct URL to `/admin/auth/user/{admin_id}/change/`, the permission check blocks them.
+3. **Django built-in** (R6): `is_superuser=True` automatically bypasses all permission checks — admin can always do everything.
 
 ---
 
-## Phase 8: Performance & QA
+### Step 4: LogEntry Admin — Admin + CEO Only
 
-### 8.1 Static File Setup
-- [x] Create directory structure: `core/static/admin/css/`, `core/static/admin/js/`
-- [x] Register in UNFOLD settings:
-  ```python
-  "STYLES": ["/static/admin/css/custom.css"],
-  "SCRIPTS": ["/static/admin/js/custom.js"],
-  ```
-- [ ] Run `collectstatic` and verify
-- [ ] Add cache-busting via file hash or query param
+**File:** `backend/core/admin.py` (add `LogEntryAdmin`)
 
-### 8.2 Final QA Checklist
-- [ ] Light mode: all pages render correctly
-- [ ] Dark mode: all pages render correctly
-- [ ] Mobile responsive: sidebar collapses, cards stack
-- [ ] Charts render with correct colors
-- [ ] KPI card animations fire on load
-- [ ] Login page shows branded gradient + logo
-- [ ] All badges display correct colors
-- [ ] Hover effects work on cards and buttons
-- [ ] Custom fonts load (Poppins headings, Lora body)
-- [ ] Cross-browser: Chrome, Firefox, Edge
+Register Django's built-in `LogEntry` model with a restricted admin:
+
+```python
+from django.contrib.admin.models import LogEntry
+
+@admin.register(LogEntry)
+class LogEntryAdmin(ModelAdmin):
+    # Read-only — logs should never be edited or deleted
+    readonly_fields = (
+        "action_time", "user", "content_type", "object_id",
+        "object_repr", "action_flag", "action_message",
+    )
+    list_display = ("action_time", "user", "content_type", "object_repr", "action_flag_display")
+    list_filter = ("action_flag", "content_type", "user")
+    search_fields = ("object_repr", "action_message")
+    list_filter_submit = True
+    save_on_top = True
+
+    def action_flag_display(self, obj):
+        flags = {1: "Add", 2: "Change", 3: "Delete"}
+        return flags.get(obj.action_flag, "Unknown")
+    action_flag_display.short_description = "Action"
+
+    def has_module_permission(self, request, obj=None):
+        # R4: Only superuser (admin) and CEO group can see this module
+        if request.user.is_superuser:
+            return True
+        return request.user.groups.filter(name="CEO").exists()
+
+    def has_view_permission(self, request, obj=None):
+        if request.user.is_superuser:
+            return True
+        return request.user.groups.filter(name="CEO").exists()
+
+    def has_add_permission(self, request):
+        return False  # Logs are system-generated, never created manually
+
+    def has_change_permission(self, request, obj=None):
+        return False  # Logs are immutable
+
+    def has_delete_permission(self, request, obj=None):
+        return False  # Logs are never deleted
+```
+
+**Sidebar visibility:** Add `LogEntry` to the UNFOLD sidebar under a new "Audit" section (only visible to admin/CEO — other users won't have `view_logentry` permission, so Unfold auto-hides it).
+
+---
+
+### Step 5: Sidebar Updates
+
+**File:** `backend/core/settings.py` — `UNFOLD["SIDEBAR"]`
+
+Add a new "Audit" section after "Compliance":
+
+```python
+{
+    "title": "Audit",
+    "items": [
+        {"title": "Admin Logs", "icon": "history", "link": reverse_lazy("admin:admin_logentry_changelist")},
+    ],
+},
+```
+
+Only users with `view_logentry` permission (admin + CEO) will see this link. Other users won't see it because Unfold auto-hides items the user lacks permission for.
+
+---
+
+### Step 6: Verification Checklist
+
+| Test | Expected Result |
+|------|-----------------|
+| Admin logs in → full access to everything | All models visible, all actions available |
+| CEO logs in → full CRUD on all models | Can add/edit/delete properties, leads, users, etc. |
+| CEO logs in → cannot see admin in user list | User list shows CEO/CTO/COO but not admin |
+| CEO logs in → direct URL to admin user edit returns 403 | `has_change_permission` blocks it |
+| CEO logs in → can see Admin Logs | `LogEntry` visible in sidebar and accessible |
+| CTO logs in → full CRUD on all models | Same as CEO minus LogEntry access |
+| CTO logs in → cannot see admin in user list | Filtered out |
+| CTO logs in → cannot see Admin Logs | `has_module_permission` returns False |
+| COO logs in → full CRUD on all models | Same as CTO |
+| COO logs in → cannot see admin in user list | Filtered out |
+| COO logs in → cannot see Admin Logs | `has_module_permission` returns False |
+| Landlord/Agent logs in → cannot access /admin/ | `is_staff=False`, redirected to login |
 
 ---
 
@@ -240,22 +219,28 @@ The frontend uses a premium real-estate aesthetic built on **Navy (`#04164a`)** 
 
 | File | Action | Priority |
 |------|--------|----------|
-| `backend/core/settings.py` | Enhance UNFOLD config, register CSS/JS | **HIGH** |
-| `backend/core/static/admin/css/custom.css` | **CREATE** — all custom styles | **HIGH** |
-| `backend/core/static/admin/js/custom.js` | **CREATE** — animations & interactivity | **MEDIUM** |
-| `backend/core/templates/admin/index.html` | Redesign dashboard layout | **HIGH** |
-| `backend/core/templates/admin/login.html` | **CREATE** — branded login page | **HIGH** |
-| `backend/core/templates/admin/base_site.html` | **CREATE** — favicon & fonts | **MEDIUM** |
-| `backend/apps/*/admin.py` | Minor improvements (save_on_top, actions) | **LOW** |
+| `backend/apps/dashboard/management/commands/setup_roles.py` | Add admin superuser, upgrade CEO/CTO/COO to full CRUD | **HIGH** |
+| `backend/apps/dashboard/admin.py` | Add custom `UserAdmin` with queryset filter + object-level guards | **HIGH** |
+| `backend/core/admin.py` | Add `LogEntryAdmin` (read-only, admin+CEO only) | **HIGH** |
+| `backend/core/settings.py` | Add "Audit" sidebar section | **MEDIUM** |
 
 ---
 
 ## Design Principles
 
-1. **Visual Consistency** — Backend should feel like the same product as the frontend
-2. **Navy Authority** — `#04164a` is the anchor color everywhere
-3. **Lavender Softness** — `#f3f0ff` backgrounds reduce visual fatigue
-4. **Frosted Glass** — `backdrop-blur` + transparency for modern elevation
-5. **Pill Shapes** — Rounded-full buttons and badges for a friendly feel
-6. **Subtle Motion** — Gentle animations, not overwhelming
-7. **Dark Mode First** — Both themes must look polished
+1. **Defense in depth** — Queryset filtering + object-level permission checks + Django's built-in superuser bypass
+2. **Least privilege** — CEO/CTO/COO get model-level CRUD but are blocked at the object level from touching the superuser
+3. **Immutability** — Audit logs are read-only; no one can edit or delete them
+4. **Visibility control** — Admin is ghost-invisible to non-superusers; LogEntry is only visible to admin+CEO
+5. **Idempotent setup** — `setup_roles` can be re-run safely to sync permissions
+
+---
+
+## Execution Order
+
+1. Update `setup_roles.py` (Step 1 + Step 2)
+2. Create `UserAdmin` in `dashboard/admin.py` (Step 3)
+3. Create `LogEntryAdmin` in `core/admin.py` (Step 4)
+4. Update sidebar in `settings.py` (Step 5)
+5. Run `python manage.py setup_roles` to apply
+6. Run verification checklist (Step 6)
