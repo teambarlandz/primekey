@@ -338,7 +338,6 @@ UNFOLD = {
     "SITE_ICON": "admin/img/logo.svg",
     "SITE_ICON_WIDTH": 40,
     "SITE_ICON_HEIGHT": 40,
-    "SITE_SYMBOL": "home",
     "DASHBOARD_CALLBACK": "core.admin.dashboard_callback",
     "LOGIN": {
         "image": "admin/img/logo.svg",
@@ -432,6 +431,12 @@ UNFOLD = {
                 "items": [
                     {"title": "Job Openings", "icon": "work", "link": reverse_lazy("admin:careers_jobopening_changelist")},
                     {"title": "Applications", "icon": "assignment", "link": reverse_lazy("admin:careers_jobapplication_changelist")},
+                ],
+            },
+            {
+                "title": "Audit",
+                "items": [
+                    {"title": "Admin Logs", "icon": "history", "link": reverse_lazy("admin:admin_logentry_changelist")},
                 ],
             },
         ],

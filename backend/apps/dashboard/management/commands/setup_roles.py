@@ -54,67 +54,39 @@ PERMISSION_TARGETS = {
         "jobopening",
         "jobapplication",
     ],
+    "admin": [
+        "logentry",
+    ],
 }
 
 # Permission verbs per role per model target.
+# CEO, CTO, COO get full CRUD on every model. The admin superuser bypasses
+# groups entirely (is_superuser=True), so it is not listed here.
+ALL_MODELS = [model for models in list(PERMISSION_TARGETS.values()) for model in models]
+
 ROLE_PERMISSIONS = {
     "ceo": {
-        "all": [
-            "auth.user",
-            "auth.group",
-            "careers.jobopening",
-            "careers.jobapplication",
-        ],
-        "view_all": [model for models in list(PERMISSION_TARGETS.values()) for model in models],
-        "change": ["crm.conciergelead"],
-        "exclude": ["otp_auth.otpcode"],
+        "all": ALL_MODELS,
+        "exclude": [],
     },
     "cto": {
-        "all": [
-            "compliance.consentlog",
-            "compliance.exportrequest",
-            "compliance.erasurerequest",
-            "compliance.anonymizationlog",
-            "otp_auth.otpcode",
-            "auth.user",
-            "auth.group",
-            "careers.jobopening",
-            "careers.jobapplication",
-        ],
-        "change": [
-            "properties.property",
-            "properties.propertyimage",
-            "dashboard.agentprofile",
-        ],
-        "view_all": True,
+        "all": ALL_MODELS,
         "exclude": [],
     },
     "coo": {
-        "all": [
-            "crm.conciergelead",
-            "crm.leadscore",
-            "crm.slaalert",
-            "crm.consentlog",
-            "careers.jobopening",
-            "careers.jobapplication",
-        ],
-        "change": [
-            "properties.property",
-            "properties.propertyimage",
-            "landlords.landlordprofile",
-            "landlords.propertyintake",
-            "landlords.appointment",
-            "landlords.documentvault",
-            "messaging.whatsappthread",
-            "messaging.whatsappmessage",
-            "notifications.notification",
-        ],
-        "view_all": True,
-        "exclude": ["otp_auth.otpcode", "auth.user", "auth.group"],
+        "all": ALL_MODELS,
+        "exclude": [],
     },
 }
 
 ROLE_ACCOUNTS = [
+    {
+        "role": "admin",
+        "username": "admin",
+        "email": "admin@primekeyhomes.ng",
+        "name": "Administrator",
+        "is_superuser": True,
+    },
     {
         "role": "ceo",
         "username": "ceo",
@@ -230,21 +202,26 @@ class Command(BaseCommand):
 
         for account in ROLE_ACCOUNTS:
             role = account["role"]
-            group, created, missing = self._sync_group(role)
-            verb = "Created" if created else "Synced"
-            self.stdout.write(self.style.SUCCESS(f"{verb} group {role.upper()} ({group.permissions.count()} permissions)"))
-            if missing:
-                self.stdout.write(self.style.WARNING(
-                    f"  Missing permissions for {role.upper()}: {', '.join(sorted(missing))}"
-                ))
+            is_superuser = account.get("is_superuser", False)
+
+            # Superuser doesn't need group permissions — it bypasses them.
+            if not is_superuser:
+                group, created, missing = self._sync_group(role)
+                verb = "Created" if created else "Synced"
+                self.stdout.write(self.style.SUCCESS(f"{verb} group {role.upper()} ({group.permissions.count()} permissions)"))
+                if missing:
+                    self.stdout.write(self.style.WARNING(
+                        f"  Missing permissions for {role.upper()}: {', '.join(sorted(missing))}"
+                    ))
 
         for account in ROLE_ACCOUNTS:
             role = account["role"]
+            is_superuser = account.get("is_superuser", False)
             username = options[f"{role}_username"]
             email = options[f"{role}_email"]
             # Password resolution order:
-            #   1. CLI flag (--ceo-password)  -> highest priority
-            #   2. Environment variable (CEO_PASSWORD)  -> loaded from .env or shell
+            #   1. CLI flag (--admin-password)  -> highest priority
+            #   2. Environment variable (ADMIN_PASSWORD)  -> loaded from .env or shell
             #   3. Development placeholder (ChangeMe-ROLE!)  -> DEBUG only
             #   4. Random one-time password  -> production (printed once, never stored)
             env_var = f"{role.upper()}_PASSWORD"
@@ -268,11 +245,13 @@ class Command(BaseCommand):
                     "first_name": account["name"],
                     "is_staff": True,
                     "is_active": True,
+                    "is_superuser": is_superuser,
                 },
             )
             if not created:
                 user.is_staff = True
                 user.is_active = True
+                user.is_superuser = is_superuser
                 user.first_name = account["name"]
                 if email:
                     user.email = email
@@ -282,11 +261,13 @@ class Command(BaseCommand):
                 user.set_password(password)
                 user.save()
 
-            user.groups.set([Group.objects.get(name=role.upper())])
+            # Assign group (superuser doesn't need one, but harmless to skip)
+            if not is_superuser:
+                user.groups.set([Group.objects.get(name=role.upper())])
 
             self.stdout.write(
                 self.style.SUCCESS(
                     f"{'Created' if created else 'Updated'} staff account {username} "
-                    f"({account['name']}, group={role.upper()}, superuser={user.is_superuser})"
+                    f"({account['name']}, group={'NONE' if is_superuser else role.upper()}, superuser={is_superuser})"
                 )
             )

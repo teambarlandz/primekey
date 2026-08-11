@@ -2,8 +2,11 @@
 
 import json
 
+from django.contrib import admin
+from django.contrib.admin.models import LogEntry
 from django.db.models import Count, Sum
 from django.urls import reverse
+from unfold.admin import ModelAdmin
 
 from apps.compliance.models import ErasureRequest, ExportRequest
 from apps.crm.models import ConciergeLead, LeadScore, SLAAlert
@@ -209,3 +212,60 @@ def dashboard_callback(request, context):
             context[key]["data"] = json.dumps(context[key]["data"])
 
     return context
+
+
+# ---------------------------------------------------------------------------
+# LogEntry admin — read-only, visible only to admin (superuser) and CEO
+# ---------------------------------------------------------------------------
+
+@admin.register(LogEntry)
+class LogEntryAdmin(ModelAdmin):
+    """Read-only audit log.  Only the superuser (admin) and members of the
+    CEO group can view these records.  No one can add, change, or delete
+    log entries — they are an immutable audit trail.
+    """
+
+    readonly_fields = (
+        "action_time",
+        "user",
+        "content_type",
+        "object_id",
+        "object_repr",
+        "action_flag",
+        "action_message",
+    )
+    list_display = ("action_time", "user", "content_type", "object_repr", "action_flag_display")
+    list_filter = ("action_flag", "content_type", "user")
+    search_fields = ("object_repr", "action_message")
+    list_filter_submit = True
+    save_on_top = True
+    ordering = ("-action_time",)
+
+    def action_flag_display(self, obj):
+        flags = {1: "Add", 2: "Change", 3: "Delete"}
+        return flags.get(obj.action_flag, "Unknown")
+
+    action_flag_display.short_description = "Action"
+
+    # -- Module-level permission gate (R4) -----------------------------------
+
+    def has_module_permission(self, request, obj=None):
+        if request.user.is_superuser:
+            return True
+        return request.user.groups.filter(name="CEO").exists()
+
+    def has_view_permission(self, request, obj=None):
+        if request.user.is_superuser:
+            return True
+        return request.user.groups.filter(name="CEO").exists()
+
+    # Logs are immutable — no one can create, edit, or delete them.
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

@@ -348,6 +348,20 @@ td span:not([class]):contains("completed") {
   color: white !important;
 }
 
+/* ── Sidebar Logo — Clean Rendering ───────────────────────────────────────── */
+#branding img,
+.sidebar-logo img {
+  height: 28px;
+  width: auto;
+  display: block;
+}
+
+/* Hide any fallback "home" text from SITE_SYMBOL */
+.sidebar-header .material-symbols-outlined:empty,
+.sidebar-logo .material-symbols-outlined:empty {
+  display: none;
+}
+
 /* ── Login Page — Branded Gradient ────────────────────────────────────────── */
 #login {
   background: var(--pk-gradient-hero) !important;

@@ -31,12 +31,9 @@
 {% endblock %}
 
 {% block branding %}
-    <div id="branding" style="display: flex; align-items: center; gap: 12px;">
+    <div id="branding" style="display: flex; align-items: center; gap: 10px;">
         <a href="{% url 'admin:index' %}" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
-            <img src="{% static 'admin/img/logo.svg' %}" alt="Primekey Homes" style="height: 32px; width: auto;">
-            <span style="font-family: 'Poppins', system-ui, sans-serif; font-weight: 600; font-size: 15px; color: #04164a;">
-                {{ site_header|default:_('Primekey Homes') }}
-            </span>
+            <img src="{% static 'admin/img/logo.svg' %}" alt="" style="height: 28px; width: auto;">
         </a>
     </div>
 {% endblock %}
