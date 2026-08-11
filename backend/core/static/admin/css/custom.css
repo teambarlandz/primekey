@@ -1,0 +1,783 @@
+/* =============================================================================
+   Primekey Homes Admin — Custom Stylesheet
+   Matches frontend design identity: Navy + Lavender + Frosted Glass
+   ============================================================================= */
+
+/* ── Google Fonts: Poppins (headings) + Lora (body) ──────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
+/* ── CSS Custom Properties ────────────────────────────────────────────────── */
+:root {
+  --pk-navy: #04164a;
+  --pk-navy-medium: #1d326f;
+  --pk-navy-light: #31487A;
+  --pk-accent-blue: #8FB3E2;
+  --pk-lavender: #f3f0ff;
+  --pk-lavender-border: #e4e0f5;
+  --pk-white: #ffffff;
+  --pk-muted-text: #4a607a;
+  --pk-success: #1b5e20;
+  --pk-warning: #e65100;
+  --pk-danger: #c62828;
+  --pk-info: #0277bd;
+  --pk-gradient-hero: linear-gradient(135deg, #04164a 0%, #1d326f 100%);
+  --pk-gradient-cta: linear-gradient(135deg, #04164a 0%, #31487A 100%);
+  --pk-radius-sm: 6px;
+  --pk-radius-md: 8px;
+  --pk-radius-lg: 12px;
+  --pk-radius-xl: 16px;
+  --pk-radius-pill: 9999px;
+  --pk-shadow-sm: 0 1px 3px rgba(4, 22, 74, 0.06);
+  --pk-shadow-md: 0 4px 12px rgba(4, 22, 74, 0.08);
+  --pk-shadow-lg: 0 10px 25px rgba(4, 22, 74, 0.12);
+  --pk-shadow-xl: 0 20px 40px rgba(4, 22, 74, 0.15);
+  --pk-transition: all 0.2s ease;
+  --pk-transition-slow: all 0.3s ease;
+}
+
+/* ── Body & Layout — Lavender Background ──────────────────────────────────── */
+body {
+  background-color: var(--pk-lavender) !important;
+  font-family: 'Lora', Georgia, serif !important;
+}
+
+/* ── Typography — Poppins for Headings ────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6,
+.font-semibold,
+[class*="text-xl"],
+[class*="text-2xl"],
+[class*="text-3xl"] {
+  font-family: 'Poppins', system-ui, sans-serif !important;
+}
+
+/* ── Custom Scrollbar ─────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--pk-lavender);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--pk-accent-blue);
+  border-radius: var(--pk-radius-pill);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--pk-navy-medium);
+}
+
+/* ── Cards — Frosted Glass Pattern ────────────────────────────────────────── */
+/* KPI cards on dashboard */
+a[href].bg-white,
+.module {
+  transition: var(--pk-transition-slow);
+}
+
+a[href].bg-white:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--pk-shadow-lg);
+}
+
+/* Generic card surfaces */
+.bg-white {
+  background-color: rgba(255, 255, 255, 0.92) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--pk-lavender-border) !important;
+  border-radius: var(--pk-radius-lg) !important;
+}
+
+/* Dark mode card surfaces */
+.dark .bg-white,
+.dark [class*="dark:bg-base-900"] {
+  background-color: rgba(17, 24, 39, 0.92) !important;
+  border-color: rgba(143, 179, 226, 0.12) !important;
+}
+
+/* ── Buttons — Pill-Shaped CTAs ───────────────────────────────────────────── */
+/* Primary buttons */
+a.button,
+input[type="submit"],
+.button,
+.btn-primary,
+[type="submit"] {
+  background-color: var(--pk-navy) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: var(--pk-radius-pill) !important;
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.01em !important;
+  box-shadow: 0 2px 8px rgba(4, 22, 74, 0.15) !important;
+  transition: var(--pk-transition) !important;
+  padding: 8px 20px !important;
+  cursor: pointer !important;
+}
+
+a.button:hover,
+input[type="submit"]:hover,
+.button:hover,
+.btn-primary:hover,
+[type="submit"]:hover {
+  box-shadow: 0 4px 12px rgba(4, 22, 74, 0.25) !important;
+  opacity: 0.95 !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Secondary / outline buttons */
+a.button-secondary,
+.button-secondary,
+.cancel-link {
+  background-color: transparent !important;
+  color: var(--pk-navy) !important;
+  border: 1px solid rgba(4, 22, 74, 0.2) !important;
+  border-radius: var(--pk-radius-pill) !important;
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-weight: 500 !important;
+  transition: var(--pk-transition) !important;
+}
+
+a.button-secondary:hover,
+.button-secondary:hover,
+.cancel-link:hover {
+  background-color: rgba(4, 22, 74, 0.05) !important;
+  border-color: var(--pk-navy) !important;
+}
+
+/* Destructive buttons */
+.button-danger,
+.deletelink,
+[type="submit"][class*="danger"] {
+  background-color: var(--pk-danger) !important;
+  border-radius: var(--pk-radius-pill) !important;
+  box-shadow: 0 2px 8px rgba(198, 40, 40, 0.15) !important;
+}
+
+.button-danger:hover,
+.deletelink:hover {
+  box-shadow: 0 4px 12px rgba(198, 40, 40, 0.25) !important;
+}
+
+/* ── Form Inputs — Rounded with Lavender Tint ─────────────────────────────── */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="url"],
+input[type="tel"],
+input[type="date"],
+textarea,
+select,
+.vTextField,
+.vURLField {
+  border-radius: var(--pk-radius-lg) !important;
+  border: 1px solid var(--pk-lavender-border) !important;
+  background-color: rgba(243, 240, 255, 0.3) !important;
+  padding: 8px 12px !important;
+  font-family: 'Lora', Georgia, serif !important;
+  transition: var(--pk-transition) !important;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+input[type="url"]:focus,
+input[type="tel"]:focus,
+input[type="date"]:focus,
+textarea:focus,
+select:focus,
+.vTextField:focus,
+.vURLField:focus {
+  border-color: var(--pk-navy-medium) !important;
+  box-shadow: 0 0 0 3px rgba(4, 22, 74, 0.08) !important;
+  outline: none !important;
+}
+
+/* ── Fieldsets — Clean Section Separators ─────────────────────────────────── */
+fieldset {
+  border: 1px solid var(--pk-lavender-border) !important;
+  border-radius: var(--pk-radius-lg) !important;
+  margin-bottom: 20px !important;
+  overflow: hidden;
+}
+
+fieldset .module {
+  border: none !important;
+  border-radius: 0 !important;
+}
+
+fieldset h2,
+fieldset legend,
+.module caption {
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-weight: 600 !important;
+  color: var(--pk-navy) !important;
+  border-left: 3px solid var(--pk-navy) !important;
+  padding-left: 12px !important;
+  margin-bottom: 12px !important;
+}
+
+/* ── Tables — Alternating Rows ────────────────────────────────────────────── */
+table {
+  border-radius: var(--pk-radius-lg) !important;
+  overflow: hidden;
+}
+
+table thead th {
+  background-color: var(--pk-navy) !important;
+  color: white !important;
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-weight: 500 !important;
+  font-size: 12px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  padding: 10px 12px !important;
+}
+
+table tbody tr:nth-child(even) {
+  background-color: rgba(243, 240, 255, 0.3) !important;
+}
+
+table tbody tr:hover {
+  background-color: rgba(143, 179, 226, 0.08) !important;
+}
+
+table tbody td {
+  padding: 10px 12px !important;
+  border-bottom: 1px solid var(--pk-lavender-border) !important;
+  font-size: 13px !important;
+}
+
+/* ── Badges — Pill-Shaped Status Indicators ───────────────────────────────── */
+/* Override Unfold badge defaults */
+.badge,
+[class*="badge-"],
+.result-list td:first-child + td + td + td {
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  padding: 2px 10px !important;
+  border-radius: var(--pk-radius-pill) !important;
+  display: inline-block !important;
+  line-height: 1.6 !important;
+}
+
+/* Success badge */
+.badge-success,
+.success,
+td span:not([class]):contains("approved"),
+td span:not([class]):contains("completed") {
+  background-color: rgba(27, 94, 32, 0.1) !important;
+  color: var(--pk-success) !important;
+}
+
+/* Warning badge */
+.badge-warning,
+.warning {
+  background-color: rgba(230, 81, 0, 0.1) !important;
+  color: var(--pk-warning) !important;
+}
+
+/* Danger badge */
+.badge-danger,
+.error,
+.danger {
+  background-color: rgba(198, 40, 40, 0.1) !important;
+  color: var(--pk-danger) !important;
+}
+
+/* Info badge */
+.badge-info,
+.info {
+  background-color: rgba(2, 119, 189, 0.1) !important;
+  color: var(--pk-info) !important;
+}
+
+/* Primary badge */
+.badge-primary,
+.primary {
+  background-color: rgba(4, 22, 74, 0.1) !important;
+  color: var(--pk-navy) !important;
+}
+
+/* Neutral badge */
+.badge-neutral,
+.neutral {
+  background-color: rgba(74, 96, 122, 0.1) !important;
+  color: var(--pk-muted-text) !important;
+}
+
+/* ── Sidebar — Lavender-Tinted ────────────────────────────────────────────── */
+#nav-sidebar,
+.sidebar {
+  background-color: var(--pk-white) !important;
+  border-right: 1px solid var(--pk-lavender-border) !important;
+}
+
+#nav-sidebar .module,
+.sidebar .module {
+  border: none !important;
+}
+
+#nav-sidebar h2,
+.sidebar h2,
+#nav-sidebar .module-caption,
+.sidebar .module-caption {
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  color: var(--pk-navy) !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  font-size: 11px !important;
+  letter-spacing: 0.06em !important;
+}
+
+/* ── Header / Brand Bar ───────────────────────────────────────────────────── */
+#header {
+  background-color: var(--pk-navy) !important;
+  color: white !important;
+}
+
+#header a {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+#header a:hover {
+  color: white !important;
+}
+
+/* ── Login Page — Branded Gradient ────────────────────────────────────────── */
+#login {
+  background: var(--pk-gradient-hero) !important;
+  min-height: 100vh !important;
+}
+
+#login-form {
+  background: rgba(255, 255, 255, 0.92) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid var(--pk-lavender-border) !important;
+  border-radius: var(--pk-radius-xl) !important;
+  box-shadow: var(--pk-shadow-xl) !important;
+  padding: 40px !important;
+  max-width: 420px !important;
+  margin: 0 auto !important;
+}
+
+#login-form h1 {
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  color: var(--pk-navy) !important;
+  text-align: center !important;
+  margin-bottom: 8px !important;
+}
+
+#login-form .help_text {
+  color: var(--pk-muted-text) !important;
+  text-align: center !important;
+  font-size: 14px !important;
+}
+
+#login-form input[type="text"],
+#login-form input[type="password"] {
+  height: 44px !important;
+  border-radius: var(--pk-radius-lg) !important;
+}
+
+#login-form input[type="submit"] {
+  width: 100% !important;
+  padding: 12px !important;
+  font-size: 15px !important;
+  margin-top: 8px !important;
+}
+
+/* ── Dashboard KPI Cards — Enhanced ───────────────────────────────────────── */
+.dashboard-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.kpi-card {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--pk-lavender-border);
+  border-radius: var(--pk-radius-lg);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: var(--pk-transition-slow);
+  text-decoration: none;
+  display: block;
+}
+
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  border-radius: var(--pk-radius-lg) 0 0 var(--pk-radius-lg);
+}
+
+.kpi-card--primary::before { background-color: var(--pk-navy); }
+.kpi-card--info::before { background-color: var(--pk-info); }
+.kpi-card--danger::before { background-color: var(--pk-danger); }
+.kpi-card--success::before { background-color: var(--pk-success); }
+.kpi-card--warning::before { background-color: var(--pk-warning); }
+.kpi-card--neutral::before { background-color: var(--pk-muted-text); }
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--pk-shadow-lg);
+}
+
+.kpi-card__icon {
+  font-family: 'Material Symbols Outlined';
+  font-size: 20px;
+  color: var(--pk-accent-blue);
+  margin-bottom: 8px;
+  opacity: 0.8;
+}
+
+.kpi-card__title {
+  font-family: 'Poppins', system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--pk-muted-text);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.kpi-card__metric {
+  font-family: 'Poppins', system-ui, sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--pk-navy);
+  line-height: 1.2;
+}
+
+.kpi-card__footer {
+  font-size: 12px;
+  color: var(--pk-muted-text);
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--pk-lavender-border);
+}
+
+/* Dark mode KPI cards */
+.dark .kpi-card,
+[class*="dark"] .kpi-card {
+  background: rgba(17, 24, 39, 0.92);
+  border-color: rgba(143, 179, 226, 0.12);
+}
+
+.dark .kpi-card__metric {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.dark .kpi-card__title,
+.dark .kpi-card__footer {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.dark .kpi-card__footer {
+  border-top-color: rgba(143, 179, 226, 0.12);
+}
+
+/* ── Pipeline Value — Hero Treatment ──────────────────────────────────────── */
+.pipeline-banner {
+  background: var(--pk-gradient-hero);
+  border-radius: var(--pk-radius-lg);
+  padding: 24px 32px;
+  color: white;
+  margin-bottom: 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+.pipeline-banner::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(143, 179, 226, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.pipeline-banner__title {
+  font-family: 'Poppins', system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  opacity: 0.8;
+  margin-bottom: 4px;
+}
+
+.pipeline-banner__subtitle {
+  font-size: 12px;
+  opacity: 0.6;
+  margin-bottom: 12px;
+}
+
+.pipeline-banner__value {
+  font-family: 'Poppins', system-ui, sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+/* ── Charts — Refined ─────────────────────────────────────────────────────── */
+.chart-container {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--pk-lavender-border);
+  border-radius: var(--pk-radius-lg);
+  padding: 24px;
+  transition: var(--pk-transition-slow);
+}
+
+.chart-container:hover {
+  box-shadow: var(--pk-shadow-md);
+}
+
+.chart-container__title {
+  font-family: 'Poppins', system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--pk-navy);
+  margin-bottom: 4px;
+}
+
+.chart-container__subtitle {
+  font-size: 12px;
+  color: var(--pk-muted-text);
+  margin-bottom: 16px;
+}
+
+/* ── Quick Actions Panel ──────────────────────────────────────────────────── */
+.quick-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 32px;
+}
+
+.quick-actions a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--pk-navy);
+  color: white;
+  padding: 8px 20px;
+  border-radius: var(--pk-radius-pill);
+  font-family: 'Poppins', system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(4, 22, 74, 0.15);
+  transition: var(--pk-transition);
+}
+
+.quick-actions a:hover {
+  box-shadow: 0 4px 12px rgba(4, 22, 74, 0.25);
+  transform: translateY(-1px);
+}
+
+.quick-actions a .material-symbols-outlined {
+  font-size: 16px;
+}
+
+/* ── Footer ───────────────────────────────────────────────────────────────── */
+#footer {
+  background-color: var(--pk-white) !important;
+  border-top: 1px solid var(--pk-lavender-border) !important;
+  padding: 16px 24px !important;
+  font-size: 12px !important;
+  color: var(--pk-muted-text) !important;
+}
+
+#footer a {
+  color: var(--pk-navy) !important;
+  text-decoration: none !important;
+}
+
+#footer a:hover {
+  text-decoration: underline !important;
+}
+
+/* ── Messages / Alerts ────────────────────────────────────────────────────── */
+.message {
+  border-radius: var(--pk-radius-lg) !important;
+  padding: 12px 16px !important;
+  margin-bottom: 12px !important;
+  font-size: 13px !important;
+  border-left: 4px solid !important;
+}
+
+.message-success {
+  background-color: rgba(27, 94, 32, 0.06) !important;
+  border-color: var(--pk-success) !important;
+  color: var(--pk-success) !important;
+}
+
+.message-warning {
+  background-color: rgba(230, 81, 0, 0.06) !important;
+  border-color: var(--pk-warning) !important;
+  color: var(--pk-warning) !important;
+}
+
+.message-error {
+  background-color: rgba(198, 40, 40, 0.06) !important;
+  border-color: var(--pk-danger) !important;
+  color: var(--pk-danger) !important;
+}
+
+.message-info {
+  background-color: rgba(2, 119, 189, 0.06) !important;
+  border-color: var(--pk-info) !important;
+  color: var(--pk-info) !important;
+}
+
+/* ── Delete Confirmation — Warning Banner ─────────────────────────────────── */
+.delete-confirmation {
+  background: rgba(198, 40, 40, 0.06) !important;
+  border: 1px solid rgba(198, 40, 40, 0.2) !important;
+  border-radius: var(--pk-radius-lg) !important;
+  padding: 20px !important;
+}
+
+.delete-confirmation h2 {
+  color: var(--pk-danger) !important;
+}
+
+/* ── Animations ───────────────────────────────────────────────────────────── */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+.animate-count-up {
+  animation: countUp 0.3s ease-out forwards;
+}
+
+/* Staggered animation for KPI cards */
+.kpi-card:nth-child(1) { animation-delay: 0ms; }
+.kpi-card:nth-child(2) { animation-delay: 60ms; }
+.kpi-card:nth-child(3) { animation-delay: 120ms; }
+.kpi-card:nth-child(4) { animation-delay: 180ms; }
+.kpi-card:nth-child(5) { animation-delay: 240ms; }
+.kpi-card:nth-child(6) { animation-delay: 300ms; }
+
+/* ── Dark Mode Overrides ──────────────────────────────────────────────────── */
+.dark body,
+.dark #content-main,
+[class*="dark"] body {
+  background-color: #0a0f1e !important;
+}
+
+.dark table tbody tr:nth-child(even),
+[class*="dark"] table tbody tr:nth-child(even) {
+  background-color: rgba(143, 179, 226, 0.04) !important;
+}
+
+.dark table tbody tr:hover,
+[class*="dark"] table tbody tr:hover {
+  background-color: rgba(143, 179, 226, 0.08) !important;
+}
+
+.dark table thead th,
+[class*="dark"] table thead th {
+  background-color: rgba(4, 22, 74, 0.8) !important;
+}
+
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="number"],
+.dark input[type="url"],
+.dark input[type="tel"],
+.dark input[type="date"],
+.dark textarea,
+.dark select,
+.dark .vTextField,
+.dark .vURLField {
+  background-color: rgba(17, 24, 39, 0.6) !important;
+  border-color: rgba(143, 179, 226, 0.15) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.dark fieldset {
+  border-color: rgba(143, 179, 226, 0.12) !important;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .dashboard-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .kpi-card__metric {
+    font-size: 22px;
+  }
+
+  .pipeline-banner {
+    padding: 16px 20px;
+  }
+
+  .pipeline-banner__value {
+    font-size: 24px;
+  }
+
+  .quick-actions {
+    flex-direction: column;
+  }
+
+  .quick-actions a {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Print Styles ─────────────────────────────────────────────────────────── */
+@media print {
+  .kpi-card,
+  .chart-container,
+  .quick-actions,
+  #nav-sidebar,
+  #header {
+    break-inside: avoid;
+  }
+}

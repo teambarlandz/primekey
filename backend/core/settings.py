@@ -326,35 +326,64 @@ if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 
-# django-unfold admin theme
+# django-unfold admin theme — styled to match frontend Primekey Homes identity
 UNFOLD = {
     "SITE_TITLE": "Primekey Homes Admin",
     "SITE_HEADER": "Primekey Homes",
     "SITE_SUBHEADER": "Backoffice",
     "SITE_URL": "/",
-    "SITE_ICON": None,
+    "SITE_ICON": "admin/img/logo.svg",
     "SITE_ICON_WIDTH": 40,
     "SITE_ICON_HEIGHT": 40,
-    "SITE_SYMBOL": "home_work",
+    "SITE_SYMBOL": "home",
     "DASHBOARD_CALLBACK": "core.admin.dashboard_callback",
     "LOGIN": {
-        "image": None,
+        "image": "admin/img/logo.svg",
     },
-    "STYLES": [],
-    "SCRIPTS": [],
+    "SHOW_HISTORY": True,
+    "SHOW_NOTIFICATIONS": True,
+    "STYLES": [
+        "/static/admin/css/custom.css",
+    ],
+    "SCRIPTS": [
+        "/static/admin/js/custom.js",
+    ],
     "COLORS": {
         "primary": {
-            "50": "240 249 255",
-            "100": "224 242 254",
-            "200": "186 230 253",
-            "300": "125 211 252",
-            "400": "56 189 248",
-            "500": "14 165 233",
-            "600": "2 132 199",
-            "700": "3 105 161",
-            "800": "7 89 133",
-            "900": "12 74 110",
-            "950": "8 47 73",
+            "50": "243 240 255",       # #f3f0ff — lavender
+            "100": "228 224 245",      # #e4e0f5 — lavender border
+            "200": "143 179 226",      # #8FB3E2 — light blue accent
+            "300": "29 50 111",        # #1d326f — medium navy
+            "400": "4 22 74",          # #04164a — primary navy
+            "500": "4 22 74",          # #04164a — primary navy
+            "600": "29 50 111",        # #1d326f — hover navy
+            "700": "29 50 111",        # #1d326f — active navy
+            "800": "4 22 74",          # #04164a — dark navy
+            "900": "4 22 74",          # #04164a — darker navy
+        },
+        "success": {
+            "50": "232 245 233",
+            "100": "200 230 201",
+            "500": "27 94 32",         # #1b5e20 — frontend success
+            "600": "27 94 32",
+        },
+        "warning": {
+            "50": "255 243 224",
+            "100": "255 224 178",
+            "500": "230 81 0",         # #e65100 — frontend warning
+            "600": "230 81 0",
+        },
+        "danger": {
+            "50": "255 235 238",
+            "100": "255 205 210",
+            "500": "198 40 40",        # #c62828 — frontend error
+            "600": "198 40 40",
+        },
+        "info": {
+            "50": "227 242 253",
+            "100": "187 222 251",
+            "500": "2 119 189",        # #0277bd — frontend info
+            "600": "2 119 189",
         },
     },
     "SIDEBAR": {

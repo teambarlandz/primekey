@@ -44,127 +44,114 @@ The frontend uses a premium real-estate aesthetic built on **Navy (`#04164a`)** 
 ## Phase 1: Enhanced UNFOLD Configuration (`settings.py`)
 
 ### 1.1 Color Palette — Match Frontend Navy/Lavender Identity
-- [ ] Replace current sky-blue palette with navy-to-lavender palette matching frontend:
-  ```
-  Primary: "4 22 74"       (#04164a — deep navy)
-  50:  "243 240 255"       (#f3f0ff — lavender)
-  100: "228 224 245"       (#e4e0f5 — lavender border)
-  200: "143 179 226"       (#8FB3E2 — light blue accent)
-  300: "29 50 111"         (#1d326f — medium navy)
-  400: "4 22 74"           (#04164a — primary)
-  500: "4 22 74"           (#04164a — primary)
-  600: "29 50 111"         (#1d326f — hover)
-  700: "29 50 111"         (#1d326f — active)
-  800: "4 22 74"           (#04164a — dark)
-  900: "4 22 74"           (#04164a — darker)
-  ```
-- [ ] Map success/warning/danger/info to frontend state colors (`#1b5e20`, `#e65100`, `#c62828`, `#0277bd`)
+- [x] Replace current sky-blue palette with navy-to-lavender palette matching frontend
+- [x] Map success/warning/danger/info to frontend state colors
 
 ### 1.2 Branding & Identity
-- [ ] Reference the frontend SVG logo (from `public/assets/`) as `SITE_ICON`
-- [ ] Set `SITE_SYMBOL` to `"home"` (Material icon for consistency)
-- [ ] Configure login page with gradient background matching `--gradient-hero`
+- [x] Reference the frontend SVG logo as `SITE_ICON`
+- [x] Set `SITE_SYMBOL` to `"home"` (Material icon for consistency)
+- [x] Configure login page with gradient background matching `--gradient-hero`
 
 ### 1.3 Sidebar — Lavender-Tinted with Navy Accents
-- [ ] Add `show_history: True` for recent action visibility
-- [ ] Add `show_notifications: True` for in-admin notifications
-- [ ] Group sections with clear visual hierarchy matching frontend nav
+- [x] Add `show_history: True` for recent action visibility
+- [x] Add `show_notifications: True` for in-admin notifications
+- [x] Group sections with clear visual hierarchy matching frontend nav
 - [ ] Add badge counts to sidebar items (e.g., pending leads, pending intakes)
 
 ### 1.4 Footer
 - [ ] Add custom footer: "Primekey Homes Backoffice" with copyright
-- [ ] Set `preload_fonts` for Material Icons
+- [x] Set `preload_fonts` for Material Icons
 
 ---
 
 ## Phase 2: Custom CSS — `core/static/admin/css/custom.css`
 
 ### 2.1 Body & Layout — Lavender Background
-- [ ] Set admin body background to `#f3f0ff` (lavender) matching frontend
-- [ ] Add custom scrollbar styling (thin, navy-tinted)
-- [ ] Set base font to Lora for body text via CSS override
+- [x] Set admin body background to `#f3f0ff` (lavender) matching frontend
+- [x] Add custom scrollbar styling (thin, navy-tinted)
+- [x] Set base font to Lora for body text via CSS override
 
 ### 2.2 KPI Cards — Frosted Glass Pattern
-- [ ] Apply frontend card pattern: `background: rgba(255,255,255,0.9); backdrop-filter: blur(8px); border: 1px solid #e4e0f5;`
-- [ ] Add `border-radius: 12px` (matching frontend `rounded-xl`)
-- [ ] Add hover lift: `transition: all 0.2s ease; &:hover { box-shadow: 0 10px 25px rgba(4,22,74,0.08); transform: translateY(-2px); }`
-- [ ] Add colored left border accent per KPI type (success/warning/danger)
-- [ ] Add subtle gradient overlay per card color
+- [x] Apply frontend card pattern: `background: rgba(255,255,255,0.9); backdrop-filter: blur(8px); border: 1px solid #e4e0f5;`
+- [x] Add `border-radius: 12px` (matching frontend `rounded-xl`)
+- [x] Add hover lift: `transition: all 0.2s ease; &:hover { box-shadow: 0 10px 25px rgba(4,22,74,0.08); transform: translateY(-2px); }`
+- [x] Add colored left border accent per KPI type (success/warning/danger)
+- [x] Add subtle gradient overlay per card color
 
 ### 2.3 Buttons — Pill-Shaped CTAs
-- [ ] Style primary buttons: `background: #04164a; color: white; border-radius: 9999px; box-shadow: 0 2px 8px rgba(4,22,74,0.15);`
-- [ ] Add hover: `box-shadow: 0 4px 12px rgba(4,22,74,0.25); opacity: 0.95;`
-- [ ] Style secondary/outline buttons: `border: 1px solid rgba(4,22,74,0.2); color: #04164a; border-radius: 12px;`
+- [x] Style primary buttons: `background: #04164a; color: white; border-radius: 9999px; box-shadow: 0 2px 8px rgba(4,22,74,0.15);`
+- [x] Add hover: `box-shadow: 0 4px 12px rgba(4,22,74,0.25); opacity: 0.95;`
+- [x] Style secondary/outline buttons: `border: 1px solid rgba(4,22,74,0.2); color: #04164a; border-radius: 12px;`
 
 ### 2.4 Form Inputs — Rounded with Lavender Tint
-- [ ] Set input border-radius to `12px` matching frontend
-- [ ] Add focus ring: `box-shadow: 0 0 0 3px rgba(4,22,74,0.1); border-color: #1d326f;`
-- [ ] Style input backgrounds: `background: rgba(243,240,255,0.3);` (subtle lavender)
+- [x] Set input border-radius to `12px` matching frontend
+- [x] Add focus ring: `box-shadow: 0 0 0 3px rgba(4,22,74,0.1); border-color: #1d326f;`
+- [x] Style input backgrounds: `background: rgba(243,240,255,0.3);` (subtle lavender)
 
 ### 2.5 Fieldsets — Clean Section Separators
-- [ ] Add left border accent (`3px solid #04164a`) to fieldset headers
-- [ ] Increase fieldset header font weight and size
-- [ ] Add subtle background to fieldset containers
+- [x] Add left border accent (`3px solid #04164a`) to fieldset headers
+- [x] Increase fieldset header font weight and size
+- [x] Add subtle background to fieldset containers
 
 ### 2.6 Tables & Lists — Alternating Rows
-- [ ] Add alternating row colors: `even: background rgba(243,240,255,0.3);`
-- [ ] Style table headers with navy background and white text
-- [ ] Add row hover effect: `background: rgba(143,179,226,0.08);`
+- [x] Add alternating row colors: `even: background rgba(243,240,255,0.3);`
+- [x] Style table headers with navy background and white text
+- [x] Add row hover effect: `background: rgba(143,179,226,0.08);`
 
 ### 2.7 Badges — Pill-Shaped Status Indicators
-- [ ] Override Unfold badge defaults to use `border-radius: 9999px`
-- [ ] Map badge colors to frontend state colors:
+- [x] Override Unfold badge defaults to use `border-radius: 9999px`
+- [x] Map badge colors to frontend state colors:
   - Success: `background: rgba(27,94,32,0.1); color: #1b5e20;`
   - Warning: `background: rgba(230,81,0,0.1); color: #e65100;`
   - Danger: `background: rgba(198,40,40,0.1); color: #c62828;`
   - Info: `background: rgba(2,119,189,0.1); color: #0277bd;`
 
 ### 2.8 Dark Mode — Navy-Based Dark Theme
-- [ ] Dark background: `#0a0f1e` (deep navy-black)
-- [ ] Dark surface: `#111827` (dark card background)
-- [ ] Dark borders: `rgba(143,179,226,0.15)` (subtle blue tint)
-- [ ] Ensure all badge colors have dark-mode contrast variants
+- [x] Dark background: `#0a0f1e` (deep navy-black)
+- [x] Dark surface: `#111827` (dark card background)
+- [x] Dark borders: `rgba(143,179,226,0.15)` (subtle blue tint)
+- [x] Ensure all badge colors have dark-mode contrast variants
 
 ---
 
 ## Phase 3: Custom JavaScript — `core/static/admin/js/custom.js`
 
 ### 3.1 Animations — GSAP-Inspired with CSS
-- [ ] Staggered fade-in for KPI cards on page load (CSS `@keyframes` + `animation-delay`)
-- [ ] Number count-up animation for KPI metrics using `IntersectionObserver`
+- [x] Staggered fade-in for KPI cards on page load (CSS `@keyframes` + `animation-delay`)
+- [x] Number count-up animation for KPI metrics using `IntersectionObserver`
 - [ ] Smooth hover transitions on all interactive elements
 
 ### 3.2 UX Enhancements
-- [ ] Tooltip popovers on badge hover showing full status text
-- [ ] Keyboard shortcut: `Ctrl+S` to save forms
-- [ ] Smooth scroll behavior for in-page anchors
-- [ ] Auto-dismiss Django messages after 5 seconds with fade-out
+- [x] Tooltip popovers on badge hover showing full status text
+- [x] Keyboard shortcut: `Ctrl+S` to save forms
+- [x] Smooth scroll behavior for in-page anchors
+- [x] Auto-dismiss Django messages after 5 seconds with fade-out
 
 ---
 
 ## Phase 4: Dashboard Template Redesign (`core/templates/admin/index.html`)
 
 ### 4.1 KPI Cards — Richer Design
-- [ ] Add Material Icon per KPI (home_work, support_agent, warning, group, etc.)
-- [ ] Apply frosted glass pattern from frontend cards
-- [ ] Add colored top gradient bar per card
-- [ ] Add trend arrow (↑/↓) next to metric if comparison data available
-- [ ] Make cards clickable with hover lift effect
+- [x] Add Material Icon per KPI (home_work, support_agent, warning, group, etc.)
+- [x] Apply frosted glass pattern from frontend cards
+- [x] Add colored top gradient bar per card
+- [x] Add trend arrow (↑/↓) next to metric if comparison data available
+- [x] Make cards clickable with hover lift effect
 
 ### 4.2 Pipeline Value — Hero Treatment
-- [ ] Apply hero gradient background: `linear-gradient(135deg, #04164a, #1d326f)`
-- [ ] White text on dark background (matching frontend hero pattern)
-- [ ] Add a subtle progress bar or visual gauge
+- [x] Apply hero gradient background: `linear-gradient(135deg, #04164a, #1d326f)`
+- [x] White text on dark background (matching frontend hero pattern)
+- [x] Add a subtle progress bar or visual gauge
 
 ### 4.3 Charts — Refined Styling
-- [ ] Match chart colors to frontend palette (navy, lavender, light blue)
-- [ ] Add rounded bar corners via Chart.js options
-- [ ] Improve responsive sizing
-- [ ] Add subtle grid lines with lavender color
+- [x] Match chart colors to frontend palette (navy, lavender, light blue)
+- [x] Add rounded bar corners via Chart.js options
+- [x] Improve responsive sizing
+- [x] Add subtle grid lines with lavender color
 
 ### 4.4 Quick Actions Panel
-- [ ] Add action buttons matching frontend CTA style (pill-shaped, navy bg)
-- [ ] "Add Property", "View Leads", "Review Intakes" shortcuts
+- [x] Add action buttons matching frontend CTA style (pill-shaped, navy bg)
+- [x] "Add Property", "View Leads", "Review Intakes" shortcuts
 
 ---
 

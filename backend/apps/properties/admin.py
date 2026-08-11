@@ -55,6 +55,8 @@ class PropertyAdmin(ModelAdmin):
     list_filter_submit = True
     show_full_result_count = True
     list_max_show_all = 200
+    save_on_top = True
+    date_hierarchy = "created_at"
     fieldsets = (
         (None, {"fields": ("title", "description", "purpose", "property_type")}),
         ("Pricing", {"fields": ("price", "currency", "is_negotiable")}),
@@ -97,6 +99,7 @@ class PropertyImageAdmin(ModelAdmin):
     list_per_page = 50
     list_fullwidth = True
     list_filter_submit = True
+    save_on_top = True
 
     @display(image=True, description="Image")
     def thumb(self, obj):

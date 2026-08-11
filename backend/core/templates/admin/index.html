@@ -10,58 +10,89 @@
 
 {% block content %}
     <div class="mb-8">
-        <h1 class="font-semibold mb-1 text-font-important-light text-xl dark:text-font-important-dark">
-            Primekey Homes — Command Center
-        </h1>
-        <p class="mb-6 text-base-500 text-sm dark:text-base-400">
-            Welcome back. Here is a live snapshot of the platform.
-        </p>
+        <!-- Page Header -->
+        <div class="mb-6">
+            <h1 class="font-semibold mb-1 text-font-important-light text-xl dark:text-font-important-dark" style="font-family: 'Poppins', system-ui, sans-serif; color: #04164a;">
+                Command Center
+            </h1>
+            <p class="text-sm dark:text-base-400" style="color: #4a607a; font-family: 'Lora', Georgia, serif;">
+                Welcome back. Here is a live snapshot of the platform.
+            </p>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions mb-6">
+            <a href="{% url 'admin:properties_property_add' %}">
+                <span class="material-symbols-outlined">add_home</span>
+                Add Property
+            </a>
+            <a href="{% url 'admin:crm_conciergelead_changelist' %}">
+                <span class="material-symbols-outlined">support_agent</span>
+                View Leads
+            </a>
+            <a href="{% url 'admin:landlords_propertyintake_changelist' %}">
+                <span class="material-symbols-outlined">rate_review</span>
+                Review Intakes
+            </a>
+            <a href="{% url 'admin:compliance_exportrequest_changelist' %}">
+                <span class="material-symbols-outlined">download</span>
+                Data Requests
+            </a>
+        </div>
 
         <!-- KPI CARDS -->
-        <div class="grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 mb-8">
+        <div class="dashboard-kpi-grid mb-8">
             {% for item in kpi %}
-                <a href="{{ item.link }}" class="bg-white flex flex-col justify-between overflow-hidden p-4 relative rounded-default shadow-xs border border-base-200 transition-all hover:border-base-300 hover:shadow-md dark:bg-base-900 dark:border-base-800 dark:hover:border-base-700">
-                    <div>
-                        <p class="mb-1 text-sm text-base-500 dark:text-base-400">{{ item.title }}</p>
-                        <p class="font-semibold text-2xl text-font-important-light dark:text-font-important-dark">{{ item.metric }}</p>
+                <a href="{{ item.link }}" class="kpi-card kpi-card--{{ item.color }}">
+                    <div class="kpi-card__icon">
+                        {% if item.color == "primary" %}<span class="material-symbols-outlined">home_work</span>
+                        {% elif item.color == "info" %}<span class="material-symbols-outlined">support_agent</span>
+                        {% elif item.color == "danger" %}<span class="material-symbols-outlined">warning</span>
+                        {% elif item.color == "success" %}<span class="material-symbols-outlined">group</span>
+                        {% elif item.color == "warning" %}<span class="material-symbols-outlined">inventory_2</span>
+                        {% else %}<span class="material-symbols-outlined">analytics</span>
+                        {% endif %}
                     </div>
+                    <div class="kpi-card__title">{{ item.title }}</div>
+                    <div class="kpi-card__metric">{{ item.metric }}</div>
                     {% if item.footer %}
-                        <p class="mt-3 pt-3 border-t border-base-200 text-xs text-base-500 dark:border-base-800 dark:text-base-400">{{ item.footer }}</p>
+                        <div class="kpi-card__footer">{{ item.footer }}</div>
                     {% endif %}
                 </a>
             {% endfor %}
         </div>
 
-        <div class="bg-white mb-8 p-6 rounded-default shadow-xs border border-base-200 dark:bg-base-900 dark:border-base-800">
-            <h2 class="font-semibold mb-1 text-font-important-light dark:text-font-important-dark">Active Pipeline Value</h2>
-            <p class="text-base-500 text-sm dark:text-base-400">Combined value of all available and under-contract listings</p>
-            <p class="mt-4 font-semibold text-3xl text-primary-600 dark:text-primary-500">₦{{ pipeline_value }}</p>
+        <!-- Pipeline Value Banner -->
+        <div class="pipeline-banner mb-8">
+            <div class="pipeline-banner__title">Active Pipeline Value</div>
+            <div class="pipeline-banner__subtitle">Combined value of all available and under-contract listings</div>
+            <div class="pipeline-banner__value">&#8358;{{ pipeline_value }}</div>
         </div>
 
         <!-- CHARTS ROW 1 -->
         <div class="grid gap-4 lg:grid-cols-2 mb-4">
-            <div class="bg-white p-6 rounded-default shadow-xs border border-base-200 dark:bg-base-900 dark:border-base-800">
-                <h2 class="font-semibold mb-1 text-font-important-light dark:text-font-important-dark">{{ chart_properties_purpose.title }}</h2>
-                <p class="mb-4 text-base-500 text-sm dark:text-base-400">Distribution of listings by listing purpose</p>
+            <div class="chart-container">
+                <div class="chart-container__title">{{ chart_properties_purpose.title }}</div>
+                <div class="chart-container__subtitle">Distribution of listings by listing purpose</div>
                 {% include "unfold/components/chart/generic.html" with data=chart_properties_purpose.data type=chart_properties_purpose.type class="h-64" %}
             </div>
-            <div class="bg-white p-6 rounded-default shadow-xs border border-base-200 dark:bg-base-900 dark:border-base-800">
-                <h2 class="font-semibold mb-1 text-font-important-light dark:text-font-important-dark">{{ chart_properties_status.title }}</h2>
-                <p class="mb-4 text-base-500 text-sm dark:text-base-400">Current listing status breakdown</p>
+            <div class="chart-container">
+                <div class="chart-container__title">{{ chart_properties_status.title }}</div>
+                <div class="chart-container__subtitle">Current listing status breakdown</div>
                 {% include "unfold/components/chart/generic.html" with data=chart_properties_status.data type=chart_properties_status.type class="h-64" %}
             </div>
         </div>
 
         <!-- CHARTS ROW 2 -->
         <div class="grid gap-4 lg:grid-cols-2 mb-8">
-            <div class="bg-white p-6 rounded-default shadow-xs border border-base-200 dark:bg-base-900 dark:border-base-800">
-                <h2 class="font-semibold mb-1 text-font-important-light dark:text-font-important-dark">{{ chart_leads_status.title }}</h2>
-                <p class="mb-4 text-base-500 text-sm dark:text-base-400">Concierge leads by current pipeline stage</p>
+            <div class="chart-container">
+                <div class="chart-container__title">{{ chart_leads_status.title }}</div>
+                <div class="chart-container__subtitle">Concierge leads by current pipeline stage</div>
                 {% include "unfold/components/chart/generic.html" with data=chart_leads_status.data type=chart_leads_status.type class="h-64" %}
             </div>
-            <div class="bg-white p-6 rounded-default shadow-xs border border-base-200 dark:bg-base-900 dark:border-base-800">
-                <h2 class="font-semibold mb-1 text-font-important-light dark:text-font-important-dark">{{ chart_lead_tiers.title }}</h2>
-                <p class="mb-4 text-base-500 text-sm dark:text-base-400">Lead priority tier distribution</p>
+            <div class="chart-container">
+                <div class="chart-container__title">{{ chart_lead_tiers.title }}</div>
+                <div class="chart-container__subtitle">Lead priority tier distribution</div>
                 {% include "unfold/components/chart/generic.html" with data=chart_lead_tiers.data type=chart_lead_tiers.type class="h-64" %}
             </div>
         </div>

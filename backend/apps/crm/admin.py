@@ -39,6 +39,25 @@ class ConciergeLeadAdmin(ModelAdmin):
     list_fullwidth = True
     list_filter_submit = True
     show_full_result_count = True
+    save_on_top = True
+    date_hierarchy = "created_at"
+
+    actions = ["close_won", "close_lost", "mark_contacted"]
+
+    @admin.action(description="Mark selected as Closed Won")
+    def close_won(self, request, queryset):
+        updated = queryset.filter(status__startswith="active_sla_queue").update(status="closed_won")
+        self.message_user(request, f"{updated} leads marked as Closed Won.")
+
+    @admin.action(description="Mark selected as Closed Lost")
+    def close_lost(self, request, queryset):
+        updated = queryset.filter(status__startswith="active_sla_queue").update(status="closed_lost")
+        self.message_user(request, f"{updated} leads marked as Closed Lost.")
+
+    @admin.action(description="Mark selected as Contacted")
+    def mark_contacted(self, request, queryset):
+        updated = queryset.filter(status__startswith="active_sla_queue").update(status="contacted")
+        self.message_user(request, f"{updated} leads marked as Contacted.")
 
     @display(
         label={
@@ -118,6 +137,7 @@ class LeadScoreAdmin(ModelAdmin):
     ordering = ("-calculated_at",)
     list_fullwidth = True
     list_filter_submit = True
+    save_on_top = True
 
     @display(label={"HOT": "danger", "WARM": "warning", "COLD": "info"})
     def tier_badge(self, obj):
@@ -135,6 +155,12 @@ class SLAAlertAdmin(ModelAdmin):
     ordering = ("-created_at",)
     list_editable = ("acknowledged",)
     list_filter_submit = True
+    save_on_top = True
+
+    @admin.action(description="Acknowledge selected alerts")
+    def acknowledge_selected(self, request, queryset):
+        updated = queryset.filter(acknowledged=False).update(acknowledged=True)
+        self.message_user(request, f"{updated} alerts acknowledged.")
 
     @display(label={"warning": "warning", "critical": "danger"})
     def severity_badge(self, obj):
@@ -151,3 +177,4 @@ class ConsentLogAdmin(ModelAdmin):
     readonly_fields = ("id", "created_at")
     ordering = ("-created_at",)
     list_filter_submit = True
+    save_on_top = True
