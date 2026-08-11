@@ -196,25 +196,25 @@ The frontend uses a premium real-estate aesthetic built on **Navy (`#04164a`)** 
 ## Phase 7: Template-Level Polish
 
 ### 7.1 Base Template (`core/templates/admin/base_site.html`)
-- [ ] Add custom favicon (from frontend public assets)
-- [ ] Inject Google Fonts: Poppins (headings) + Lora (body)
-- [ ] Add custom footer bar
+- [x] Add custom favicon (from frontend public assets)
+- [x] Inject Google Fonts: Poppins (headings) + Lora (body)
+- [x] Add custom footer bar
 
 ### 7.2 Change Form
-- [ ] Cleaner fieldset spacing
-- [ ] Visual separators between sections
+- [x] Cleaner fieldset spacing
+- [x] Visual separators between sections
 
 ### 7.3 Delete Confirmation
-- [ ] Warning banner with red accent
-- [ ] Clearer messaging
+- [x] Warning banner with red accent
+- [x] Clearer messaging
 
 ---
 
 ## Phase 8: Performance & QA
 
 ### 8.1 Static File Setup
-- [ ] Create directory structure: `core/static/admin/css/`, `core/static/admin/js/`
-- [ ] Register in UNFOLD settings:
+- [x] Create directory structure: `core/static/admin/css/`, `core/static/admin/js/`
+- [x] Register in UNFOLD settings:
   ```python
   "STYLES": ["/static/admin/css/custom.css"],
   "SCRIPTS": ["/static/admin/js/custom.js"],
