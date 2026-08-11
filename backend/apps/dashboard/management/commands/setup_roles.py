@@ -62,7 +62,7 @@ PERMISSION_TARGETS = {
 # Permission verbs per role per model target.
 # CEO, CTO, COO get full CRUD on every model. The admin superuser bypasses
 # groups entirely (is_superuser=True), so it is not listed here.
-ALL_MODELS = [model for models in list(PERMISSION_TARGETS.values()) for model in models]
+ALL_MODELS = [f"{app}.{model}" for app, models in PERMISSION_TARGETS.items() for model in models]
 
 ROLE_PERMISSIONS = {
     "ceo": {
