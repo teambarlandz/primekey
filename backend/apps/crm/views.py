@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
+from core.security import get_client_ip
 from .serializers import ConciergeLeadSerializer, NDPRErasureRequestSerializer
 from .services import LeadScoringService, NDPRErasureService
 
@@ -76,8 +77,8 @@ class NDPRErasureView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         # Extract Client IP and User Agent for audit logging
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-        ip_address = x_forwarded_for.split(',')[0] if x_forwarded_for else request.META.get('REMOTE_ADDR')
+        # (proxy-aware: raw X-Forwarded-For is never trusted directly)
+        ip_address = get_client_ip(request)
         user_agent = request.META.get('HTTP_USER_AGENT', '')
 
         result = NDPRErasureService.process_erasure_request(

@@ -1,0 +1,43 @@
+# Gitleaks configuration for PrimeKey
+# Run: gitleaks detect --source . -c backend/.gitleaks.toml
+[allowlist]
+  description = "Global allowlist"
+  paths = [
+    '''backend/venv/''',
+    '''backend/protected/''',
+    '''backend/exports/''',
+    '''\.env\.example$''',
+    '''node_modules/''',
+    '''\.pyc$''',
+  ]
+  commits = []
+
+[[rules]]
+  id = "django-secret-key"
+  description = "Django SECRET_KEY"
+  regex = '''(?i)SECRET_KEY\s*=\s*['\"]([^'\"]{20,})['\"]'''
+  tags = ["key", "django"]
+
+[[rules]]
+  id = "database-url"
+  description = "Database connection string"
+  regex = '''(?i)(postgres|mysql|mongodb)://[^'\s]+'''
+  tags = ["key", "database"]
+
+[[rules]]
+  id = "generic-api-key"
+  description = "Generic API key"
+  regex = '''(?i)(api[_-]?key|apikey)\s*[:=]\s*['\"]([^'\"]{20,})['\"]'''
+  tags = ["key", "api"]
+
+[[rules]]
+  id = "jwt-secret"
+  description = "JWT signing secret"
+  regex = '''(?i)(jwt[_-]?secret|signing[_-]?key)\s*[:=]\s*['\"]([^'\"]{10,})['\"]'''
+  tags = ["key", "jwt"]
+
+[[rules]]
+  id = "private-key"
+  description = "Private key block"
+  regex = '''-----BEGIN (RSA |EC |DSA )?PRIVATE KEY-----'''
+  tags = ["key", "private"]

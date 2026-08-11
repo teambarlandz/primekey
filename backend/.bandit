@@ -1,0 +1,8 @@
+# Bandit configuration for PrimeKey security scanning
+# Run: bandit -r backend/ -c backend/.bandit
+[bandit]
+exclude = venv,.venv,tests,migrations
+skips = B101
+recursive = true
+severity-level = medium
+confidence-level = medium

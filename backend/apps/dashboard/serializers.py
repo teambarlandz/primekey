@@ -1,7 +1,7 @@
 from django.utils import timezone
 from rest_framework import serializers
 from apps.landlords.models import LandlordProfile, PropertyIntake, Appointment, DocumentVault
-from apps.landlords.serializers import APPOINTMENT_TIME_SLOTS
+from apps.landlords.serializers import APPOINTMENT_TIME_SLOTS, document_download_url
 from apps.crm.models import ConciergeLead
 
 
@@ -22,11 +22,7 @@ class DashboardDocumentSerializer(serializers.ModelSerializer):
         ]
 
     def get_file_url(self, obj):
-        request = self.context.get('request')
-        url = obj.file.url
-        if request:
-            return request.build_absolute_uri(url)
-        return url
+        return document_download_url(self.context.get('request'), obj)
 
 
 class DocumentReviewSerializer(serializers.Serializer):

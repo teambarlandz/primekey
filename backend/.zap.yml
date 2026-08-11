@@ -1,0 +1,53 @@
+# OWASP ZAP Baseline scan configuration
+# Used in CI to scan the API schema for common vulnerabilities
+# Run: docker run -v $(pwd)/backend:/zap/wrk owasp/zap2docker-stable \
+#   zap-baseline.py -t http://localhost:8000/api/schema/ -J zap-report.json
+#
+# This file defines context-specific alert thresholds for the PrimeKey API.
+# Import the drf-spectacular OpenAPI schema as scan context.
+
+env:
+  ZAP_PROGRESS_TARGET: "10"
+
+contexts:
+  - name: "PrimeKey API"
+    urls:
+      - "http://localhost:8000/api/"
+      - "http://localhost:8000/admin/"
+    includePaths:
+      - "http://localhost:8000/api/.*"
+    excludePaths:
+      - "http://localhost:8000/api/v1/landlords/documents/.*/download/.*"
+
+scanner:
+  # Alert thresholds: ignore informational, warn on low, fail on medium+
+  - id: 10021  # X-Content-Type-Options
+    strength: medium
+    threshold: low
+  - id: 10038  # Content Security Policy
+    strength: medium
+    threshold: low
+  - id: 40012  # Cross-Site Scripting (Reflected)
+    strength: high
+    threshold: medium
+  - id: 40014  # Cross-Site Scripting (Persistent)
+    strength: high
+    threshold: medium
+  - id: 40018  # SQL Injection
+    strength: high
+    threshold: medium
+  - id: 40019  # SQL Injection (MySQL)
+    strength: high
+    threshold: medium
+  - id: 40020  # SQL Injection (Hypersonic)
+    strength: high
+    threshold: medium
+  - id: 40021  # SQL Injection (Oracle)
+    strength: high
+    threshold: medium
+  - id: 40022  # SQL Injection (PostgreSQL)
+    strength: high
+    threshold: medium
+  - id: 90033  # Loosely Scoped Cookie
+    strength: medium
+    threshold: low

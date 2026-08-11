@@ -3,21 +3,21 @@
 Landlord resources are owned by the phone-authenticated user whose username
 matches the landlord profile's phone number. Agents (and managers) may access
 all landlord resources as part of the operations workflow.
+
+Canonical implementations live in ``core.permissions``; these thin wrappers
+keep the existing call sites (views, notifications) stable.
 """
+
+from core.permissions import can_access_owner, is_active_agent, owns_profile
 
 
 def is_agent(user):
-    profile = getattr(user, "agent_profile", None)
-    return profile is not None and profile.is_active
+    return is_active_agent(user)
 
 
 def owns_landlord(user, landlord):
-    return (
-        user.is_authenticated
-        and landlord is not None
-        and landlord.phone == user.username
-    )
+    return owns_profile(user, landlord)
 
 
 def can_access_landlord(user, landlord):
-    return is_agent(user) or owns_landlord(user, landlord)
+    return can_access_owner(user, landlord)

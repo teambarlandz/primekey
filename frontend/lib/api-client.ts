@@ -1542,3 +1542,89 @@ export async function searchProperties(
     );
   }
 }
+
+// ──────────────────────────────────────────────────────────────────
+// CAREERS — Job Openings & Applications
+// ──────────────────────────────────────────────────────────────────
+
+export interface JobOpeningDetail {
+  id: string;
+  title: string;
+  team: string;
+  location: string;
+  employment_type: string;
+  employment_type_display: string;
+  summary: string;
+  application_email: string;
+  created_at: string;
+}
+
+export interface JobApplicationPayload {
+  job_opening: string;
+  first_name: string;
+  middle_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  cover_letter: string;
+  resume: File;
+  ndpr_consent: boolean;
+}
+
+/**
+ * Fetch a single job opening by ID for the detail page.
+ */
+export async function fetchJobOpening(id: string): Promise<JobOpeningDetail> {
+  const response = await fetch(`${API_BASE_URL}/careers/openings/${id}/`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const errorMessage = data?.detail || data?.message || "Failed to load job details.";
+    throw new ApiClientError(errorMessage, response.status, data?.errors);
+  }
+
+  const payload = data as { success: boolean; results: JobOpeningDetail };
+  return payload.results;
+}
+
+/**
+ * Submit a job application (multipart/form-data for file upload).
+ */
+export async function submitJobApplication(
+  payload: JobApplicationPayload
+): Promise<{ id: string }> {
+  const formData = new FormData();
+  formData.append("job_opening", payload.job_opening);
+  formData.append("first_name", payload.first_name);
+  formData.append("middle_name", payload.middle_name);
+  formData.append("last_name", payload.last_name);
+  formData.append("email", payload.email);
+  formData.append("phone", payload.phone);
+  formData.append("cover_letter", payload.cover_letter);
+  formData.append("resume", payload.resume);
+  formData.append("ndpr_consent", String(payload.ndpr_consent));
+
+  const response = await fetch(`${API_BASE_URL}/careers/applications/`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+    },
+    body: formData,
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const errorMessage =
+      data?.detail ||
+      data?.message ||
+      "Failed to submit application. Please try again.";
+    throw new ApiClientError(errorMessage, response.status, data?.errors);
+  }
+
+  return data.results;
+}

@@ -107,7 +107,7 @@ class ExportRequest(models.Model):
     reason = models.TextField(blank=True, null=True)
     
     # Verification
-    verification_code = models.CharField(max_length=64, blank=True, null=True, help_text="SHA-256 hash of the 6-digit code")
+    verification_code = models.CharField(max_length=128, blank=True, null=True, help_text="Salted HMAC-SHA256 hash of the 6-digit code")
     verification_sent_at = models.DateTimeField(blank=True, null=True)
     verified_at = models.DateTimeField(blank=True, null=True)
     verification_attempts = models.IntegerField(default=0)
@@ -167,7 +167,7 @@ class ErasureRequest(models.Model):
     reason = models.TextField(blank=True, null=True)
     
     # Verification
-    verification_code = models.CharField(max_length=64, blank=True, null=True, help_text="SHA-256 hash of the 6-digit code")
+    verification_code = models.CharField(max_length=128, blank=True, null=True, help_text="Salted HMAC-SHA256 hash of the 6-digit code")
     verification_sent_at = models.DateTimeField(blank=True, null=True)
     verified_at = models.DateTimeField(blank=True, null=True)
     verification_attempts = models.IntegerField(default=0)

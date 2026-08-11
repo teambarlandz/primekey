@@ -1,5 +1,7 @@
 import re
 from rest_framework import serializers
+
+from core.security import get_client_ip
 from .models import ConciergeLead, ConsentLog
 
 # Regex supporting local (080..., 070..., 090..., 081...) and international (+234... / 234...) formats
@@ -72,11 +74,7 @@ class PropertyInquirySerializer(serializers.ModelSerializer):
         ip_address = None
         user_agent = None
         if request:
-            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-            if x_forwarded_for:
-                ip_address = x_forwarded_for.split(',')[0].strip()
-            else:
-                ip_address = request.META.get('REMOTE_ADDR')
+            ip_address = get_client_ip(request)
             user_agent = request.META.get('HTTP_USER_AGENT')
 
         ConsentLog.objects.create(
@@ -171,12 +169,7 @@ class ConciergeLeadSerializer(serializers.ModelSerializer):
         user_agent = None
 
         if request:
-            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-            if x_forwarded_for:
-                ip_address = x_forwarded_for.split(',')[0].strip()
-            else:
-                ip_address = request.META.get('REMOTE_ADDR')
-
+            ip_address = get_client_ip(request)
             user_agent = request.META.get('HTTP_USER_AGENT')
 
         # Log consent for compliance audit trail

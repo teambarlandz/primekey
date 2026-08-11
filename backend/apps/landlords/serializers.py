@@ -2,6 +2,8 @@ import re
 
 from django.utils import timezone
 from rest_framework import serializers
+
+from core.files import allowed_upload_types, validate_upload
 from .models import LandlordProfile, PropertyIntake, Appointment, DocumentVault
 
 # Regex supporting local (080..., 070..., 090..., 081...) and international (+234... / 234...) formats
@@ -10,13 +12,30 @@ NIGERIAN_PHONE_REGEX = r'^(?:\+?234|0)[789][01]\d{8}$'
 # Time slots offered for landlord consultation appointments
 APPOINTMENT_TIME_SLOTS = ['09:00 AM', '11:00 AM', '02:00 PM', '04:00 PM']
 
+MAX_DOCUMENT_SIZE = 10 * 1024 * 1024  # 10 MB
+
+
+def document_download_url(request, doc):
+    """Absolute URL of the authenticated document download endpoint."""
+    relative = f"/api/v1/landlords/documents/{doc.id}/download/"
+    if request:
+        return request.build_absolute_uri(relative)
+    return relative
+
 
 class LandlordProfileSerializer(serializers.ModelSerializer):
+    """Public-facing landlord profile.
+
+    ``id_number`` (NDPR-sensitive) is excluded: it is only returned by
+    ``LandlordProfileDetailSerializer`` to the owner or an agent.
+    """
+
     class Meta:
         model = LandlordProfile
         fields = [
             'id', 'full_name', 'phone', 'email',
-            'id_type', 'id_number', 'property_count',
+            'id_type',
+            'property_count',
             'ndpr_consent',
             'verification_status', 'created_at', 'updated_at',
         ]
@@ -44,11 +63,29 @@ class LandlordProfileSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class LandlordProfileDetailSerializer(LandlordProfileSerializer):
+    """Owner/agent-only view of a landlord profile (includes id_number)."""
+
+    class Meta(LandlordProfileSerializer.Meta):
+        fields = LandlordProfileSerializer.Meta.fields + ['id_number']
+
+
 class PropertyIntakeSerializer(serializers.ModelSerializer):
+    """Intake serializer.
+
+    ``landlord`` is server-derived (never client-supplied) and ``status`` is
+    forced to ``submitted`` on create, preventing mass assignment.
+    """
+
     class Meta:
         model = PropertyIntake
-        fields = '__all__'
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        fields = [
+            'id', 'landlord', 'title', 'property_type', 'price',
+            'is_negotiable', 'address', 'city', 'state', 'area',
+            'bedrooms', 'bathrooms', 'toilets', 'description',
+            'status', 'created_at', 'updated_at',
+        ]
+        read_only_fields = ['id', 'landlord', 'status', 'created_at', 'updated_at']
 
     def validate_price(self, value):
         if value is None or value <= 0:
@@ -76,10 +113,19 @@ class PropertyIntakeSerializer(serializers.ModelSerializer):
 
 
 class AppointmentSerializer(serializers.ModelSerializer):
+    """Appointment serializer.
+
+    ``landlord`` and ``status`` are server-managed; clients cannot create or
+    confirm appointments on behalf of another landlord.
+    """
+
     class Meta:
         model = Appointment
-        fields = '__all__'
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        fields = [
+            'id', 'landlord', 'preferred_date', 'time_slot',
+            'tour_type', 'notes', 'status', 'created_at', 'updated_at',
+        ]
+        read_only_fields = ['id', 'landlord', 'status', 'created_at', 'updated_at']
 
     def validate_preferred_date(self, value):
         if value < timezone.localdate():
@@ -94,7 +140,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
-        landlord = attrs.get('landlord')
+        landlord = attrs.get('landlord') or self.context.get('_server_landlord')
         preferred_date = attrs.get('preferred_date')
         time_slot = attrs.get('time_slot')
 
@@ -130,18 +176,19 @@ class DocumentVaultSerializer(serializers.ModelSerializer):
         ]
 
     def get_file_url(self, obj):
-        request = self.context.get('request')
-        url = obj.file.url
-        if request:
-            return request.build_absolute_uri(url)
-        return url
+        return document_download_url(self.context.get('request'), obj)
 
     def validate(self, attrs):
         file_field = attrs.get('file')
         if file_field:
-            max_size = 10 * 1024 * 1024
-            if file_field.size > max_size:
+            if file_field.size > MAX_DOCUMENT_SIZE:
                 raise serializers.ValidationError({
                     "file": "File size must be 10MB or less."
                 })
+            # Magic-byte + extension allowlist validation (rejects HTML, JS,
+            # SVG, executables, polyglot files, and extension spoofing).
+            try:
+                validate_upload(file_field)
+            except ValueError as exc:
+                raise serializers.ValidationError({"file": str(exc)})
         return attrs

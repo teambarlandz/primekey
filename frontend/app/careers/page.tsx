@@ -14,6 +14,7 @@ import {
   MapPin,
   Clock,
   Home,
+  ChevronRight,
   ShieldCheck,
   HeartHandshake,
   Rocket,
@@ -136,6 +137,24 @@ export default function CareersPage() {
   return (
     <main className="min-h-screen bg-[#f3f0ff]">
       <SiteNav />
+
+      {/* Breadcrumbs */}
+      <nav className="bg-white border-b border-purple-100" aria-label="Breadcrumb">
+        <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3">
+          <ol className="flex items-center gap-2 text-sm font-body text-[#4a607a]">
+            <li>
+              <Link href="/" className="inline-flex items-center gap-1 hover:text-[#04164a] transition-colors">
+                <Home className="w-3.5 h-3.5" aria-hidden="true" />
+                Home
+              </Link>
+            </li>
+            <li aria-hidden="true">
+              <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+            </li>
+            <li className="font-semibold text-[#04164a]">Careers</li>
+          </ol>
+        </div>
+      </nav>
 
       {/* ─────────────────────────────────────────────
           HERO
@@ -284,20 +303,23 @@ export default function CareersPage() {
 
             {!openingsLoading && !openingsError && openings.length === 0 && (
               <li className="p-6 md:p-8 rounded-2xl border border-purple-100 bg-[#f3f0ff]/50 text-center">
+                <p className="text-sm font-body text-[#4a607a] mb-2">
+                  We currently have no open positions at this time.
+                </p>
                 <p className="text-sm font-body text-[#4a607a]">
-                  There are no open roles right now, but we're always keen to hear from great people — email us your CV at{' '}
+                  We are always looking for exceptional talent — submit your CV to{' '}
                   <a href="mailto:careers@primekeyhomes.com" className="font-semibold underline" style={{ color: BRAND_COLOR }}>
                     careers@primekeyhomes.com
-                  </a>
-                  .
+                  </a>{' '}
+                  and we will keep you in mind for future opportunities.
                 </p>
               </li>
             )}
 
             {!openingsLoading && !openingsError && openings.map((role) => (
               <li key={role.id}>
-                <a
-                  href={`mailto:${role.application_email}?subject=Application: ${encodeURIComponent(role.title)}`}
+                <Link
+                  href={`/careers/${role.id}`}
                   className="group flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 md:p-8 rounded-2xl border border-purple-100 bg-[#f3f0ff]/50 hover:bg-[#f3f0ff] hover:shadow-md transition-all duration-300"
                 >
                   <div className="flex items-start gap-4">
@@ -316,10 +338,10 @@ export default function CareersPage() {
                     </div>
                   </div>
                   <span className="inline-flex items-center gap-2 text-sm font-semibold font-heading shrink-0" style={{ color: BRAND_COLOR }}>
-                    Apply
+                    View Details
                     <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
                   </span>
-                </a>
+                </Link>
               </li>
             ))}
           </ul>

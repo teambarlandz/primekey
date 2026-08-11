@@ -9,7 +9,7 @@ from django.conf import settings
 from django_ratelimit.decorators import ratelimit
 from django.utils.decorators import method_decorator
 
-from core.security import get_client_ip
+from core.security import get_client_ip, is_dev_client
 from .models import OTPCode
 from .serializers import SendOTPSerializer, VerifyOTPSerializer
 
@@ -58,8 +58,9 @@ class SendOTPView(APIView):
             "purpose": purpose,
             "expires_in_minutes": 5,
         }
-        # Only include the code in development
-        if settings.DEBUG:
+        # Only expose the plaintext code to loopback clients while DEBUG is
+        # enabled. Never in production, even if DEBUG is accidentally on.
+        if is_dev_client(request):
             response_data["dev_code"] = otp._plaintext_code
 
         return Response({
@@ -102,8 +103,12 @@ class VerifyOTPView(APIView):
                 "message": "No valid OTP found. Please request a new code.",
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Verify the code
-        is_valid, message = otp.verify(code)
+        # Verify the code (binds to IP/UA recorded at send time)
+        is_valid, message = otp.verify(
+            code,
+            ip_address=get_client_ip(request),
+            user_agent=request.META.get('HTTP_USER_AGENT', ''),
+        )
         if not is_valid:
             return Response({
                 "success": False,

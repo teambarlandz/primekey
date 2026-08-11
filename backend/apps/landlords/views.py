@@ -6,15 +6,26 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from .models import LandlordProfile, PropertyIntake, Appointment, DocumentVault
-from .access import can_access_landlord
+from .access import can_access_landlord, is_agent
 from .serializers import (
     LandlordProfileSerializer,
+    LandlordProfileDetailSerializer,
     PropertyIntakeSerializer,
     AppointmentSerializer,
     DocumentVaultSerializer,
     APPOINTMENT_TIME_SLOTS,
 )
 from apps.notifications.services import create_notification
+
+OWNER_ALLOWED_STATUS_TRANSITIONS = {"pending": {"cancelled"}}
+
+
+def _current_landlord(request):
+    """The landlord profile owned by the authenticated user, or None."""
+    try:
+        return LandlordProfile.objects.get(phone=request.user.username)
+    except (LandlordProfile.DoesNotExist, AttributeError):
+        return None
 
 
 @method_decorator(ratelimit(key='ip', rate='10/m', method='POST'), name='post')
@@ -55,18 +66,26 @@ class LandlordProfileDetailView(APIView):
                 {"success": False, "message": "You can only access your own profile."},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        serializer = LandlordProfileSerializer(profile)
+        # Owner or agent: id_number is NDPR-sensitive and only shown here.
+        serializer = LandlordProfileDetailSerializer(profile)
         return Response(serializer.data)
 
 
 @method_decorator(ratelimit(key='ip', rate='10/m', method='POST'), name='post')
 class PropertyIntakeCreateView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        landlord = _current_landlord(request)
+        if landlord is None:
+            return Response(
+                {"success": False, "message": "No landlord profile found for this account."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        # landlord is server-derived; client-supplied value is ignored.
         serializer = PropertyIntakeSerializer(data=request.data)
         if serializer.is_valid():
-            intake = serializer.save()
+            intake = serializer.save(landlord=landlord)
             return Response(
                 {"success": True, "data": PropertyIntakeSerializer(intake).data},
                 status=status.HTTP_201_CREATED,
@@ -100,12 +119,19 @@ class PropertyIntakeListView(APIView):
 
 @method_decorator(ratelimit(key='ip', rate='10/m', method='POST'), name='post')
 class AppointmentCreateView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        serializer = AppointmentSerializer(data=request.data)
+        landlord = _current_landlord(request)
+        if landlord is None:
+            return Response(
+                {"success": False, "message": "No landlord profile found for this account."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        # landlord is server-derived; client-supplied value is ignored.
+        serializer = AppointmentSerializer(data=request.data, context={'_server_landlord': landlord})
         if serializer.is_valid():
-            appointment = serializer.save()
+            appointment = serializer.save(landlord=landlord)
             return Response(
                 {"success": True, "data": AppointmentSerializer(appointment).data},
                 status=status.HTTP_201_CREATED,
@@ -156,6 +182,8 @@ class AppointmentUpdateView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
+        agent = is_agent(request.user)
+
         allowed_fields = {"status", "preferred_date", "time_slot"}
         provided = set(request.data.keys())
         if not provided.issubset(allowed_fields):
@@ -165,11 +193,21 @@ class AppointmentUpdateView(APIView):
             )
 
         status_value = request.data.get("status")
-        if status_value is not None and status_value not in {"pending", "confirmed", "cancelled"}:
+        if status_value is not None and status_value not in {"pending", "confirmed", "completed", "cancelled"}:
             return Response(
                 {"success": False, "errors": {"status": ["Invalid appointment status."]}},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        # Owners may only cancel a pending appointment; only agents may
+        # confirm/complete/reschedule on behalf of the operations team.
+        if status_value and not agent:
+            allowed_next = OWNER_ALLOWED_STATUS_TRANSITIONS.get(appointment.status, set())
+            if status_value not in allowed_next:
+                return Response(
+                    {"success": False, "errors": {"status": ["You cannot change the appointment to this status."]}},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
         preferred_date = request.data.get("preferred_date", appointment.preferred_date)
         time_slot = request.data.get("time_slot", appointment.time_slot)
@@ -188,6 +226,11 @@ class AppointmentUpdateView(APIView):
 
         reschedule = "preferred_date" in request.data or "time_slot" in request.data
         if reschedule:
+            if not agent:
+                return Response(
+                    {"success": False, "errors": {"detail": "Only our team can reschedule appointments."}},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
             conflict = Appointment.objects.filter(
                 landlord=appointment.landlord,
                 preferred_date=preferred_date,
@@ -219,7 +262,7 @@ class AppointmentUpdateView(APIView):
 
 @method_decorator(ratelimit(key='ip', rate='10/m', method='POST'), name='post')
 class DocumentUploadView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         data = request.data.copy()
@@ -235,6 +278,14 @@ class DocumentUploadView(APIView):
             return Response(
                 {"success": False, "message": "Landlord not found"},
                 status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Ownership gate: only the landlord themselves (or an agent) may
+        # upload documents to a profile.
+        if not can_access_landlord(request.user, landlord):
+            return Response(
+                {"success": False, "message": "You can only upload documents for your own profile."},
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         intake_pk = data.get('intake_id')
@@ -291,3 +342,43 @@ class DocumentListView(APIView):
         documents = DocumentVault.objects.filter(landlord=landlord)
         serializer = DocumentVaultSerializer(documents, many=True, context={'request': request})
         return Response({"success": True, "data": serializer.data})
+
+
+class DocumentDownloadView(APIView):
+    """
+    GET /api/v1/landlords/documents/<pk>/download/
+    Stream a protected document. Owner or agent only. The file lives outside
+    MEDIA_ROOT so it is never reachable via any public URL.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    @method_decorator(ratelimit(key='ip', rate='30/m', method='GET'), name='get')
+    def get(self, request, pk):
+        try:
+            document = DocumentVault.objects.select_related('landlord').get(pk=pk)
+        except DocumentVault.DoesNotExist:
+            return Response(
+                {"success": False, "message": "Document not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        if not can_access_landlord(request.user, document.landlord):
+            return Response(
+                {"success": False, "message": "You can only download your own documents."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        if not document.file:
+            return Response(
+                {"success": False, "message": "Document file is missing."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        from django.http import FileResponse
+
+        response = FileResponse(
+            document.file.open('rb'),
+            content_type='application/octet-stream',
+        )
+        response['Content-Disposition'] = (
+            f'attachment; filename="landlord-document-{document.id}.{document.file.name.rsplit(".", 1)[-1]}"'
+        )
+        return response

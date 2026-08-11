@@ -1,0 +1,60 @@
+# Semgrep rules for PrimeKey security checks
+# Custom rules targeting OWASP Top 10 / DRF-specific issues
+rules:
+  - id: django-allowany-on-write
+    patterns:
+      - pattern: permission_classes = [..., AllowAny, ...]
+      - pattern-not: permission_classes = [AllowAny]
+    message: >
+      AllowAny found in permission_classes on a non-registration view.
+      Write endpoints should require authentication.
+    languages: [python]
+    severity: ERROR
+    metadata:
+      cwe: "CWE-306: Missing Authentication for Critical Function"
+
+  - id: drf-fields-all
+    pattern: fields = '__all__'
+    message: >
+      Using fields='__all__' exposes all model fields. Use explicit field
+      lists to prevent mass-assignment of sensitive fields.
+    languages: [python]
+    severity: WARNING
+    metadata:
+      cwe: "CWE-915: Improperly Controlled Modification of Dynamically-Determined Object Attributes"
+
+  - id: django-filefield-no-validation
+    patterns:
+      - pattern: $MODEL.file = models.FileField(...)
+      - pattern-not-inside: |
+          class $MODEL(models.Model):
+              ...
+              def validate(self, *$ARGS):
+                  ...
+    message: >
+      FileField without upload validation. Ensure magic-byte and extension
+      allowlist checks are performed before storage.
+    languages: [python]
+    severity: WARNING
+    metadata:
+      cwe: "CWE-434: Unrestricted Upload of File with Dangerous Type"
+
+  - id: django-raw-sql
+    pattern: $QUERYSET.raw(...)
+    message: >
+      Raw SQL query detected. Use ORM methods or parameterized queries
+      to prevent SQL injection.
+    languages: [python]
+    severity: WARNING
+    metadata:
+      cwe: "CWE-89: SQL Injection"
+
+  - id: hardcoded-secret-key
+    pattern: SECRET_KEY = "..."
+    message: >
+      Hardcoded SECRET_KEY detected. Use environment variables for
+      secret management.
+    languages: [python]
+    severity: ERROR
+    metadata:
+      cwe: "CWE-798: Use of Hard-coded Credentials"

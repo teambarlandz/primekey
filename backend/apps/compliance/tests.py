@@ -10,7 +10,7 @@ from rest_framework.test import APIClient
 from rest_framework import status
 
 from .models import ConsentLog, ExportRequest, ErasureRequest, AnonymizationLog
-from core.security import hash_code
+from core.security import hash_code, verify_code
 from .serializers import (
     ConsentLogSerializer,
     ExportRequestSerializer, ExportRequestCreateSerializer, ExportRequestVerifySerializer,
@@ -129,7 +129,7 @@ class TestExportRequestModel:
     def test_create(self, db):
         req = ExportRequestFactory.create()
         assert req.status == 'pending'
-        assert req.verification_code == hash_code('123456')
+        assert verify_code(req.verification_code, '123456')
         assert isinstance(req.id, uuid.UUID)
 
     def test_str(self, db):
@@ -146,7 +146,7 @@ class TestErasureRequestModel:
     def test_create(self, db):
         req = ErasureRequestFactory.create()
         assert req.status == 'pending'
-        assert req.verification_code == hash_code('654321')
+        assert verify_code(req.verification_code, '654321')
 
     def test_str(self, db):
         req = ErasureRequestFactory.create()
@@ -199,7 +199,7 @@ class TestExportRequestCreateSerializer:
         assert serializer.is_valid()
         req = serializer.save()
         assert req.verification_code is not None
-        assert len(req.verification_code) == 64
+        assert ":" in req.verification_code
         assert req.verification_sent_at is not None
 
 
@@ -255,7 +255,7 @@ class TestErasureRequestCreateSerializer:
         assert serializer.is_valid()
         req = serializer.save()
         assert req.verification_code is not None
-        assert len(req.verification_code) == 64
+        assert ":" in req.verification_code
 
 
 class TestErasureRequestVerifySerializer:

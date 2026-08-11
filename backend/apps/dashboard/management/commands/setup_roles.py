@@ -50,6 +50,10 @@ PERMISSION_TARGETS = {
         "user",
         "group",
     ],
+    "careers": [
+        "jobopening",
+        "jobapplication",
+    ],
 }
 
 # Permission verbs per role per model target.
@@ -58,6 +62,8 @@ ROLE_PERMISSIONS = {
         "all": [
             "auth.user",
             "auth.group",
+            "careers.jobopening",
+            "careers.jobapplication",
         ],
         "view_all": [model for models in list(PERMISSION_TARGETS.values()) for model in models],
         "change": ["crm.conciergelead"],
@@ -72,6 +78,8 @@ ROLE_PERMISSIONS = {
             "otp_auth.otpcode",
             "auth.user",
             "auth.group",
+            "careers.jobopening",
+            "careers.jobapplication",
         ],
         "change": [
             "properties.property",
@@ -87,6 +95,8 @@ ROLE_PERMISSIONS = {
             "crm.leadscore",
             "crm.slaalert",
             "crm.consentlog",
+            "careers.jobopening",
+            "careers.jobapplication",
         ],
         "change": [
             "properties.property",
@@ -139,6 +149,35 @@ class Command(BaseCommand):
             parser.add_argument(f"--{role}-username", default=account["username"], help=f"{role.upper()} username")
             parser.add_argument(f"--{role}-email", default=account["email"], help=f"{role.upper()} email")
 
+    def _ensure_permissions(self):
+        """Create Permission objects for all registered models if they don't exist.
+
+        Django's ``post_migrate`` signal usually handles this, but if
+        ``setup_roles`` runs before or without migrations, the permissions
+        won't exist and ``group.permissions.set()`` silently assigns none.
+        """
+        from django.contrib.contenttypes.models import ContentType
+
+        created = 0
+        for app_label, models in PERMISSION_TARGETS.items():
+            for model_name in models:
+                ct, ct_created = ContentType.objects.get_or_create(
+                    app_label=app_label,
+                    model=model_name,
+                )
+                if ct_created:
+                    created += 1
+                for verb in ("add", "change", "delete", "view"):
+                    codename = f"{verb}_{model_name}"
+                    _, perm_created = Permission.objects.get_or_create(
+                        codename=codename,
+                        content_type=ct,
+                        defaults={"name": f"Can {verb} {model_name}"},
+                    )
+                    if perm_created:
+                        created += 1
+        return created
+
     def _perms(self, app_label, model_name, verbs):
         codenames = []
         for verb in verbs:
@@ -170,17 +209,34 @@ class Command(BaseCommand):
         group, created = Group.objects.get_or_create(name=role_name.upper())
         targets = self._role_codenames(role_name)
         perms = Permission.objects.none()
+        missing = []
         for app_label, model, verbs in targets:
-            perms |= self._perms(app_label, model, verbs)
+            found = self._perms(app_label, model, verbs)
+            if found.count() != len(verbs):
+                expected = {f"{v}_{model}" for v in verbs}
+                found_names = set(found.values_list("codename", flat=True))
+                missing.extend(expected - found_names)
+            perms |= found
         group.permissions.set(perms)
-        return group, created
+        return group, created, missing
 
     def handle(self, *args, **options):
+        self.stdout.write(self.style.NOTICE("Ensuring permission objects exist..."))
+        created_count = self._ensure_permissions()
+        if created_count:
+            self.stdout.write(self.style.SUCCESS(f"Created {created_count} missing permission/content-type objects."))
+        else:
+            self.stdout.write(self.style.SUCCESS("All permission objects already exist."))
+
         for account in ROLE_ACCOUNTS:
             role = account["role"]
-            group, created = self._sync_group(role)
+            group, created, missing = self._sync_group(role)
             verb = "Created" if created else "Synced"
             self.stdout.write(self.style.SUCCESS(f"{verb} group {role.upper()} ({group.permissions.count()} permissions)"))
+            if missing:
+                self.stdout.write(self.style.WARNING(
+                    f"  Missing permissions for {role.upper()}: {', '.join(sorted(missing))}"
+                ))
 
         for account in ROLE_ACCOUNTS:
             role = account["role"]

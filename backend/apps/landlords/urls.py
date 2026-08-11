@@ -9,6 +9,7 @@ from .views import (
     AppointmentUpdateView,
     DocumentUploadView,
     DocumentListView,
+    DocumentDownloadView,
 )
 
 app_name = 'landlords'
@@ -22,5 +23,6 @@ urlpatterns = [
     path('landlords/<uuid:landlord_pk>/appointments/', AppointmentListView.as_view(), name='appointment-list'),
     path('appointments/<uuid:pk>/', AppointmentUpdateView.as_view(), name='appointment-update'),
     path('documents/', DocumentUploadView.as_view(), name='document-upload'),
+    path('documents/<uuid:pk>/download/', DocumentDownloadView.as_view(), name='document-download'),
     path('landlords/<uuid:landlord_pk>/documents/', DocumentListView.as_view(), name='document-list'),
 ]

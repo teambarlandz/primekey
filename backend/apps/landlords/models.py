@@ -1,6 +1,30 @@
 import uuid
-from django.db import models
 from django.conf import settings
+from django.core.files.storage import FileSystemStorage
+from django.db import models
+
+# Sensitive landlord documents (IDs, proof of ownership) live OUTSIDE
+# MEDIA_ROOT in protected storage and are served only via the authenticated
+# download endpoint. base_url=None guarantees no public URL is ever exposed.
+protected_storage = FileSystemStorage(
+    location=settings.PROTECTED_STORAGE_DIR,
+    base_url=None,
+)
+
+
+from core.files import _ALLOWED_SIGNATURES
+
+_SAFE_EXTENSIONS = {
+    ext for exts, _ in _ALLOWED_SIGNATURES.values() for ext in exts
+}
+
+
+def document_upload_path(instance, filename):
+    """Randomize the stored filename; unknown extensions fall back to 'bin'."""
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    if ext not in _SAFE_EXTENSIONS:
+        ext = "bin"
+    return f"landlord_documents/{uuid.uuid4().hex}.{ext}"
 
 
 class LandlordProfile(models.Model):
@@ -144,7 +168,10 @@ class DocumentVault(models.Model):
         related_name='documents',
     )
     doc_type = models.CharField(max_length=40, choices=DOC_TYPES, default='title_deed')
-    file = models.FileField(upload_to='landlord_documents/')
+    file = models.FileField(
+        upload_to=document_upload_path,
+        storage=protected_storage,
+    )
     review_status = models.CharField(
         max_length=20, choices=REVIEW_STATUS, default='pending', db_index=True
     )

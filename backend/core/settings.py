@@ -9,8 +9,9 @@ from pathlib import Path
 from datetime import timedelta
 
 import environ
-from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse_lazy
+
+from core.config_checks import validate_production_settings
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -39,15 +40,11 @@ DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 
 # Fail fast in production if critical security settings are left at insecure defaults
-if not DEBUG:
-    if SECRET_KEY == "django-insecure-dev-key-change-in-production":
-        raise ImproperlyConfigured(
-            "SECRET_KEY must be overridden when DEBUG=False. Set SECRET_KEY in the environment."
-        )
-    if not ALLOWED_HOSTS:
-        raise ImproperlyConfigured(
-            "ALLOWED_HOSTS must be set when DEBUG=False."
-        )
+validate_production_settings(
+    secret_key=SECRET_KEY,
+    debug=DEBUG,
+    allowed_hosts=ALLOWED_HOSTS,
+)
 
 
 # Application definition
@@ -71,6 +68,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "django_ratelimit",
     "django_q",
+    "axes",
     # Local project apps
     "apps.crm",
     "apps.careers",
@@ -92,6 +90,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "axes.middleware.AxesMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "core.middleware.IdleSessionMiddleware",
@@ -168,6 +167,11 @@ MEDIA_ROOT = BASE_DIR / "media"
 # Protected storage for NDPR data exports (never served by nginx)
 EXPORT_STORAGE_DIR = BASE_DIR / "exports"
 
+# Protected storage for sensitive landlord documents (IDs, proof of ownership).
+# Lives OUTSIDE MEDIA_ROOT so nginx/Django never serve it publicly; files are
+# delivered only through the authenticated download endpoint.
+PROTECTED_STORAGE_DIR = BASE_DIR / "protected"
+
 
 CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
 CORS_ALLOW_CREDENTIALS = env("CORS_ALLOW_CREDENTIALS")
@@ -194,6 +198,11 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
 }
+if not DEBUG:
+    # Do not expose the API surface (schema/docs/redoc) publicly in production.
+    SPECTACULAR_SETTINGS["SERVE_PERMISSIONS"] = [
+        "rest_framework.permissions.IsAdminUser",
+    ]
 
 # Rate limiting (django-ratelimit uses cache backend)
 RATELIMIT_USE_CACHE = "default"
@@ -239,6 +248,16 @@ SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_IDLE_TIMEOUT_SECONDS = 30 * 60  # 30 minutes of inactivity
 
+# django-axes: brute-force lockout for session/admin login attempts
+AUTHENTICATION_BACKENDS = [
+    "axes.backends.AxesStandaloneBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = timedelta(minutes=15)
+AXES_LOCKOUT_PARAMETERS = ["ip_address"]
+AXES_CACHE = "default"
+
 # Django Q2 Configuration for background tasks
 DJANGO_Q_REDIS_URL = env("DJANGO_Q_REDIS_URL")
 
@@ -263,7 +282,7 @@ Q_CLUSTER = {
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
@@ -271,8 +290,8 @@ SIMPLE_JWT = {
     "ALGORITHM": "HS256",
     "SIGNING_KEY": SECRET_KEY,
     "VERIFYING_KEY": None,
-    "AUDIENCE": None,
-    "ISSUER": None,
+    "AUDIENCE": "primekey-homes-frontend",
+    "ISSUER": "primekey-homes-api",
     "JWK_URL": None,
     "LEEWAY": 0,
     "AUTH_HEADER_TYPES": ("Bearer",),
@@ -293,6 +312,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Security settings for production
 SECURE_REFERRER_POLICY = "same-origin"
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
 
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
@@ -373,6 +393,13 @@ UNFOLD = {
                 "items": [
                     {"title": "WhatsApp Threads", "icon": "chat", "link": reverse_lazy("admin:messaging_whatsappthread_changelist")},
                     {"title": "Notifications", "icon": "notifications", "link": reverse_lazy("admin:notifications_notification_changelist")},
+                ],
+            },
+            {
+                "title": "Careers",
+                "items": [
+                    {"title": "Job Openings", "icon": "work", "link": reverse_lazy("admin:careers_jobopening_changelist")},
+                    {"title": "Applications", "icon": "assignment", "link": reverse_lazy("admin:careers_jobapplication_changelist")},
                 ],
             },
         ],

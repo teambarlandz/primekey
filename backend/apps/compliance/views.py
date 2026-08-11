@@ -106,10 +106,11 @@ class ConsentLogListView(APIView):
 class ExportRequestCreateView(APIView):
     """
     POST /api/v1/compliance/export/
-    Create a new data export request (public).
+    Create a new data export request (public, rate-limited per email+IP).
     """
     permission_classes = [AllowAny]
-    
+
+    @method_decorator(ratelimit(key=_email_ip_key, rate='10/m', method='POST'))
     def post(self, request):
         serializer = ExportRequestCreateSerializer(data=request.data)
         if serializer.is_valid():
@@ -196,10 +197,11 @@ class ExportRequestStatusView(APIView):
 class ErasureRequestCreateView(APIView):
     """
     POST /api/v1/compliance/erase/
-    Create a new data erasure request (public).
+    Create a new data erasure request (public, rate-limited per email+IP).
     """
     permission_classes = [AllowAny]
-    
+
+    @method_decorator(ratelimit(key=_email_ip_key, rate='10/m', method='POST'))
     def post(self, request):
         serializer = ErasureRequestCreateSerializer(data=request.data)
         if serializer.is_valid():

@@ -19,21 +19,7 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils import timezone
 
-
-def _is_private_or_loopback(address):
-    try:
-        ip = ipaddress.ip_address(address)
-    except ValueError:
-        return False
-    return ip.is_private or ip.is_loopback
-
-
-def _validated_ip(value):
-    """Return a normalized IP string, or None if the value is not an IP."""
-    try:
-        return ipaddress.ip_address(value.strip()).compressed
-    except (ValueError, AttributeError):
-        return None
+from core.security import _is_private_or_loopback, _validated_ip
 
 
 class TrustedProxyIPMiddleware:

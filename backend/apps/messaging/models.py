@@ -3,6 +3,7 @@ import uuid
 from django.db import models
 
 from apps.crm.models import ConciergeLead
+from apps.dashboard.models import AgentProfile
 from apps.landlords.models import LandlordProfile
 
 
@@ -13,6 +14,16 @@ class WhatsAppThread(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     phone = models.CharField(max_length=20, db_index=True)
     display_name = models.CharField(max_length=150, blank=True, default="")
+
+    # Owning agent: threads are only visible to the assigned agent (or a
+    # manager). Null until assigned.
+    assigned_agent = models.ForeignKey(
+        AgentProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='whatsapp_threads',
+    )
 
     # Optional source records
     concierge_lead = models.OneToOneField(

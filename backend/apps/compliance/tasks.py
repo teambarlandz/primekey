@@ -1,11 +1,15 @@
 """
 Background tasks for NDPR Compliance using django-q2.
 """
-from django_q.tasks import async_task
-from django.utils import timezone
-from datetime import timedelta
 import hashlib
 import json
+import uuid
+from datetime import timedelta
+
+from django.db import models, transaction
+from django.db.models import Q
+from django.utils import timezone
+from django_q.tasks import async_task
 
 
 def compile_export_data(export_request_id: str):
@@ -348,13 +352,14 @@ def scheduled_anonymization():
     
     # Also anonymize related consent logs
     if count > 0:
-        CRMConsentLog.objects.filter(
+        consent_logs = CRMConsentLog.objects.filter(
             lead_id__in=[l.id for l in leads]
-        ).update(
-            email=models.F('id'),  # Will be overridden
-            phone=models.F('id'),
         )
-    
+        for cl in consent_logs:
+            cl.email = f"anon_{cl.id.hex[:8]}@primekey.ng"
+            cl.phone = f"anon_{cl.id.hex[:8]}"
+            cl.save(update_fields=['email', 'phone'])
+
     return f"Anonymized {count} inactive leads"
 
 

@@ -46,3 +46,5 @@ Thumbs.db
 *.iml
 
 backend/media/
+backend/protected/
+backend/exports/
