@@ -1,5 +1,36 @@
 # Backend Admin UI/UX Makeover Plan
 
+## Design Inspiration: Frontend → Backend Visual Consistency
+
+The frontend uses a premium real-estate aesthetic built on **Navy (`#04164a`)** + **Soft Lavender (`#f3f0ff`)** with **Poppins** headings, **Lora** body text, frosted-glass cards, and pill-shaped CTAs. The backend admin should mirror this identity.
+
+---
+
+## Key Design Tokens (from Frontend)
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| Primary Navy | `#04164a` | Sidebar, buttons, headings, KPI cards |
+| Medium Navy | `#1d326f` | Hover states, gradient endpoints |
+| Light Blue Accent | `#8FB3E2` | Focus rings, info badges |
+| Lavender Background | `#f3f0ff` | Admin body background |
+| Lavender Border | `#e4e0f5` | Card borders, input borders |
+| White Surface | `#ffffff` | Cards, modals, elevated surfaces |
+| Muted Text | `#4a607a` | Secondary/body text |
+| Success Green | `#1b5e20` | Approved/active states |
+| Error Red | `#c62828` | Destructive/breached states |
+| Warning Orange | `#e65100` | Pending/warning states |
+| Info Blue | `#0277bd` | Info/neutral states |
+| Hero Gradient | `135deg, #04164a → #1d326f` | Login page, header backgrounds |
+| Accent Gradient | `135deg, #FBC2EB → #78A3EB` | Decorative accents |
+| Font Heading | Poppins (600, 700) | Admin headings, badges |
+| Font Body | Lora (400, 500) | Admin body text, labels |
+| Border Radius | `0.5rem` (8px) base | Cards, inputs, buttons |
+| Card Pattern | `bg-white/90 backdrop-blur-sm border-purple-100` | Frosted glass cards |
+| Hover Lift | `hover:shadow-xl hover:-translate-y-1 transition-all` | Interactive cards |
+
+---
+
 ## Current State
 - Django Unfold 0.102.0 already installed and configured
 - Custom dashboard with KPI cards and Chart.js charts
@@ -10,164 +41,234 @@
 
 ---
 
-## Phase 1: Enhanced UNFOLD Configuration (settings.py)
+## Phase 1: Enhanced UNFOLD Configuration (`settings.py`)
 
-### 1.1 Upgrade Color Palette
-- [ ] Replace the current sky-blue primary palette with a richer, more vibrant palette (e.g., indigo/violet gradient feel)
-- [ ] Add accent color for hover states and interactive elements
-- [ ] Add dark mode color overrides for better contrast
+### 1.1 Color Palette — Match Frontend Navy/Lavender Identity
+- [ ] Replace current sky-blue palette with navy-to-lavender palette matching frontend:
+  ```
+  Primary: "4 22 74"       (#04164a — deep navy)
+  50:  "243 240 255"       (#f3f0ff — lavender)
+  100: "228 224 245"       (#e4e0f5 — lavender border)
+  200: "143 179 226"       (#8FB3E2 — light blue accent)
+  300: "29 50 111"         (#1d326f — medium navy)
+  400: "4 22 74"           (#04164a — primary)
+  500: "4 22 74"           (#04164a — primary)
+  600: "29 50 111"         (#1d326f — hover)
+  700: "29 50 111"         (#1d326f — active)
+  800: "4 22 74"           (#04164a — dark)
+  900: "4 22 74"           (#04164a — darker)
+  ```
+- [ ] Map success/warning/danger/info to frontend state colors (`#1b5e20`, `#e65100`, `#c62828`, `#0277bd`)
 
 ### 1.2 Branding & Identity
-- [ ] Add a custom logo image (SVG recommended) displayed in sidebar and login
-- [ ] Set `SITE_ICON` to a meaningful icon (e.g., a building/home icon)
-- [ ] Customize the login page background with a branded image or gradient
-- [ ] Add a custom favicon via template override
+- [ ] Reference the frontend SVG logo (from `public/assets/`) as `SITE_ICON`
+- [ ] Set `SITE_SYMBOL` to `"home"` (Material icon for consistency)
+- [ ] Configure login page with gradient background matching `--gradient-hero`
 
-### 1.3 Sidebar Enhancements
+### 1.3 Sidebar — Lavender-Tinted with Navy Accents
 - [ ] Add `show_history: True` for recent action visibility
 - [ ] Add `show_notifications: True` for in-admin notifications
-- [ ] Group apps with color-coded section headers
-- [ ] Add badges to sidebar items (e.g., count of pending leads)
+- [ ] Group sections with clear visual hierarchy matching frontend nav
+- [ ] Add badge counts to sidebar items (e.g., pending leads, pending intakes)
 
-### 1.4 Footer & Misc
-- [ ] Add a custom footer with copyright / version info
-- [ ] Enable `show_full_result_count` globally
+### 1.4 Footer
+- [ ] Add custom footer: "Primekey Homes Backoffice" with copyright
 - [ ] Set `preload_fonts` for Material Icons
 
 ---
 
-## Phase 2: Custom CSS Stylesheet
+## Phase 2: Custom CSS — `core/static/admin/css/custom.css`
 
-### 2.1 Create `core/static/admin/css/custom.css`
-- [ ] Add smooth transitions and micro-animations on cards and buttons
-- [ ] Style KPI cards with subtle gradients and hover lift effects
-- [ ] Add custom scrollbar styling for a polished feel
-- [ ] Improve typography: line-height, letter-spacing for readability
-- [ ] Style action buttons (save, delete) with rounded corners and shadows
-- [ ] Add a subtle background pattern or gradient to the admin body
-- [ ] Improve fieldset headers with accent border-left
-- [ ] Style read-only fields with a muted, clean look
-- [ ] Add custom badge styles for status labels beyond Unfold defaults
-- [ ] Improve inline editing tables with alternating row colors
+### 2.1 Body & Layout — Lavender Background
+- [ ] Set admin body background to `#f3f0ff` (lavender) matching frontend
+- [ ] Add custom scrollbar styling (thin, navy-tinted)
+- [ ] Set base font to Lora for body text via CSS override
 
-### 2.2 Dark Mode Refinements
-- [ ] Add dark mode overrides for custom styles
-- [ ] Ensure KPI cards, charts, and badges look great in dark mode
+### 2.2 KPI Cards — Frosted Glass Pattern
+- [ ] Apply frontend card pattern: `background: rgba(255,255,255,0.9); backdrop-filter: blur(8px); border: 1px solid #e4e0f5;`
+- [ ] Add `border-radius: 12px` (matching frontend `rounded-xl`)
+- [ ] Add hover lift: `transition: all 0.2s ease; &:hover { box-shadow: 0 10px 25px rgba(4,22,74,0.08); transform: translateY(-2px); }`
+- [ ] Add colored left border accent per KPI type (success/warning/danger)
+- [ ] Add subtle gradient overlay per card color
+
+### 2.3 Buttons — Pill-Shaped CTAs
+- [ ] Style primary buttons: `background: #04164a; color: white; border-radius: 9999px; box-shadow: 0 2px 8px rgba(4,22,74,0.15);`
+- [ ] Add hover: `box-shadow: 0 4px 12px rgba(4,22,74,0.25); opacity: 0.95;`
+- [ ] Style secondary/outline buttons: `border: 1px solid rgba(4,22,74,0.2); color: #04164a; border-radius: 12px;`
+
+### 2.4 Form Inputs — Rounded with Lavender Tint
+- [ ] Set input border-radius to `12px` matching frontend
+- [ ] Add focus ring: `box-shadow: 0 0 0 3px rgba(4,22,74,0.1); border-color: #1d326f;`
+- [ ] Style input backgrounds: `background: rgba(243,240,255,0.3);` (subtle lavender)
+
+### 2.5 Fieldsets — Clean Section Separators
+- [ ] Add left border accent (`3px solid #04164a`) to fieldset headers
+- [ ] Increase fieldset header font weight and size
+- [ ] Add subtle background to fieldset containers
+
+### 2.6 Tables & Lists — Alternating Rows
+- [ ] Add alternating row colors: `even: background rgba(243,240,255,0.3);`
+- [ ] Style table headers with navy background and white text
+- [ ] Add row hover effect: `background: rgba(143,179,226,0.08);`
+
+### 2.7 Badges — Pill-Shaped Status Indicators
+- [ ] Override Unfold badge defaults to use `border-radius: 9999px`
+- [ ] Map badge colors to frontend state colors:
+  - Success: `background: rgba(27,94,32,0.1); color: #1b5e20;`
+  - Warning: `background: rgba(230,81,0,0.1); color: #e65100;`
+  - Danger: `background: rgba(198,40,40,0.1); color: #c62828;`
+  - Info: `background: rgba(2,119,189,0.1); color: #0277bd;`
+
+### 2.8 Dark Mode — Navy-Based Dark Theme
+- [ ] Dark background: `#0a0f1e` (deep navy-black)
+- [ ] Dark surface: `#111827` (dark card background)
+- [ ] Dark borders: `rgba(143,179,226,0.15)` (subtle blue tint)
+- [ ] Ensure all badge colors have dark-mode contrast variants
 
 ---
 
-## Phase 3: Custom JavaScript
+## Phase 3: Custom JavaScript — `core/static/admin/js/custom.js`
 
-### 3.1 Create `core/static/admin/js/custom.js`
-- [ ] Add entrance animations for KPI cards (staggered fade-in)
-- [ ] Add number count-up animation for KPI metrics on page load
-- [ ] Add tooltip popovers on badge hover showing full status details
-- [ ] Add keyboard shortcut hints (e.g., Ctrl+S to save)
-- [ ] Smooth scroll behavior for in-page anchor links
+### 3.1 Animations — GSAP-Inspired with CSS
+- [ ] Staggered fade-in for KPI cards on page load (CSS `@keyframes` + `animation-delay`)
+- [ ] Number count-up animation for KPI metrics using `IntersectionObserver`
+- [ ] Smooth hover transitions on all interactive elements
+
+### 3.2 UX Enhancements
+- [ ] Tooltip popovers on badge hover showing full status text
+- [ ] Keyboard shortcut: `Ctrl+S` to save forms
+- [ ] Smooth scroll behavior for in-page anchors
+- [ ] Auto-dismiss Django messages after 5 seconds with fade-out
 
 ---
 
-## Phase 4: Dashboard Template Enhancements
+## Phase 4: Dashboard Template Redesign (`core/templates/admin/index.html`)
 
-### 4.1 Redesign KPI Cards (`core/templates/admin/index.html`)
-- [ ] Add gradient backgrounds per card color (not just border)
-- [ ] Add icon per KPI (using Material Icons)
-- [ ] Add small sparkline or trend arrow per metric
-- [ ] Improve pipeline value section with a progress bar or gauge
-- [ ] Add a "Quick Actions" panel (e.g., buttons to add property, view leads)
+### 4.1 KPI Cards — Richer Design
+- [ ] Add Material Icon per KPI (home_work, support_agent, warning, group, etc.)
+- [ ] Apply frosted glass pattern from frontend cards
+- [ ] Add colored top gradient bar per card
+- [ ] Add trend arrow (↑/↓) next to metric if comparison data available
+- [ ] Make cards clickable with hover lift effect
 
-### 4.2 Chart Improvements
-- [ ] Add Chart.js plugin for rounded bar corners
-- [ ] Add responsive chart sizing improvements
-- [ ] Add a legend below charts for better readability
-- [ ] Consider adding a line chart for leads-over-time trend
+### 4.2 Pipeline Value — Hero Treatment
+- [ ] Apply hero gradient background: `linear-gradient(135deg, #04164a, #1d326f)`
+- [ ] White text on dark background (matching frontend hero pattern)
+- [ ] Add a subtle progress bar or visual gauge
+
+### 4.3 Charts — Refined Styling
+- [ ] Match chart colors to frontend palette (navy, lavender, light blue)
+- [ ] Add rounded bar corners via Chart.js options
+- [ ] Improve responsive sizing
+- [ ] Add subtle grid lines with lavender color
+
+### 4.4 Quick Actions Panel
+- [ ] Add action buttons matching frontend CTA style (pill-shaped, navy bg)
+- [ ] "Add Property", "View Leads", "Review Intakes" shortcuts
 
 ---
 
 ## Phase 5: Admin Class Improvements
 
-### 5.1 Consistent Stacking & Ordering
-- [ ] Standardize `list_per_page` across all admin classes (50 is good)
-- [ ] Ensure all admin classes have `list_filter_submit = True`
-- [ ] Add `save_on_top = True` to all ModelAdmin classes for better UX
+### 5.1 Consistency Across All Admin Classes
+- [ ] Add `save_on_top = True` to all ModelAdmin classes
+- [ ] Ensure `list_filter_submit = True` everywhere
+- [ ] Standardize `list_per_page = 50`
 
-### 5.2 Better Field Organization
-- [ ] Review and improve fieldset groupings — use descriptive headers with icons in titles
-- [ ] Add `collapsible` sections where appropriate (Unfold supports this)
-- [ ] Ensure all datetime fields use consistent formatting
+### 5.2 Fieldset Enhancements
+- [ ] Review all fieldset groupings for clarity
+- [ ] Add `classes = ("collapse",)` to metadata sections
+- [ ] Use descriptive section headers matching frontend section titles
 
 ### 5.3 Enhanced List Displays
-- [ ] Add `date_hierarchy` to all models with `created_at` for easy time-based filtering
-- [ ] Consider adding colored row highlights for critical items (e.g., breached SLA)
-- [ ] Add custom admin actions (e.g., bulk approve landlords, bulk close leads)
+- [ ] Add `date_hierarchy = "created_at"` to all time-aware models
+- [ ] Add custom admin actions:
+  - ConciergeLead: bulk close, bulk assign
+  - LandlordProfile: bulk approve, bulk reject
+  - PropertyIntake: bulk approve
 
 ### 5.4 Inline Improvements
-- [ ] Style PropertyImage inline with thumbnail previews
-- [ ] Style WhatsAppMessage inline with direction indicators
+- [ ] PropertyImage inline: show thumbnail preview in list
+- [ ] WhatsAppMessage inline: style direction badges inline
 
 ---
 
-## Phase 6: Login Page Customization
+## Phase 6: Login Page — Branded Experience
 
-### 6.1 Create custom login template
-- [ ] Override `admin/login.html` with a branded login page
-- [ ] Add Primekey Homes logo centered above the form
-- [ ] Add a subtle background image or gradient
-- [ ] Style the login form with rounded inputs and a prominent submit button
-- [ ] Add a tagline or welcome message
+### 6.1 Create `core/templates/admin/login.html`
+- [ ] Full-page gradient background: `linear-gradient(135deg, #04164a, #1d326f)`
+- [ ] Centered card with frosted glass effect: `bg-white/90 backdrop-blur-sm rounded-2xl`
+- [ ] Primekey Homes SVG logo centered above form
+- [ ] Tagline: "Backoffice Management Portal"
+- [ ] Rounded inputs matching frontend style (`rounded-xl`, lavender focus ring)
+- [ ] Pill-shaped submit button: `bg-[#04164a] text-white rounded-full`
+- [ ] Subtle decorative elements (matching frontend hero glow pattern)
 
 ---
 
 ## Phase 7: Template-Level Polish
 
-### 7.1 Base Template Overrides
-- [ ] Override `admin/base_site.html` to add custom favicon
-- [ ] Add a custom "Powered by" footer or version badge
-- [ ] Add breadcrumbs styling improvements
+### 7.1 Base Template (`core/templates/admin/base_site.html`)
+- [ ] Add custom favicon (from frontend public assets)
+- [ ] Inject Google Fonts: Poppins (headings) + Lora (body)
+- [ ] Add custom footer bar
 
-### 7.2 Change Form Improvements
-- [ ] Style the change form with a cleaner layout
-- [ ] Add visual separators between fieldset sections
-- [ ] Improve the delete confirmation page with a warning banner
+### 7.2 Change Form
+- [ ] Cleaner fieldset spacing
+- [ ] Visual separators between sections
+
+### 7.3 Delete Confirmation
+- [ ] Warning banner with red accent
+- [ ] Clearer messaging
 
 ---
 
-## Phase 8: Performance & Polish
+## Phase 8: Performance & QA
 
 ### 8.1 Static File Setup
-- [ ] Register custom CSS/JS in UNFOLD `STYLES` and `SCRIPTS` settings
-- [ ] Ensure `collectstatic` works correctly
-- [ ] Add cache-busting query params to static files
+- [ ] Create directory structure: `core/static/admin/css/`, `core/static/admin/js/`
+- [ ] Register in UNFOLD settings:
+  ```python
+  "STYLES": ["/static/admin/css/custom.css"],
+  "SCRIPTS": ["/static/admin/js/custom.js"],
+  ```
+- [ ] Run `collectstatic` and verify
+- [ ] Add cache-busting via file hash or query param
 
-### 8.2 Final QA
-- [ ] Test all admin pages in light mode
-- [ ] Test all admin pages in dark mode
-- [ ] Verify mobile responsiveness
-- [ ] Verify chart rendering
-- [ ] Verify KPI card animations
-- [ ] Check login page branding
-- [ ] Cross-browser check (Chrome, Firefox, Edge)
+### 8.2 Final QA Checklist
+- [ ] Light mode: all pages render correctly
+- [ ] Dark mode: all pages render correctly
+- [ ] Mobile responsive: sidebar collapses, cards stack
+- [ ] Charts render with correct colors
+- [ ] KPI card animations fire on load
+- [ ] Login page shows branded gradient + logo
+- [ ] All badges display correct colors
+- [ ] Hover effects work on cards and buttons
+- [ ] Custom fonts load (Poppins headings, Lora body)
+- [ ] Cross-browser: Chrome, Firefox, Edge
 
 ---
 
 ## Files to Create/Modify
 
-| File | Action |
-|------|--------|
-| `backend/core/settings.py` | Enhance UNFOLD config, register CSS/JS |
-| `backend/core/static/admin/css/custom.css` | **CREATE** — all custom styles |
-| `backend/core/static/admin/js/custom.js` | **CREATE** — animations & interactivity |
-| `backend/core/templates/admin/index.html` | Redesign dashboard layout |
-| `backend/core/templates/admin/login.html` | **CREATE** — branded login page |
-| `backend/core/templates/admin/base_site.html` | **CREATE** — favicon & footer |
-| `backend/apps/*/admin.py` | Minor improvements (save_on_top, etc.) |
-| `backend/requirements.txt` | No changes needed (Unfold already installed) |
+| File | Action | Priority |
+|------|--------|----------|
+| `backend/core/settings.py` | Enhance UNFOLD config, register CSS/JS | **HIGH** |
+| `backend/core/static/admin/css/custom.css` | **CREATE** — all custom styles | **HIGH** |
+| `backend/core/static/admin/js/custom.js` | **CREATE** — animations & interactivity | **MEDIUM** |
+| `backend/core/templates/admin/index.html` | Redesign dashboard layout | **HIGH** |
+| `backend/core/templates/admin/login.html` | **CREATE** — branded login page | **HIGH** |
+| `backend/core/templates/admin/base_site.html` | **CREATE** — favicon & fonts | **MEDIUM** |
+| `backend/apps/*/admin.py` | Minor improvements (save_on_top, actions) | **LOW** |
 
 ---
 
-## Approach
-- **Primary framework:** Django Unfold (already installed — maximize its features)
-- **Custom styling:** Tailwind-compatible CSS (Unfold is built on Tailwind)
-- **Charts:** Chart.js (already in use via Unfold)
-- **Icons:** Material Symbols (Unfold default)
-- **No additional packages needed** — everything achievable with Unfold + custom CSS/JS
+## Design Principles
+
+1. **Visual Consistency** — Backend should feel like the same product as the frontend
+2. **Navy Authority** — `#04164a` is the anchor color everywhere
+3. **Lavender Softness** — `#f3f0ff` backgrounds reduce visual fatigue
+4. **Frosted Glass** — `backdrop-blur` + transparency for modern elevation
+5. **Pill Shapes** — Rounded-full buttons and badges for a friendly feel
+6. **Subtle Motion** — Gentle animations, not overwhelming
+7. **Dark Mode First** — Both themes must look polished
