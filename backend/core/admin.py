@@ -13,6 +13,12 @@ from apps.crm.models import ConciergeLead, LeadScore, SLAAlert
 from apps.landlords.models import Appointment, DocumentVault, LandlordProfile, PropertyIntake
 from apps.properties.models import Property
 
+# Unregister the default LogEntry admin so we can register our custom one.
+try:
+    admin.site.unregister(LogEntry)
+except admin.sites.NotRegistered:
+    pass
+
 
 def _kpi(title, metric, link=None, footer=None, color="primary"):
     return {

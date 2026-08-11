@@ -9,6 +9,12 @@ from .models import AgentProfile
 
 User = get_user_model()
 
+# Unregister the default UserAdmin so we can register our custom one.
+try:
+    admin.site.unregister(User)
+except admin.sites.NotRegistered:
+    pass
+
 
 # ---------------------------------------------------------------------------
 # Custom UserAdmin — hides superuser from non-superusers + blocks edits
