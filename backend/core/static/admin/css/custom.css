@@ -354,6 +354,7 @@ td span:not([class]):contains("completed") {
   height: 28px;
   width: auto;
   display: block;
+  filter: brightness(0) invert(1);
 }
 
 /* Hide any fallback "home" text from SITE_SYMBOL */

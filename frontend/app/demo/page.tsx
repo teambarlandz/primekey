@@ -92,7 +92,7 @@ export default function DemoPage() {
       {/* ─────────────────────────────────────────────
           HIGHLIGHTS
           ───────────────────────────────────────────── */}
-      <section className="pb-16 md:pb-24 bg-white" aria-label="What the demo covers">
+      <section className="pt-12 md:pt-20 pb-16 md:pb-24 bg-white" aria-label="What the demo covers">
         <div className="container mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <header className="text-center max-w-2xl mx-auto mb-12">
             <h2 className="text-3xl md:text-4xl font-bold font-heading mb-4 tracking-tight" style={{ color: BRAND_COLOR }}>
