@@ -12,7 +12,7 @@ import { EmptyResults } from '@/components/search/EmptyResults';
 import { ConciergeModal } from '@/components/search/ConciergeModal';
 import { AuthInterceptSheet } from '@/components/auth/AuthInterceptSheet';
 import { useToast } from '@/components/ui/toast';
-import { isUserLoggedIn } from '@/lib/api-client';
+import { isUserLoggedIn, toggleFavorite, fetchFavorites } from '@/lib/api-client';
 import { NavDropdown, NavDropdownItem } from '@/components/NavDropdown';
 import Footer from '@/components/Footer';
 import { SearchFilterValues } from '@/lib/validations/searchSchema';
@@ -307,26 +307,60 @@ export default function SearchPage() {
     setIsAuthOpen(true);
   };
 
-  const handleAuthSuccess = (data?: Record<string, unknown>) => {
-    const propId = data?.propertyId as string | undefined;
-    if (propId) {
+  const handleToggleFavorite = async (propertyId: string) => {
+    if (!isUserLoggedIn()) {
+      handleRequireAuth('Save Property', propertyId);
+      return;
+    }
+    try {
+      const result = await toggleFavorite(propertyId);
       setFavoritedIds((prev) => {
         const next = new Set(prev);
-        if (next.has(propId)) {
-          next.delete(propId);
-          toast('Property removed from favorites');
+        if (result.is_favorited) {
+          next.add(propertyId);
         } else {
-          next.add(propId);
-          toast('Property saved to favorites');
+          next.delete(propertyId);
         }
         return next;
       });
+      toast(result.is_favorited ? 'Property saved to favorites' : 'Property removed from favorites');
+    } catch {
+      toast('Failed to update favorite. Please try again.', 'error');
+    }
+  };
+
+  const handleAuthSuccess = async (data?: Record<string, unknown>) => {
+    const propId = data?.propertyId as string | undefined;
+    if (propId) {
+      try {
+        const result = await toggleFavorite(propId);
+        setFavoritedIds((prev) => {
+          const next = new Set(prev);
+          if (result.is_favorited) {
+            next.add(propId);
+          } else {
+            next.delete(propId);
+          }
+          return next;
+        });
+        toast(result.is_favorited ? 'Property saved to favorites' : 'Property removed from favorites');
+      } catch {
+        toast('Failed to update favorite. Please try again.', 'error');
+      }
     }
   };
 
   // Initial search on mount
   useEffect(() => {
     executeSearch(filters);
+    // Fetch user's favorites if logged in
+    if (isUserLoggedIn()) {
+      fetchFavorites()
+        .then((favs) => {
+          setFavoritedIds(new Set(favs.map((f) => f.property_id)));
+        })
+        .catch(() => {});
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -696,6 +730,7 @@ export default function SearchPage() {
               properties={properties}
               onSelectProperty={(id) => router.push(`/property/${id}`)}
               onRequireAuth={(actionName, propertyId) => handleRequireAuth(actionName, propertyId)}
+              onToggleFavorite={handleToggleFavorite}
               favoritedIds={favoritedIds}
             />
 

@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AuthInterceptSheet } from '@/components/auth/AuthInterceptSheet';
 import { useToast } from '@/components/ui/toast';
+import { isUserLoggedIn, toggleFavorite, checkFavorite } from '@/lib/api-client';
 import { PropertyMap } from '@/components/map/PropertyMap';
 import { InspectionBookingModal } from '@/components/booking/InspectionBookingModal';
 import { PropertyInquiryForm } from '@/components/property/PropertyInquiryForm';
@@ -69,6 +70,15 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   useEffect(() => {
     loadProperty();
   }, [loadProperty]);
+
+  // Check favorite status if logged in
+  useEffect(() => {
+    if (isUserLoggedIn() && params.id) {
+      checkFavorite(params.id)
+        .then((fav) => setIsFavorited(fav))
+        .catch(() => {});
+    }
+  }, [params.id]);
 
   const handleProtectedAction = (actionName: string) => {
     setPendingAction(actionName);

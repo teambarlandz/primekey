@@ -80,6 +80,7 @@ INSTALLED_APPS = [
     "apps.dashboard",
     "apps.notifications",
     "apps.messaging",
+    "apps.users",
 ]
 
 MIDDLEWARE = [

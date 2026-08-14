@@ -1628,3 +1628,113 @@ export async function submitJobApplication(
 
   return data.results;
 }
+
+// ─── FAVORITES (Saved Properties) ─────────────────────────────────────
+
+export interface FavoriteItem {
+  id: string;
+  property_id: string;
+  property_title: string;
+  property_price: number;
+  property_image: string | null;
+  property_location: string;
+  created_at: string;
+}
+
+export async function fetchFavorites(): Promise<FavoriteItem[]> {
+  const token = getUserAccessToken();
+  const response = await fetch(`${API_BASE_URL}/users/favorites/`, {
+    headers: {
+      Accept: "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new ApiClientError(
+      data?.detail || "Failed to load favorites.",
+      response.status,
+      data?.errors
+    );
+  }
+
+  return data.results ?? [];
+}
+
+export async function toggleFavorite(
+  propertyId: string
+): Promise<{ action: "added" | "removed"; is_favorited: boolean }> {
+  const token = getUserAccessToken();
+  const response = await fetch(`${API_BASE_URL}/users/favorites/toggle/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ property_id: propertyId }),
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new ApiClientError(
+      data?.detail || data?.message || "Failed to update favorite.",
+      response.status,
+      data?.errors
+    );
+  }
+
+  return {
+    action: data.action,
+    is_favorited: data.action === "added",
+  };
+}
+
+export async function removeFavorite(
+  propertyId: string
+): Promise<void> {
+  const token = getUserAccessToken();
+  const response = await fetch(
+    `${API_BASE_URL}/users/favorites/${propertyId}/`,
+    {
+      method: "DELETE",
+      headers: {
+        Accept: "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new ApiClientError(
+      data?.detail || "Failed to remove favorite.",
+      response.status,
+      data?.errors
+    );
+  }
+}
+
+export async function checkFavorite(
+  propertyId: string
+): Promise<boolean> {
+  const token = getUserAccessToken();
+  const response = await fetch(
+    `${API_BASE_URL}/users/favorites/${propertyId}/check/`,
+    {
+      headers: {
+        Accept: "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    }
+  );
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) return false;
+
+  return data.is_favorited ?? false;
+}

@@ -1,22 +1,28 @@
-# TODO — Gated Flows Fix
+# TODO — Frontend-Backend Integration
 
-## HIGH PRIORITY (Security & Core Functionality)
+## HIGH PRIORITY (Core Features Broken Without Backend)
 
-- [x] Fix AuthInterceptSheet: Execute gated actions (save, favorite, book) after successful OTP verification instead of console.log
-- [x] Add server-side middleware.ts to protect /dashboard/agent and /landlord/* routes (redirect to login if no valid session)
-- [x] Add landlord logout button to landlord dashboard UI (clear localStorage primekey_landlord_id and redirect to /)
-- [ ] Fix landlord auth: Add JWT-based auth for landlord routes instead of relying on localStorage UUID alone
+- [ ] Create backend model for saved/favorited properties (User + Property FK, unique together)
+- [ ] Create backend API: POST /api/v1/users/favorites/ (save a property)
+- [ ] Create backend API: DELETE /api/v1/users/favorites/<property_id>/ (unsave a property)
+- [ ] Create backend API: GET /api/v1/users/favorites/ (list saved properties)
+- [ ] Add frontend API client functions: saveFavorite(), removeFavorite(), fetchFavorites()
+- [ ] Wire AuthInterceptSheet "Save Property" action to call saveFavorite() instead of toggling local state only
+- [ ] Wire property detail page "Save" button to call saveFavorite()/removeFavorite() with JWT auth
+- [ ] Wire search page heart icon to call saveFavorite()/removeFavorite() with JWT auth
 
-## MEDIUM PRIORITY (UX Polish)
+## MEDIUM PRIORITY (Auth & Session)
 
-- [x] Add loading/spinner state to AuthInterceptSheet during OTP verification to prevent double-submit
-- [x] Add success toast/notification after gated action completes (e.g. 'Property saved!', 'Inspection booked!')
-- [x] Add error handling in AuthInterceptSheet for failed OTP or network errors
-- [x] Close AuthInterceptSheet automatically after successful action and show confirmation
-- [x] Add session expiry warning modal for agent dashboard before 30-min idle timeout kicks in
-- [x] Audit all gated routes to ensure deep-link callbackUrl works correctly after login (e.g. /property/123?save=true)
+- [ ] Landlord login: Add OTP login flow for landlords (reuse existing /auth/otp/verify with purpose="login")
+- [ ] Landlord dashboard: Fetch landlord profile using JWT from login instead of just localStorage UUID
+- [ ] Wire "Remember this device" to store refresh token in localStorage and use it on page reload
+- [ ] Add user profile endpoint: GET /api/v1/users/me/ (return current user from JWT)
+- [ ] Wire property inquiry form to submit with JWT auth header (currently AllowAny, but should attach user if logged in)
+- [ ] Wire inspection booking to attach JWT when user is logged in
 
-## LOW PRIORITY (Enhancement)
+## LOW PRIORITY (Nice-to-Have)
 
-- [x] Add rate limiting feedback to users on OTP requests (show countdown timer instead of just disabling button)
-- [x] Add 'Remember this device' option to reduce OTP friction for repeat logins
+- [ ] Add "My Saved Properties" page at /account/saved that lists favorited properties
+- [ ] Show saved status (filled heart) on property cards when user has favorited them
+- [ ] Add favorites count to user profile/dashboard
+- [ ] Sync favorites across devices when "Remember this device" is used

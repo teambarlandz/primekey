@@ -11,6 +11,7 @@ interface PropertyCardProps {
   property: Property;
   onSelectProperty: (id: string) => void;
   onRequireAuth: (actionName: string, propertyId?: string) => void;
+  onToggleFavorite?: (propertyId: string) => void;
   isAuthenticated?: boolean;
   isFavorited?: boolean;
 }
@@ -19,6 +20,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
   property,
   onSelectProperty,
   onRequireAuth,
+  onToggleFavorite,
   isAuthenticated = false,
   isFavorited: externalFavorited,
 }) => {
@@ -34,11 +36,13 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!isAuthenticated) {
+    if (onToggleFavorite) {
+      onToggleFavorite(property.id);
+    } else if (!isAuthenticated) {
       onRequireAuth('Save Property', property.id);
-      return;
+    } else {
+      setIsFavorited(!isFavorited);
     }
-    setIsFavorited(!isFavorited);
   };
 
   const handleBookTourClick = (e: React.MouseEvent) => {
