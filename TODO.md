@@ -13,16 +13,21 @@
 
 ## MEDIUM PRIORITY (Auth & Session)
 
-- [ ] Landlord login: Add OTP login flow for landlords (reuse existing /auth/otp/verify with purpose="login")
-- [ ] Landlord dashboard: Fetch landlord profile using JWT from login instead of just localStorage UUID
-- [ ] Wire "Remember this device" to store refresh token in localStorage and use it on page reload
-- [ ] Add user profile endpoint: GET /api/v1/users/me/ (return current user from JWT)
-- [ ] Wire property inquiry form to submit with JWT auth header (currently AllowAny, but should attach user if logged in)
-- [ ] Wire inspection booking to attach JWT when user is logged in
+- [x] Landlord login: Add OTP login flow for landlords (reuse existing /auth/otp/verify with purpose="login")
+- [x] Landlord dashboard: Fetch landlord profile using JWT from login instead of just localStorage UUID
+- [x] Wire "Remember this device" to store refresh token in localStorage and use it on page reload
+- [x] Add user profile endpoint: GET /api/v1/users/me/ (return current user from JWT)
+- [x] Wire property inquiry form to submit with JWT auth header (currently AllowAny, but should attach user if logged in)
+- [x] Wire inspection booking to attach JWT when user is logged in
 
 ## LOW PRIORITY (Nice-to-Have)
 
-- [ ] Add "My Saved Properties" page at /account/saved that lists favorited properties
+- [x] Add "My Saved Properties" page at /account/saved that lists favorited properties
 - [x] Show saved status (filled heart) on property cards when user has favorited them
-- [ ] Add favorites count to user profile/dashboard
-- [ ] Sync favorites across devices when "Remember this device" is used
+- [x] Add favorites count to user profile/dashboard
+- [x] Sync favorites across devices when "Remember this device" is used
+
+## REMAINING / KNOWN ISSUES
+
+- [ ] Backend: Add buyer-facing inspection request endpoint (current /landlords/appointments/ requires landlord auth)
+- [ ] Backend: Link landlord accounts to Django User for full JWT-based landlord auth

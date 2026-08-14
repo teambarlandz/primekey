@@ -234,11 +234,7 @@ function LoginContent() {
                 | { access: string; refresh: string; user: { id: string; phone: string; is_new_user: boolean } }
                 | undefined;
               if (verifyData) {
-                saveUserSession(verifyData.access, verifyData.refresh, verifyData.user);
-                if (rememberDevice) {
-                  // Store refresh token in localStorage for persistent session
-                  localStorage.setItem('primekey_user_refresh_persistent', verifyData.refresh);
-                }
+                saveUserSession(verifyData.access, verifyData.refresh, verifyData.user, rememberDevice);
               }
               router.push(callbackUrl);
               router.refresh();

@@ -70,11 +70,11 @@ export const InspectionBookingModal: React.FC<InspectionBookingModalProps> = ({
   const selectedTimeSlot = watch('timeSlot');
 
   const onSubmit = async (data: BookingSchemaType) => {
-    // Simulate API submission delay
+    // TODO: POST to a buyer-facing inspection endpoint once backend creates one.
+    // Currently submitAppointment hits /landlords/appointments/ which requires landlord auth.
     await new Promise((resolve) => setTimeout(resolve, 800));
     setSubmittedData(data);
     setIsSubmitted(true);
-
     if (onBookingSuccess) {
       onBookingSuccess(data);
     }

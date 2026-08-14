@@ -678,11 +678,13 @@ export async function submitAppointment(
   payload: AppointmentPayload
 ): Promise<ApiSuccessResponse> {
   try {
+    const token = getUserAccessToken();
     const response = await fetch(`${API_BASE_URL}/landlords/appointments/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify(payload),
     });
@@ -1426,11 +1428,13 @@ export async function submitPropertyInquiry(
   payload: PropertyInquiryPayload
 ): Promise<ApiSuccessResponse<PropertyInquiryResult>> {
   try {
+    const token = getUserAccessToken();
     const response = await fetch(`${API_BASE_URL}/properties/properties/${propertyId}/inquiries/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify(payload),
     });
