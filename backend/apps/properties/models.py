@@ -106,3 +106,52 @@ class PropertyImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.property.title} ({'Primary' if self.is_primary else 'Secondary'})"
+
+
+class InspectionRequest(models.Model):
+    """
+    Buyer-facing inspection request. A buyer requests a physical inspection
+    of a property; agents receive and confirm/cancel.
+    """
+
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("confirmed", "Confirmed"),
+        ("cancelled", "Cancelled"),
+        ("completed", "Completed"),
+    ]
+
+    TOUR_TYPE_CHOICES = [
+        ("in_person", "In-Person Tour"),
+        ("virtual", "Virtual Tour"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    property = models.ForeignKey(
+        Property, on_delete=models.CASCADE, related_name="inspection_requests"
+    )
+    user = models.ForeignKey(
+        "auth.User", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="inspection_requests"
+    )
+    full_name = models.CharField(max_length=150)
+    phone = models.CharField(max_length=30)
+    email = models.EmailField(blank=True, default="")
+    preferred_date = models.DateField()
+    time_slot = models.CharField(max_length=20)
+    tour_type = models.CharField(
+        max_length=20, choices=TOUR_TYPE_CHOICES, default="in_person"
+    )
+    notes = models.TextField(blank=True, default="")
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default="pending"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "inspection_requests"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Inspection: {self.full_name} → {self.property.title} ({self.status})"

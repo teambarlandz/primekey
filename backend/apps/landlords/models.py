@@ -29,6 +29,10 @@ def document_upload_path(instance, filename):
 
 class LandlordProfile(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(
+        "auth.User", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="landlord_profiles", help_text="Django auth user linked via OTP login."
+    )
     full_name = models.CharField(max_length=150)
     phone = models.CharField(max_length=20, db_index=True)
     email = models.EmailField(db_index=True)

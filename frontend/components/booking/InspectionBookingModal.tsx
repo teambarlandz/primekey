@@ -29,10 +29,12 @@ import {
   bookingSchema,
   BookingSchemaType,
 } from '@/lib/validations/bookingSchema';
+import { submitInspectionRequest } from '@/lib/api-client';
 
 interface InspectionBookingModalProps {
   isOpen: boolean;
   onClose: () => void;
+  propertyId: string;
   propertyTitle: string;
   propertyLocation: string;
   onBookingSuccess?: (data: BookingSchemaType) => void;
@@ -43,12 +45,14 @@ const TIME_SLOTS = ['09:00 AM', '11:00 AM', '02:00 PM', '04:00 PM'] as const;
 export const InspectionBookingModal: React.FC<InspectionBookingModalProps> = ({
   isOpen,
   onClose,
+  propertyId,
   propertyTitle,
   propertyLocation,
   onBookingSuccess,
 }) => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submittedData, setSubmittedData] = useState<BookingSchemaType | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
     register,
@@ -70,13 +74,27 @@ export const InspectionBookingModal: React.FC<InspectionBookingModalProps> = ({
   const selectedTimeSlot = watch('timeSlot');
 
   const onSubmit = async (data: BookingSchemaType) => {
-    // TODO: POST to a buyer-facing inspection endpoint once backend creates one.
-    // Currently submitAppointment hits /landlords/appointments/ which requires landlord auth.
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    setSubmittedData(data);
-    setIsSubmitted(true);
-    if (onBookingSuccess) {
-      onBookingSuccess(data);
+    setSubmitError(null);
+    try {
+      const dateStr = data.inspectionDate instanceof Date
+        ? data.inspectionDate.toISOString().split('T')[0]
+        : String(data.inspectionDate);
+      await submitInspectionRequest(propertyId, {
+        full_name: data.fullName,
+        phone: data.phone,
+        email: data.email || undefined,
+        preferred_date: dateStr,
+        time_slot: data.timeSlot,
+        tour_type: data.tourType,
+        notes: data.notes || undefined,
+      });
+      setSubmittedData(data);
+      setIsSubmitted(true);
+      if (onBookingSuccess) {
+        onBookingSuccess(data);
+      }
+    } catch (err: any) {
+      setSubmitError(err?.message ?? 'Failed to book inspection. Please try again.');
     }
   };
 
@@ -255,6 +273,11 @@ export const InspectionBookingModal: React.FC<InspectionBookingModalProps> = ({
               </div>
 
               {/* Submit CTA */}
+              {submitError && (
+                <p className="text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-4 py-2">
+                  {submitError}
+                </p>
+              )}
               <Button
                 type="submit"
                 disabled={isSubmitting}

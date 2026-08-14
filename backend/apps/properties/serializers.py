@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Property, PropertyImage
+from .models import Property, PropertyImage, InspectionRequest
 
 
 class PropertyImageSerializer(serializers.ModelSerializer):
@@ -65,3 +65,44 @@ class PropertyDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Property
         fields = '__all__'
+
+
+class InspectionRequestCreateSerializer(serializers.ModelSerializer):
+    """Create a buyer-facing inspection request for a property."""
+
+    class Meta:
+        model = InspectionRequest
+        fields = [
+            'full_name', 'phone', 'email',
+            'preferred_date', 'time_slot', 'tour_type', 'notes',
+        ]
+
+    def validate_time_slot(self, value):
+        allowed = ['09:00 AM', '11:00 AM', '02:00 PM', '04:00 PM']
+        if value not in allowed:
+            raise serializers.ValidationError(f"Time slot must be one of: {', '.join(allowed)}")
+        return value
+
+    def validate_tour_type(self, value):
+        allowed = ['in_person', 'virtual']
+        if value not in allowed:
+            raise serializers.ValidationError("Tour type must be 'in_person' or 'virtual'.")
+        return value
+
+
+class InspectionRequestSerializer(serializers.ModelSerializer):
+    """Read serializer for inspection requests."""
+    property_title = serializers.CharField(source='property.title', read_only=True)
+    property_location = serializers.SerializerMethodField()
+
+    class Meta:
+        model = InspectionRequest
+        fields = [
+            'id', 'property', 'property_title', 'property_location',
+            'full_name', 'phone', 'email',
+            'preferred_date', 'time_slot', 'tour_type', 'notes',
+            'status', 'created_at',
+        ]
+
+    def get_property_location(self, obj):
+        return f"{obj.property.area}, {obj.property.city}"

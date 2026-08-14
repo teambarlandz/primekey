@@ -1,4 +1,5 @@
 from django.utils.decorators import method_decorator
+from django.db import models
 from django_ratelimit.decorators import ratelimit
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -25,15 +26,20 @@ class UserProfileView(APIView):
         # Check if user has an associated landlord profile
         try:
             from apps.landlords.models import LandlordProfile
-            landlord = LandlordProfile.objects.get(phone=user.username)
-            data["landlord"] = {
-                "id": str(landlord.id),
-                "full_name": landlord.full_name,
-                "phone": landlord.phone,
-                "email": landlord.email,
-                "verification_status": landlord.verification_status,
-                "created_at": landlord.created_at.isoformat(),
-            }
+            landlord = LandlordProfile.objects.filter(
+                models.Q(user=user) | models.Q(phone=user.username)
+            ).first()
+            if landlord:
+                data["landlord"] = {
+                    "id": str(landlord.id),
+                    "full_name": landlord.full_name,
+                    "phone": landlord.phone,
+                    "email": landlord.email,
+                    "verification_status": landlord.verification_status,
+                    "created_at": landlord.created_at.isoformat(),
+                }
+            else:
+                data["landlord"] = None
         except LandlordProfile.DoesNotExist:
             data["landlord"] = None
 

@@ -1657,6 +1657,62 @@ export async function submitJobApplication(
   return data.results;
 }
 
+// ─── INSPECTION REQUESTS ──────────────────────────────────────────────
+
+export interface InspectionRequestPayload {
+  full_name: string;
+  phone: string;
+  email?: string;
+  preferred_date: string;
+  time_slot: string;
+  tour_type: 'in_person' | 'virtual';
+  notes?: string;
+}
+
+export async function submitInspectionRequest(
+  propertyId: string,
+  payload: InspectionRequestPayload
+): Promise<ApiSuccessResponse<{ id: string; status: string; property_title: string; preferred_date: string; time_slot: string; tour_type: string }>> {
+  try {
+    const token = getUserAccessToken();
+    const response = await fetch(`${API_BASE_URL}/properties/properties/${propertyId}/inspections/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      const errorMessage =
+        data?.message ||
+        data?.detail ||
+        (typeof data?.errors === "object" && data?.errors !== null
+          ? Object.entries(data.errors)
+              .map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(", ") : val}`)
+              .join(" | ")
+          : "Failed to submit inspection request. Please try again.");
+
+      throw new ApiClientError(errorMessage, response.status, data?.errors);
+    }
+
+    return data as ApiSuccessResponse<{ id: string; status: string; property_title: string; preferred_date: string; time_slot: string; tour_type: string }>;
+  } catch (error) {
+    if (error instanceof ApiClientError) {
+      throw error;
+    }
+
+    throw new ApiClientError(
+      "Unable to connect to Primekey server. Please check your network connection.",
+      0
+    );
+  }
+}
+
 // ─── FAVORITES (Saved Properties) ─────────────────────────────────────
 
 export interface UserProfile {

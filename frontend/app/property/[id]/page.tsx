@@ -380,6 +380,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
         <InspectionBookingModal
           isOpen={isBookingOpen}
           onClose={() => setIsBookingOpen(false)}
+          propertyId={params.id}
           propertyTitle={property.title}
           propertyLocation={locationLine}
           onBookingSuccess={handleBookingSuccess}

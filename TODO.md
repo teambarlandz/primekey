@@ -10,6 +10,8 @@
 - [x] Wire AuthInterceptSheet "Save Property" action to call toggleFavorite() instead of toggling local state only
 - [x] Wire property detail page "Save" button to call toggleFavorite() with JWT auth
 - [x] Wire search page heart icon to call toggleFavorite() with JWT auth
+- [x] Create backend buyer-facing inspection request endpoint (POST /api/v1/properties/properties/<id>/inspections/)
+- [x] Wire frontend InspectionBookingModal to call the new buyer-facing endpoint with JWT
 
 ## MEDIUM PRIORITY (Auth & Session)
 
@@ -19,6 +21,7 @@
 - [x] Add user profile endpoint: GET /api/v1/users/me/ (return current user from JWT)
 - [x] Wire property inquiry form to submit with JWT auth header (currently AllowAny, but should attach user if logged in)
 - [x] Wire inspection booking to attach JWT when user is logged in
+- [x] Link landlord accounts to Django User for full JWT-based landlord auth
 
 ## LOW PRIORITY (Nice-to-Have)
 
@@ -27,7 +30,6 @@
 - [x] Add favorites count to user profile/dashboard
 - [x] Sync favorites across devices when "Remember this device" is used
 
-## REMAINING / KNOWN ISSUES
+## ALL ITEMS COMPLETE
 
-- [ ] Backend: Add buyer-facing inspection request endpoint (current /landlords/appointments/ requires landlord auth)
-- [ ] Backend: Link landlord accounts to Django User for full JWT-based landlord auth
+All frontend-backend integration tasks are done. The remaining work is operational (deploy, test end-to-end).

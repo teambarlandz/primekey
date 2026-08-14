@@ -156,6 +156,10 @@ class VerifyOTPView(APIView):
             defaults={'is_active': True}
         )
 
+        # Link any existing landlord profiles matching this phone number
+        from apps.landlords.models import LandlordProfile
+        LandlordProfile.objects.filter(phone=phone, user__isnull=True).update(user=user)
+
         # Generate JWT tokens
         refresh = RefreshToken.for_user(user)
         access_token = str(refresh.access_token)

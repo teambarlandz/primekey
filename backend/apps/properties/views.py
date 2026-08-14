@@ -5,7 +5,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.pagination import PageNumberPagination
 from django.utils.decorators import method_decorator
 from django_ratelimit.decorators import ratelimit
-from .serializers import PropertyListSerializer, PropertyDetailSerializer
+from .serializers import PropertyListSerializer, PropertyDetailSerializer, InspectionRequestCreateSerializer
 from .services import SearchService
 from .models import Property
 from apps.crm.serializers import PropertyInquirySerializer
@@ -142,6 +142,64 @@ class PropertyInquirySubmitView(APIView):
                         "priority_score": score_obj.get("score"),
                         "tier": score_obj.get("tier"),
                         "property_title": prop.title,
+                    },
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        return Response(
+            {
+                "success": False,
+                "message": "Validation failed.",
+                "errors": serializer.errors,
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+
+@method_decorator(ratelimit(key='ip', rate='10/m', method='POST'), name='post')
+class InspectionRequestView(APIView):
+    """
+    Buyer-facing endpoint: POST /api/v1/properties/properties/<uuid:pk>/inspections/
+    Creates an inspection request for a property. Optionally attaches the logged-in
+    user via JWT (optional — buyer can submit without auth).
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request, pk=None, *args, **kwargs):
+        try:
+            prop = Property.objects.get(pk=pk, status='available')
+        except (Property.DoesNotExist, ValueError):
+            return Response({
+                "success": False,
+                "message": "Property listing not found.",
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = InspectionRequestCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            inspection = serializer.save(
+                property=prop,
+                user=request.user if request.user.is_authenticated else None,
+            )
+
+            create_notification(
+                "agent",
+                None,
+                "New inspection request",
+                f"{inspection.full_name} requested a {inspection.get_tour_type_display()} for '{prop.title}' on {inspection.preferred_date} at {inspection.time_slot}.",
+            )
+
+            return Response(
+                {
+                    "success": True,
+                    "message": "Inspection request submitted successfully.",
+                    "data": {
+                        "id": str(inspection.id),
+                        "status": inspection.status,
+                        "property_title": prop.title,
+                        "preferred_date": str(inspection.preferred_date),
+                        "time_slot": inspection.time_slot,
+                        "tour_type": inspection.tour_type,
                     },
                 },
                 status=status.HTTP_201_CREATED,
