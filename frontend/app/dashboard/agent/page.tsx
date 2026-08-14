@@ -51,7 +51,16 @@ import { WhatsAppPanel } from '@/components/dashboard/WhatsAppPanel';
 import { DocumentReviewTable } from '@/components/dashboard/DocumentReviewTable';
 import { LeadDetail } from '@/components/dashboard/LeadDetail';
 import { NotificationsPanel } from '@/components/NotificationsPanel';
+import { Button } from '@/components/ui/button';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 const BRAND_COLOR = '#04164a';
 
@@ -114,6 +123,16 @@ export default function AgentDashboardPage() {
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [showSessionWarning, setShowSessionWarning] = useState(false);
+  const [sessionCountdown, setSessionCountdown] = useState(0);
+
+  const handleAgentLogout = () => {
+    setShowSessionWarning(false);
+    clearAgentSession();
+    setAgentProfile(null);
+    setAuthed(null);
+    router.replace('/dashboard/agent/login');
+  };
 
   useEffect(() => {
     if (!isAgentLoggedIn()) {
@@ -132,22 +151,36 @@ export default function AgentDashboardPage() {
     });
   }, [router]);
 
-  // Idle timeout: sign out after 30 minutes of inactivity.
+  // Idle timeout: warn at 25 min, sign out at 30 min of inactivity.
   useEffect(() => {
     if (authed !== true) return;
     const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
+    const WARNING_AT_MS = 25 * 60 * 1000;
     let timer: NodeJS.Timeout | null = null;
+    let warningTimer: NodeJS.Timeout | null = null;
+    let countdownInterval: NodeJS.Timeout | null = null;
 
-    const signOut = () => {
-      clearAgentSession();
-      setAgentProfile(null);
-      setAuthed(null);
-      router.replace('/dashboard/agent/login');
+    const showWarning = () => {
+      setShowSessionWarning(true);
+      let remaining = 5 * 60; // 5 minutes in seconds
+      setSessionCountdown(remaining);
+      countdownInterval = setInterval(() => {
+        remaining -= 1;
+        setSessionCountdown(remaining);
+        if (remaining <= 0) {
+          if (countdownInterval) clearInterval(countdownInterval);
+          handleAgentLogout();
+        }
+      }, 1000);
     };
 
     const resetTimer = () => {
       if (timer) clearTimeout(timer);
-      timer = setTimeout(signOut, IDLE_TIMEOUT_MS);
+      if (warningTimer) clearTimeout(warningTimer);
+      if (countdownInterval) clearInterval(countdownInterval);
+      setShowSessionWarning(false);
+      timer = setTimeout(() => handleAgentLogout(), IDLE_TIMEOUT_MS);
+      warningTimer = setTimeout(showWarning, WARNING_AT_MS);
     };
 
     const events: Array<keyof WindowEventMap> = ['pointerdown', 'keydown', 'touchstart', 'scroll'];
@@ -156,6 +189,8 @@ export default function AgentDashboardPage() {
 
     return () => {
       if (timer) clearTimeout(timer);
+      if (warningTimer) clearTimeout(warningTimer);
+      if (countdownInterval) clearInterval(countdownInterval);
       events.forEach((event) => window.removeEventListener(event, resetTimer));
     };
   }, [authed, router]);
@@ -702,6 +737,48 @@ export default function AgentDashboardPage() {
           if (!open) setSelectedLead(null);
         }}
       />
+
+      {/* Session Expiry Warning Modal */}
+      <Dialog open={showSessionWarning}>
+        <DialogContent className="sm:max-w-md" showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 font-heading text-lg text-[#04164a]">
+              <AlertCircle className="w-5 h-5 text-amber-500" />
+              Session Expiring Soon
+            </DialogTitle>
+            <DialogDescription className="font-body text-sm text-slate-600">
+              Your session will expire in{' '}
+              <span className="font-semibold text-amber-600">
+                {Math.floor(sessionCountdown / 60)}m {sessionCountdown % 60}s
+              </span>{' '}
+              due to inactivity. Move your mouse or press a key to stay signed in.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center justify-center py-2">
+            <div className="w-full bg-slate-100 rounded-full h-2">
+              <div
+                className="bg-amber-500 h-2 rounded-full transition-all duration-1000"
+                style={{ width: `${(sessionCountdown / 300) * 100}%` }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleAgentLogout}
+              className="text-sm font-heading"
+            >
+              Sign Out Now
+            </Button>
+            <Button
+              onClick={() => setShowSessionWarning(false)}
+              className="bg-[#04164a] hover:bg-[#04164a]/90 text-white font-heading text-sm"
+            >
+              Stay Signed In
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       </>
       )}
     </main>

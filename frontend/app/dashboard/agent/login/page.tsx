@@ -228,7 +228,12 @@ function AgentLoginContent() {
             }}
             sendOtp={(phone) => sendOtp(phone, 'agent_login')}
             verifyOtp={verifyAgentOtp}
-            onSuccess={() => {
+            onSuccess={(result, rememberDevice) => {
+              document.cookie = 'pk_agent_session=1; path=/; max-age=86400; SameSite=Lax';
+              if (rememberDevice) {
+                // Extend session cookie to 30 days
+                document.cookie = 'pk_agent_session=1; path=/; max-age=2592000; SameSite=Lax';
+              }
               router.push(callbackUrl);
               router.refresh();
             }}

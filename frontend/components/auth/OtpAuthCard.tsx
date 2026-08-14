@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Phone, ArrowRight, RotateCcw, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Phone, ArrowRight, RotateCcw, CheckCircle2, AlertCircle, Monitor } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 
 const BRAND_COLOR = '#04164a';
@@ -22,7 +23,7 @@ interface OtpAuthCardProps<T = unknown> {
   config: OtpAuthCardConfig;
   sendOtp: (phone: string) => Promise<{ data?: unknown }>;
   verifyOtp: (phone: string, code: string) => Promise<T>;
-  onSuccess: (result: T) => void;
+  onSuccess: (result: T, rememberDevice?: boolean) => void;
   inputPrefix?: string;
   cardClassName?: string;
   children?: React.ReactNode;
@@ -44,6 +45,7 @@ export function OtpAuthCard<T = unknown>({
   const [resendTimer, setResendTimer] = useState(60);
   const [phoneError, setPhoneError] = useState('');
   const [apiError, setApiError] = useState('');
+  const [rememberDevice, setRememberDevice] = useState(false);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -106,7 +108,7 @@ export function OtpAuthCard<T = unknown>({
     try {
       const result = await verifyOtp(phone, fullCode);
       setIsSubmitting(false);
-      onSuccess(result);
+      onSuccess(result, rememberDevice);
     } catch (error: any) {
       setIsSubmitting(false);
       setApiError(error.message || 'Invalid code. Please try again.');
@@ -231,6 +233,19 @@ export function OtpAuthCard<T = unknown>({
                 {resendTimer > 0 ? `Resend in ${resendTimer}s` : 'Resend Code'}
               </button>
             </div>
+
+            <label className="flex items-center gap-2.5 cursor-pointer pt-1">
+              <Checkbox
+                id="remember-device"
+                checked={rememberDevice}
+                onCheckedChange={(checked) => setRememberDevice(checked === true)}
+                className="border-slate-300"
+              />
+              <span className="font-body text-xs text-slate-600 flex items-center gap-1.5">
+                <Monitor className="w-3.5 h-3.5 text-slate-400" />
+                Remember this device for 30 days
+              </span>
+            </label>
           </form>
         )}
 

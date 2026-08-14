@@ -229,12 +229,16 @@ function LoginContent() {
             }}
             sendOtp={(phone) => submitOTP(phone, 'login')}
             verifyOtp={(phone, code) => verifyOTP(phone, code, 'login')}
-            onSuccess={(result) => {
+            onSuccess={(result, rememberDevice) => {
               const verifyData = result?.data as
                 | { access: string; refresh: string; user: { id: string; phone: string; is_new_user: boolean } }
                 | undefined;
               if (verifyData) {
                 saveUserSession(verifyData.access, verifyData.refresh, verifyData.user);
+                if (rememberDevice) {
+                  // Store refresh token in localStorage for persistent session
+                  localStorage.setItem('primekey_user_refresh_persistent', verifyData.refresh);
+                }
               }
               router.push(callbackUrl);
               router.refresh();

@@ -21,6 +21,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AuthInterceptSheet } from '@/components/auth/AuthInterceptSheet';
+import { useToast } from '@/components/ui/toast';
 import { PropertyMap } from '@/components/map/PropertyMap';
 import { InspectionBookingModal } from '@/components/booking/InspectionBookingModal';
 import { PropertyInquiryForm } from '@/components/property/PropertyInquiryForm';
@@ -45,6 +46,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState('');
   const [isFavorited, setIsFavorited] = useState(false);
+  const { toast } = useToast();
 
   const loadProperty = useCallback(async () => {
     setIsLoading(true);
@@ -71,6 +73,16 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const handleProtectedAction = (actionName: string) => {
     setPendingAction(actionName);
     setIsAuthOpen(true);
+  };
+
+  const handleAuthSuccess = () => {
+    if (pendingAction === 'Save to Favorites') {
+      setIsFavorited((prev) => {
+        const next = !prev;
+        toast(next ? 'Property saved to favorites' : 'Property removed from favorites');
+        return next;
+      });
+    }
   };
 
   const handleBookingSuccess = (data: BookingSchemaType) => {
@@ -159,7 +171,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
               className="bg-background border-border text-foreground hover:text-rose-600 rounded-xl"
             >
               <Heart className={`w-4 h-4 ${isFavorited ? 'fill-rose-600 text-rose-600' : ''}`} />
-              <span className="hidden sm:inline">Save</span>
+              <span className="hidden sm:inline">{isFavorited ? 'Saved' : 'Save'}</span>
             </Button>
             <Button
               variant="outline"
@@ -342,7 +354,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
           isOpen={isAuthOpen}
           onClose={() => setIsAuthOpen(false)}
           pendingActionName={pendingAction}
-          onSuccess={() => console.log('Action authenticated & executed on Detail Page!')}
+          onSuccess={handleAuthSuccess}
         />
 
         {/* Unit 2.1: Inspection Booking Modal */}

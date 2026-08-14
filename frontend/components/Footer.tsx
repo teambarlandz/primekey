@@ -216,7 +216,7 @@ export default function Footer() {
             © {currentYear} Primekey Homes and Properties Ltd. All rights reserved.
           </p>
           <p className="text-center md:text-right">
-            RC: 0000000 · Registered in Nigeria
+            RC: 8032716 · Registered in Nigeria
           </p>
         </div>
 

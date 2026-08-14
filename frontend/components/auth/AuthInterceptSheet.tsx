@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Phone, Lock, ArrowRight, RotateCcw, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ShieldCheck, Phone, Lock, ArrowRight, RotateCcw, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -19,13 +19,15 @@ interface AuthInterceptSheetProps {
   isOpen: boolean;
   onClose: () => void;
   pendingActionName: string; // e.g., "Book Inspection Tour" or "Save Property"
-  onSuccess: () => void;
+  pendingActionData?: Record<string, unknown>; // e.g., { propertyId: '123' }
+  onSuccess: (data?: Record<string, unknown>) => void;
 }
 
 export const AuthInterceptSheet: React.FC<AuthInterceptSheetProps> = ({
   isOpen,
   onClose,
   pendingActionName,
+  pendingActionData,
   onSuccess,
 }) => {
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
@@ -111,7 +113,7 @@ export const AuthInterceptSheet: React.FC<AuthInterceptSheetProps> = ({
       }
       
       setIsSubmitting(false);
-      onSuccess(); // Executes pending action
+      onSuccess(pendingActionData); // Executes pending action with context
       handleReset();
       onClose();
     } catch (error: any) {
@@ -174,8 +176,8 @@ export const AuthInterceptSheet: React.FC<AuthInterceptSheetProps> = ({
                 disabled={isSubmitting || !phone}
                 className="w-full bg-[#04164a] hover:bg-[#04164a]/90 text-white font-heading h-11 rounded-xl flex items-center justify-center gap-2"
               >
-                {isSubmitting ? 'Sending Code...' : 'Send Verification Code'}
-                <ArrowRight className="w-4 h-4" />
+                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Send Verification Code'}
+                {!isSubmitting && <ArrowRight className="w-4 h-4" />}
               </Button>
             </form>
           )}
@@ -207,8 +209,8 @@ export const AuthInterceptSheet: React.FC<AuthInterceptSheetProps> = ({
                 disabled={isSubmitting || otp.join('').length < 6}
                 className="w-full bg-[#04164a] hover:bg-[#04164a]/90 text-white font-heading h-11 rounded-xl flex items-center justify-center gap-2"
               >
-                {isSubmitting ? 'Verifying...' : 'Verify & Proceed'}
-                <CheckCircle2 className="w-4 h-4" />
+                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Verify & Proceed'}
+                {!isSubmitting && <CheckCircle2 className="w-4 h-4" />}
               </Button>
 
               <div className="flex items-center justify-between font-body text-xs pt-2">

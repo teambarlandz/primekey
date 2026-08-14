@@ -8,8 +8,9 @@ interface PropertyGridProps {
   properties: Property[];
   isLoading?: boolean;
   onSelectProperty: (id: string) => void;
-  onRequireAuth: (actionName: string) => void;
+  onRequireAuth: (actionName: string, propertyId?: string) => void;
   isAuthenticated?: boolean;
+  favoritedIds?: Set<string>;
 }
 
 export const PropertyGrid: React.FC<PropertyGridProps> = ({
@@ -18,6 +19,7 @@ export const PropertyGrid: React.FC<PropertyGridProps> = ({
   onSelectProperty,
   onRequireAuth,
   isAuthenticated = false,
+  favoritedIds,
 }) => {
   if (isLoading) {
     return (
@@ -43,6 +45,7 @@ export const PropertyGrid: React.FC<PropertyGridProps> = ({
           onSelectProperty={onSelectProperty}
           onRequireAuth={onRequireAuth}
           isAuthenticated={isAuthenticated}
+          isFavorited={favoritedIds?.has(property.id) ?? false}
         />
       ))}
     </div>

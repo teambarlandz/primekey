@@ -10,8 +10,9 @@ import { Button } from '@/components/ui/button';
 interface PropertyCardProps {
   property: Property;
   onSelectProperty: (id: string) => void;
-  onRequireAuth: (actionName: string) => void;
+  onRequireAuth: (actionName: string, propertyId?: string) => void;
   isAuthenticated?: boolean;
+  isFavorited?: boolean;
 }
 
 export const PropertyCard: React.FC<PropertyCardProps> = ({
@@ -19,8 +20,10 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
   onSelectProperty,
   onRequireAuth,
   isAuthenticated = false,
+  isFavorited: externalFavorited,
 }) => {
   const [isFavorited, setIsFavorited] = useState(false);
+  const favorited = externalFavorited ?? isFavorited;
 
   const formatPrice = (amount: number, category: string) => {
     const formatted = `₦${amount.toLocaleString()}`;
@@ -32,7 +35,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isAuthenticated) {
-      onRequireAuth('Save Property');
+      onRequireAuth('Save Property', property.id);
       return;
     }
     setIsFavorited(!isFavorited);
@@ -77,7 +80,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
           className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-md hover:bg-white text-slate-700 hover:text-rose-600 transition-all shadow-sm"
           aria-label="Save to Favorites"
         >
-          <Heart className={`w-4 h-4 ${isFavorited ? 'fill-rose-600 text-rose-600' : ''}`} />
+          <Heart className={`w-4 h-4 ${favorited ? 'fill-rose-600 text-rose-600' : ''}`} />
         </button>
 
         {/* Price Tag Overlay */}

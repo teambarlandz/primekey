@@ -11,6 +11,8 @@ import { PropertyGrid } from '@/components/search/PropertyGrid';
 import { EmptyResults } from '@/components/search/EmptyResults';
 import { ConciergeModal } from '@/components/search/ConciergeModal';
 import { AuthInterceptSheet } from '@/components/auth/AuthInterceptSheet';
+import { useToast } from '@/components/ui/toast';
+import { isUserLoggedIn } from '@/lib/api-client';
 import { NavDropdown, NavDropdownItem } from '@/components/NavDropdown';
 import Footer from '@/components/Footer';
 import { SearchFilterValues } from '@/lib/validations/searchSchema';
@@ -165,6 +167,9 @@ export default function SearchPage() {
   const [isConciergeOpen, setIsConciergeOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState('');
+  const [pendingPropertyId, setPendingPropertyId] = useState<string | null>(null);
+  const [favoritedIds, setFavoritedIds] = useState<Set<string>>(new Set());
+  const { toast } = useToast();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [openMobileGroup, setOpenMobileGroup] = useState<string | null>(null);
@@ -296,9 +301,27 @@ export default function SearchPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleRequireAuth = (actionName: string) => {
+  const handleRequireAuth = (actionName: string, propertyId?: string) => {
     setPendingAction(actionName);
+    setPendingPropertyId(propertyId ?? null);
     setIsAuthOpen(true);
+  };
+
+  const handleAuthSuccess = (data?: Record<string, unknown>) => {
+    const propId = data?.propertyId as string | undefined;
+    if (propId) {
+      setFavoritedIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(propId)) {
+          next.delete(propId);
+          toast('Property removed from favorites');
+        } else {
+          next.add(propId);
+          toast('Property saved to favorites');
+        }
+        return next;
+      });
+    }
   };
 
   // Initial search on mount
@@ -672,7 +695,8 @@ export default function SearchPage() {
             <PropertyGrid
               properties={properties}
               onSelectProperty={(id) => router.push(`/property/${id}`)}
-              onRequireAuth={handleRequireAuth}
+              onRequireAuth={(actionName, propertyId) => handleRequireAuth(actionName, propertyId)}
+              favoritedIds={favoritedIds}
             />
 
             {/* Pagination */}
@@ -745,7 +769,8 @@ export default function SearchPage() {
           isOpen={isAuthOpen}
           onClose={() => setIsAuthOpen(false)}
           pendingActionName={pendingAction}
-          onSuccess={() => console.log('Action authenticated & executed!')}
+          pendingActionData={pendingPropertyId ? { propertyId: pendingPropertyId } : undefined}
+          onSuccess={handleAuthSuccess}
         />
       </div>
 

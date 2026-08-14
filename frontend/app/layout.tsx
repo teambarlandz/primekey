@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Poppins, Lora } from "next/font/google";
+import { Providers } from "./providers";
 import "./globals.css";
 
 // ──────────────────────────────────────────────────────────────
@@ -56,7 +57,9 @@ export default function RootLayout({
       className={`${poppins.variable} ${lora.variable}`}
     >
       <body className={`${lora.className} antialiased`}>
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

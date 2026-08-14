@@ -57,6 +57,7 @@ export default function LandlordRegisterPage() {
       const responseData = response.data as { id?: string } | undefined;
       if (typeof window !== 'undefined' && responseData?.id) {
         localStorage.setItem('primekey_landlord_id', responseData.id);
+        document.cookie = 'pk_landlord_session=1; path=/; max-age=86400; SameSite=Lax';
       }
       router.push('/landlord/intake');
     } catch (error: any) {
