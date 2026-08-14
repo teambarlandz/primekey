@@ -6,6 +6,7 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ANIMATION_TOKENS, prefersReducedMotion } from '@/lib/animations';
 import { Mail, Phone, MessageCircle, ShieldCheck } from 'lucide-react';
+import Breadcrumbs from '@/components/Breadcrumbs';
 
 const BRAND_COLOR = '#04164a';
 
@@ -54,6 +55,16 @@ export default function LegalPage({
   return (
     <div className="min-h-screen bg-[#f3f0ff] py-16 px-4">
       <div className="max-w-5xl mx-auto">
+        {/* Breadcrumb */}
+        <div className="mb-8">
+          <Breadcrumbs
+            items={[
+              { label: 'Home', href: '/' },
+              { label: title },
+            ]}
+          />
+        </div>
+
         {/* ─────────────────────────────────────────────
             HEADER
             ───────────────────────────────────────────── */}
@@ -165,14 +176,14 @@ export default function LegalPage({
                   hello@primekeyhomes.com
                 </a>
                 <a
-                  href="tel:+2348000000000"
+                  href="tel:+2349017368499"
                   className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full border-2 border-white/30 hover:border-white text-white font-semibold font-heading text-sm transition-colors"
                 >
                   <Phone className="w-4 h-4" />
-                  +234 800 000 0000
+                  +234 901 736 8499
                 </a>
                 <a
-                  href="https://wa.me/2348000000000"
+                  href="https://wa.me/2349017368499"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full border-2 border-white/30 hover:border-white text-white font-semibold font-heading text-sm transition-colors"

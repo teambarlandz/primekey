@@ -24,6 +24,7 @@ import { AuthInterceptSheet } from '@/components/auth/AuthInterceptSheet';
 import { PropertyMap } from '@/components/map/PropertyMap';
 import { InspectionBookingModal } from '@/components/booking/InspectionBookingModal';
 import { PropertyInquiryForm } from '@/components/property/PropertyInquiryForm';
+import Breadcrumbs from '@/components/Breadcrumbs';
 import { BookingSchemaType } from '@/lib/validations/bookingSchema';
 import { fetchPropertyDetail, PropertyDetailData } from '@/lib/api-client';
 
@@ -132,6 +133,15 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   return (
     <main className="min-h-screen bg-secondary/40 py-8 px-4 md:px-8 font-body">
       <div className="max-w-7xl mx-auto space-y-6">
+
+        {/* Breadcrumb */}
+        <Breadcrumbs
+          items={[
+            { label: 'Home', href: '/' },
+            { label: 'Buy & Rent', href: '/search' },
+            { label: property.title },
+          ]}
+        />
 
         {/* Navigation & Header Controls */}
         <div className="flex items-center justify-between">

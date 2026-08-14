@@ -113,7 +113,7 @@ export default function FAQ() {
               </p>
               <div className="flex flex-col gap-3">
                 <Link 
-                  href="https://wa.me/2348000000000" 
+                  href="https://wa.me/2349017368499" 
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2.5 px-4 py-3 rounded-full border border-emerald-200 bg-emerald-50/50 text-emerald-900 font-semibold font-heading text-sm hover:bg-emerald-100/70 transition-colors shadow-sm"
@@ -122,12 +122,12 @@ export default function FAQ() {
                   <span>Chat on WhatsApp</span>
                 </Link>
                 <Link 
-                  href="tel:+2348000000000" 
+                  href="tel:+2349017368499" 
                   className="inline-flex items-center justify-center gap-2.5 px-4 py-3 rounded-full border border-purple-200/80 bg-purple-50/50 font-semibold font-heading text-sm hover:bg-purple-100/60 transition-colors shadow-sm"
                   style={{ color: BRAND_COLOR }}
                 >
                   <Phone className="w-4 h-4" aria-hidden="true" style={{ color: BRAND_COLOR }} />
-                  <span>Call +234 800 000 0000</span>
+                  <span>Call +234 901 736 8499</span>
                 </Link>
               </div>
             </div>

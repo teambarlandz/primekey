@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { OtpAuthCard } from '@/components/auth/OtpAuthCard';
 import { sendOtp, verifyAgentOtp } from '@/lib/api-client';
+import Breadcrumbs from '@/components/Breadcrumbs';
 
 const BRAND_COLOR = '#04164a';
 
@@ -185,6 +186,16 @@ function AgentLoginContent() {
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[560px] h-[560px] bg-purple-200/40 rounded-full blur-3xl pointer-events-none" aria-hidden="true" />
 
         <div className="w-full max-w-md relative z-10 m-auto px-4 sm:px-8 py-12">
+          {/* Breadcrumb */}
+          <div className="mb-8">
+            <Breadcrumbs
+              items={[
+                { label: 'Home', href: '/' },
+                { label: 'Agent Sign In' },
+              ]}
+            />
+          </div>
+
           {/* Brand Header (mobile only — left panel is hidden) */}
           <div className="lg:hidden text-center mb-10 login-anim opacity-0">
             <Link href="/" className="flex items-center justify-center gap-3 mb-6" aria-label="Primekey Homes home">

@@ -230,7 +230,7 @@ export default function FAQPage() {
           </p>
           <div className="relative flex flex-col sm:flex-row gap-3 justify-center">
             <a
-              href="https://wa.me/2348000000000"
+              href="https://wa.me/2349017368499"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#f3f0ff] text-[#04164a] font-semibold font-heading text-sm hover:bg-purple-100 transition-colors"
@@ -239,11 +239,11 @@ export default function FAQPage() {
               Chat on WhatsApp
             </a>
             <a
-              href="tel:+2348000000000"
+              href="tel:+2349017368499"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full border-2 border-white/30 hover:border-white text-white font-semibold font-heading text-sm transition-colors"
             >
               <Phone className="w-4 h-4" />
-              +234 800 000 0000
+              +234 901 736 8499
             </a>
             <a
               href="mailto:hello@primekeyhomes.com"

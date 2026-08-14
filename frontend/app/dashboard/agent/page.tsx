@@ -51,6 +51,7 @@ import { WhatsAppPanel } from '@/components/dashboard/WhatsAppPanel';
 import { DocumentReviewTable } from '@/components/dashboard/DocumentReviewTable';
 import { LeadDetail } from '@/components/dashboard/LeadDetail';
 import { NotificationsPanel } from '@/components/NotificationsPanel';
+import Breadcrumbs from '@/components/Breadcrumbs';
 
 const BRAND_COLOR = '#04164a';
 
@@ -427,6 +428,16 @@ export default function AgentDashboardPage() {
 
   return (
     <main className="min-h-screen bg-[#f3f0ff]">
+      {/* Breadcrumb */}
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6">
+        <Breadcrumbs
+          items={[
+            { label: 'Home', href: '/' },
+            { label: 'Agent Dashboard' },
+          ]}
+        />
+      </div>
+
       {authed !== true ? (
         <div className="flex items-center justify-center py-24 text-[#4a607a]">
           <RefreshCw className="w-6 h-6 animate-spin mr-3" />

@@ -7,6 +7,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Building2, ShieldCheck, Clock, Users, FileText, Banknote, ArrowRight, Sparkles, Key, Target, Check, Minus, X } from 'lucide-react';
 import { ANIMATION_TOKENS, prefersReducedMotion } from '@/lib/animations';
+import Breadcrumbs from '@/components/Breadcrumbs';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -134,6 +135,16 @@ export default function LandlordPage() {
   return (
     <>
       <main className="min-h-screen bg-[#f3f0ff]">
+        {/* Breadcrumb */}
+        <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6">
+          <Breadcrumbs
+            items={[
+              { label: 'Home', href: '/' },
+              { label: 'For Landlords' },
+            ]}
+          />
+        </div>
+
         {/* ──────────────────────────────────────────────────────────────
             HERO SECTION
             ────────────────────────────────────────────────────────────── */}

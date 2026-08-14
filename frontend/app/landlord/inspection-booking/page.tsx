@@ -10,6 +10,7 @@ import { AppointmentBookingForm } from '@/components/landlord/AppointmentBooking
 import { LandlordGate } from '@/components/landlord/LandlordGate';
 import { getStoredLandlordId, submitAppointment } from '@/lib/api-client';
 import { AppointmentValues, mapAppointmentValuesToPayload } from '@/lib/validations/appointmentSchema';
+import Breadcrumbs from '@/components/Breadcrumbs';
 
 const BRAND_COLOR = '#04164a';
 
@@ -56,6 +57,17 @@ export default function InspectionBookingPage() {
 
   return (
     <main className="min-h-screen bg-[#f3f0ff]">
+      {/* Breadcrumb */}
+      <div className="container mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 pt-6">
+        <Breadcrumbs
+          items={[
+            { label: 'Home', href: '/' },
+            { label: 'For Landlords', href: '/landlord' },
+            { label: 'Book an Inspection' },
+          ]}
+        />
+      </div>
+
       <section className="relative pt-12 pb-16 lg:pt-16 lg:pb-24 bg-[#f3f0ff] overflow-hidden">
         <div
           className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-200/40 rounded-full blur-3xl pointer-events-none"

@@ -6,7 +6,7 @@ import { MessageCircle } from 'lucide-react';
 export default function FloatingContact() {
   return (
     <Link
-      href="https://wa.me/2348000000000"
+      href="https://wa.me/2349017368499"
       target="_blank"
       rel="noopener noreferrer"
       className="fixed bottom-6 right-6 z-50 flex items-center gap-3 group focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 rounded-full"

@@ -49,14 +49,14 @@ export default function Footer() {
             
             <address className="not-italic space-y-3 text-sm text-[#22376e]">
               <a 
-                href="tel:+2348000000000" 
+                href="tel:+2349017368499" 
                 className="flex items-center gap-3 hover:opacity-80 transition-opacity"
               >
                 <Phone className="w-4 h-4 flex-shrink-0" aria-hidden="true" style={{ color: BRAND_COLOR }} />
-                <span>+234 800 000 0000</span>
+                <span>+234 901 736 8499</span>
               </a>
               <a 
-                href="https://wa.me/2348000000000" 
+                href="https://wa.me/2349017368499" 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="flex items-center gap-3 hover:opacity-80 transition-opacity"

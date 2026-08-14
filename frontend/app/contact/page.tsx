@@ -238,24 +238,24 @@ export default function ContactPage() {
                 </p>
 
                 <div className="space-y-6">
-                  <a href="tel:+2348000000000" className="flex items-center gap-4 p-4 bg-[#f3f0ff]/60 rounded-2xl border border-purple-100 hover:bg-[#f3f0ff] transition-colors group">
+                  <a href="tel:+2349017368499" className="flex items-center gap-4 p-4 bg-[#f3f0ff]/60 rounded-2xl border border-purple-100 hover:bg-[#f3f0ff] transition-colors group">
                     <div className="w-12 h-12 rounded-xl bg-[#f3f0ff] flex items-center justify-center text-[#04164a] shrink-0 group-hover:bg-[#04164a] group-hover:text-white transition-colors">
                       <Phone className="w-5 h-5" />
                     </div>
                     <div>
                       <p className="font-semibold text-sm text-[#04164a]">Call Us</p>
-                      <p className="text-slate-600 font-body text-sm">+234 800 000 0000</p>
+                      <p className="text-slate-600 font-body text-sm">+234 901 736 8499</p>
                       <p className="text-xs text-slate-400 font-body">Mon-Fri, 8am-6pm WAT</p>
                     </div>
                   </a>
 
-                  <a href="https://wa.me/2348000000000" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 bg-[#f3f0ff]/60 rounded-2xl border border-purple-100 hover:bg-[#f3f0ff] transition-colors group">
+                  <a href="https://wa.me/2349017368499" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 bg-[#f3f0ff]/60 rounded-2xl border border-purple-100 hover:bg-[#f3f0ff] transition-colors group">
                     <div className="w-12 h-12 rounded-xl bg-[#f3f0ff] flex items-center justify-center text-emerald-600 shrink-0 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
                       <MessageCircle className="w-5 h-5" />
                     </div>
                     <div>
                       <p className="font-semibold text-sm text-[#04164a]">WhatsApp</p>
-                      <p className="text-slate-600 font-body text-sm">+234 800 000 0000</p>
+                      <p className="text-slate-600 font-body text-sm">+234 901 736 8499</p>
                       <p className="text-xs text-slate-400 font-body">Quick response on WhatsApp</p>
                     </div>
                   </a>

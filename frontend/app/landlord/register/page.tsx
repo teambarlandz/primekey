@@ -25,6 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ShieldCheck, User, Phone, Mail, BadgeCheck, Building2, ArrowRight, AlertCircle } from 'lucide-react';
 import { landlordRegistrationSchema, LandlordRegistrationValues, mapLandlordValuesToPayload } from '@/lib/validations/landlordSchema';
 import { submitLandlordRegistration } from '@/lib/api-client';
+import Breadcrumbs from '@/components/Breadcrumbs';
 
 const BRAND_COLOR = '#04164a';
 
@@ -78,6 +79,17 @@ export default function LandlordRegisterPage() {
   return (
     <div className="min-h-screen bg-[#f3f0ff] flex items-center justify-center py-12 px-4">
       <div className="w-full max-w-2xl">
+        {/* Breadcrumb */}
+        <div className="mb-8">
+          <Breadcrumbs
+            items={[
+              { label: 'Home', href: '/' },
+              { label: 'For Landlords', href: '/landlord' },
+              { label: 'Register' },
+            ]}
+          />
+        </div>
+
         {/* Brand Header */}
         <div className="text-center mb-10 register-anim opacity-0">
           <Link href="/" className="flex items-center justify-center gap-3 mb-6" aria-label="Primekey Homes home">
