@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import SiteNav from '@/components/SiteNav';
 import { AlertCircle, CheckCircle2, Mail, Phone, MessageCircle, MapPin, Building2, Send, ChevronRight } from 'lucide-react';
+import { submitContactForm } from '@/lib/api-client';
 
 const BRAND_COLOR = '#04164a';
 
@@ -56,14 +57,26 @@ export default function ContactPage() {
   });
 
   const onSubmit = async (values: ContactFormValues) => {
-    // In a real implementation, this would call an API endpoint
-    // For now, we'll simulate the submission
     setIsSubmitting(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsSubmitting(false);
-    setSubmitStatus('success');
-    setSubmitMessage('Thank you for reaching out! We\'ll get back to you within 24 hours.');
-    form.reset();
+    setSubmitStatus('idle');
+    setSubmitMessage('');
+    try {
+      await submitContactForm({
+        full_name: values.fullName,
+        email: values.email,
+        phone: values.phone,
+        subject: values.subject,
+        message: values.message,
+      });
+      setSubmitStatus('success');
+      setSubmitMessage('Thank you for reaching out! We\'ll get back to you within 24 hours.');
+      form.reset();
+    } catch (err: any) {
+      setSubmitStatus('error');
+      setSubmitMessage(err?.message ?? 'Something went wrong. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   useGSAP(() => {

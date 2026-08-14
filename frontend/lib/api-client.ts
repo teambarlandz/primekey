@@ -1404,6 +1404,57 @@ export async function fetchPropertyDetail(
   }
 }
 
+// ─── CONTACT FORM ──────────────────────────────────────────────────────
+
+export interface ContactFormPayload {
+  full_name: string;
+  email: string;
+  phone: string;
+  subject: 'general' | 'sales' | 'support' | 'landlord' | 'partnership' | 'legal' | 'other';
+  message: string;
+}
+
+export async function submitContactForm(
+  payload: ContactFormPayload
+): Promise<ApiSuccessResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/contact/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      const errorMessage =
+        data?.message ||
+        data?.detail ||
+        (typeof data?.errors === "object" && data?.errors !== null
+          ? Object.entries(data.errors)
+              .map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(", ") : val}`)
+              .join(" | ")
+          : "Failed to send message. Please try again.");
+
+      throw new ApiClientError(errorMessage, response.status, data?.errors);
+    }
+
+    return data as ApiSuccessResponse;
+  } catch (error) {
+    if (error instanceof ApiClientError) {
+      throw error;
+    }
+
+    throw new ApiClientError(
+      "Unable to connect to Primekey server. Please check your network connection.",
+      0
+    );
+  }
+}
+
 export interface PropertyInquiryPayload {
   full_name: string;
   phone: string;

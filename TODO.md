@@ -1,35 +1,57 @@
-# TODO — Frontend-Backend Integration
+# TODO — Contact Form Email Delivery
 
-## HIGH PRIORITY (Core Features Broken Without Backend)
+## Status: COMPLETE (console backend)
 
-- [x] Create backend model for saved/favorited properties (User + Property FK, unique together)
-- [x] Create backend API: POST /api/v1/users/favorites/toggle/ (toggle favorite)
-- [x] Create backend API: DELETE /api/v1/users/favorites/<property_id>/ (unsave a property)
-- [x] Create backend API: GET /api/v1/users/favorites/ (list saved properties)
-- [x] Add frontend API client functions: saveFavorite(), removeFavorite(), fetchFavorites()
-- [x] Wire AuthInterceptSheet "Save Property" action to call toggleFavorite() instead of toggling local state only
-- [x] Wire property detail page "Save" button to call toggleFavorite() with JWT auth
-- [x] Wire search page heart icon to call toggleFavorite() with JWT auth
-- [x] Create backend buyer-facing inspection request endpoint (POST /api/v1/properties/properties/<id>/inspections/)
-- [x] Wire frontend InspectionBookingModal to call the new buyer-facing endpoint with JWT
+All code is wired and working. Emails print to the Django console (terminal) during development.
 
-## MEDIUM PRIORITY (Auth & Session)
+---
 
-- [x] Landlord login: Add OTP login flow for landlords (reuse existing /auth/otp/verify with purpose="login")
-- [x] Landlord dashboard: Fetch landlord profile using JWT from login instead of just localStorage UUID
-- [x] Wire "Remember this device" to store refresh token in localStorage and use it on page reload
-- [x] Add user profile endpoint: GET /api/v1/users/me/ (return current user from JWT)
-- [x] Wire property inquiry form to submit with JWT auth header (currently AllowAny, but should attach user if logged in)
-- [x] Wire inspection booking to attach JWT when user is logged in
-- [x] Link landlord accounts to Django User for full JWT-based landlord auth
+## What was built
 
-## LOW PRIORITY (Nice-to-Have)
+### Backend (`apps/contact/`)
+- **Model** — `ContactMessage` (persists all submissions to DB)
+- **Serializer** — validates `full_name`, `email`, `phone`, `subject`, `message`
+- **View** — `POST /api/v1/contact/` — saves to DB + sends email via `django.core.mail.send_mail()`
+- **Rate limit** — 5/min per IP
+- **Migration** — `0001_initial.py` applied
 
-- [x] Add "My Saved Properties" page at /account/saved that lists favorited properties
-- [x] Show saved status (filled heart) on property cards when user has favorited them
-- [x] Add favorites count to user profile/dashboard
-- [x] Sync favorites across devices when "Remember this device" is used
+### Frontend
+- `submitContactForm()` in `api-client.ts`
+- `/contact` page wired to call the API (replaces simulated delay)
 
-## ALL ITEMS COMPLETE
+### Settings (`core/settings.py`)
+- `EMAIL_BACKEND` defaults to `console.EmailBackend` (prints to terminal)
+- `CONTACT_RECIPIENT_EMAIL` defaults to `hello@primekeyhomes.com`
 
-All frontend-backend integration tasks are done. The remaining work is operational (deploy, test end-to-end).
+---
+
+## To switch to real Hostinger SMTP
+
+1. Create mailbox `hello@primekeyhomes.com` in Hostinger hPanel
+2. Add to `backend/.env`:
+```
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.hostinger.com
+EMAIL_PORT=465
+EMAIL_USE_SSL=True
+EMAIL_USE_TLS=False
+EMAIL_HOST_USER=hello@primekeyhomes.com
+EMAIL_HOST_PASSWORD=<your-password>
+```
+3. Restart Django server
+
+---
+
+## Files created/modified
+- `backend/core/settings.py` — EMAIL_* settings
+- `backend/apps/contact/__init__.py`
+- `backend/apps/contact/apps.py`
+- `backend/apps/contact/models.py`
+- `backend/apps/contact/serializers.py`
+- `backend/apps/contact/views.py`
+- `backend/apps/contact/urls.py`
+- `backend/apps/contact/migrations/0001_initial.py`
+- `backend/core/settings.py` — INSTALLED_APPS
+- `backend/core/urls.py` — contact endpoint
+- `frontend/lib/api-client.ts` — submitContactForm()
+- `frontend/app/contact/page.tsx` — wired onSubmit

@@ -30,6 +30,7 @@ urlpatterns = [
     path('api/v1/notifications/', include('apps.notifications.urls', namespace='notifications')),
     path('api/v1/messaging/', include('apps.messaging.urls', namespace='messaging')),
     path('api/v1/users/', include('apps.users.urls', namespace='users')),
+    path('api/v1/contact/', include('apps.contact.urls', namespace='contact')),
 
     # OpenAPI Schema
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

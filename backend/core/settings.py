@@ -81,6 +81,7 @@ INSTALLED_APPS = [
     "apps.notifications",
     "apps.messaging",
     "apps.users",
+    "apps.contact",
 ]
 
 MIDDLEWARE = [
@@ -123,6 +124,27 @@ WSGI_APPLICATION = "core.wsgi.application"
 DATABASES = {
     "default": env.db("DATABASE_URL"),
 }
+
+
+# Email (Contact Form Delivery)
+# Dev: console backend prints emails to terminal
+# Prod: switch to SMTP backend and fill in Hostinger credentials
+EMAIL_BACKEND = env(
+    "EMAIL_BACKEND",
+    default="django.core.mail.backends.console.EmailBackend",
+)
+EMAIL_HOST = env("EMAIL_HOST", default="smtp.hostinger.com")
+EMAIL_PORT = env.int("EMAIL_PORT", default=465)
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=False)
+EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=True)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+DEFAULT_FROM_EMAIL = env(
+    "DEFAULT_FROM_EMAIL", default="Primekey Homes <hello@primekeyhomes.com>"
+)
+CONTACT_RECIPIENT_EMAIL = env(
+    "CONTACT_RECIPIENT_EMAIL", default="hello@primekeyhomes.com"
+)
 
 
 # Password validation
