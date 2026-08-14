@@ -2,14 +2,14 @@
 
 ## HIGH PRIORITY (Core Features Broken Without Backend)
 
-- [ ] Create backend model for saved/favorited properties (User + Property FK, unique together)
-- [ ] Create backend API: POST /api/v1/users/favorites/ (save a property)
-- [ ] Create backend API: DELETE /api/v1/users/favorites/<property_id>/ (unsave a property)
-- [ ] Create backend API: GET /api/v1/users/favorites/ (list saved properties)
-- [ ] Add frontend API client functions: saveFavorite(), removeFavorite(), fetchFavorites()
-- [ ] Wire AuthInterceptSheet "Save Property" action to call saveFavorite() instead of toggling local state only
-- [ ] Wire property detail page "Save" button to call saveFavorite()/removeFavorite() with JWT auth
-- [ ] Wire search page heart icon to call saveFavorite()/removeFavorite() with JWT auth
+- [x] Create backend model for saved/favorited properties (User + Property FK, unique together)
+- [x] Create backend API: POST /api/v1/users/favorites/toggle/ (toggle favorite)
+- [x] Create backend API: DELETE /api/v1/users/favorites/<property_id>/ (unsave a property)
+- [x] Create backend API: GET /api/v1/users/favorites/ (list saved properties)
+- [x] Add frontend API client functions: saveFavorite(), removeFavorite(), fetchFavorites()
+- [x] Wire AuthInterceptSheet "Save Property" action to call toggleFavorite() instead of toggling local state only
+- [x] Wire property detail page "Save" button to call toggleFavorite() with JWT auth
+- [x] Wire search page heart icon to call toggleFavorite() with JWT auth
 
 ## MEDIUM PRIORITY (Auth & Session)
 
@@ -23,6 +23,6 @@
 ## LOW PRIORITY (Nice-to-Have)
 
 - [ ] Add "My Saved Properties" page at /account/saved that lists favorited properties
-- [ ] Show saved status (filled heart) on property cards when user has favorited them
+- [x] Show saved status (filled heart) on property cards when user has favorited them
 - [ ] Add favorites count to user profile/dashboard
 - [ ] Sync favorites across devices when "Remember this device" is used

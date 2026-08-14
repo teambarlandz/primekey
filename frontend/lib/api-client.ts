@@ -325,15 +325,23 @@ export interface UserSessionProfile {
   is_new_user?: boolean;
 }
 
-export function saveUserSession(access: string, refresh: string, user: UserSessionProfile): void {
+export function saveUserSession(access: string, refresh: string, user: UserSessionProfile, rememberDevice?: boolean): void {
   window.sessionStorage.setItem(USER_ACCESS_KEY, access);
   window.sessionStorage.setItem(USER_REFRESH_KEY, refresh);
   window.sessionStorage.setItem(USER_PROFILE_KEY, JSON.stringify(user));
+  if (rememberDevice) {
+    window.localStorage.setItem(USER_ACCESS_KEY, access);
+    window.localStorage.setItem(USER_REFRESH_KEY, refresh);
+    window.localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(user));
+  }
 }
 
 export function getUserAccessToken(): string | null {
   if (typeof window === "undefined") return null;
-  return window.sessionStorage.getItem(USER_ACCESS_KEY);
+  const token = window.sessionStorage.getItem(USER_ACCESS_KEY);
+  if (token) return token;
+  // Fallback to persistent session
+  return window.localStorage.getItem(USER_ACCESS_KEY);
 }
 
 export function getUserRefreshToken(): string | null {
@@ -354,14 +362,30 @@ export function getUserProfile(): UserSessionProfile | null {
 
 export function isUserLoggedIn(): boolean {
   const token = getUserAccessToken();
-  if (!token) return false;
-  return !isTokenExpired(token);
+  if (token && !isTokenExpired(token)) return true;
+  // Check persistent session in localStorage
+  const persistentToken = typeof window !== 'undefined' ? window.localStorage.getItem(USER_ACCESS_KEY) : null;
+  if (persistentToken && !isTokenExpired(persistentToken)) {
+    // Restore session from localStorage to sessionStorage
+    const refresh = window.localStorage.getItem(USER_REFRESH_KEY);
+    const profile = window.localStorage.getItem(USER_PROFILE_KEY);
+    if (refresh && profile) {
+      window.sessionStorage.setItem(USER_ACCESS_KEY, persistentToken);
+      window.sessionStorage.setItem(USER_REFRESH_KEY, refresh);
+      window.sessionStorage.setItem(USER_PROFILE_KEY, profile);
+    }
+    return true;
+  }
+  return false;
 }
 
 export function clearUserSession(): void {
   window.sessionStorage.removeItem(USER_ACCESS_KEY);
   window.sessionStorage.removeItem(USER_REFRESH_KEY);
   window.sessionStorage.removeItem(USER_PROFILE_KEY);
+  window.localStorage.removeItem(USER_ACCESS_KEY);
+  window.localStorage.removeItem(USER_REFRESH_KEY);
+  window.localStorage.removeItem(USER_PROFILE_KEY);
 }
 
 export interface AuthResponse {
@@ -1630,6 +1654,49 @@ export async function submitJobApplication(
 }
 
 // ─── FAVORITES (Saved Properties) ─────────────────────────────────────
+
+export interface UserProfile {
+  id: string;
+  phone: string;
+  is_staff: boolean;
+  landlord: {
+    id: string;
+    full_name: string;
+    phone: string;
+    email: string;
+    verification_status: string;
+    created_at: string;
+  } | null;
+  agent: {
+    id: string;
+    full_name: string;
+    role: string;
+    phone: string;
+  } | null;
+  favorites_count: number;
+}
+
+export async function fetchUserProfile(): Promise<UserProfile> {
+  const token = getUserAccessToken();
+  const response = await fetch(`${API_BASE_URL}/users/me/`, {
+    headers: {
+      Accept: "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new ApiClientError(
+      data?.detail || "Failed to load user profile.",
+      response.status,
+      data?.errors
+    );
+  }
+
+  return data.data;
+}
 
 export interface FavoriteItem {
   id: string;

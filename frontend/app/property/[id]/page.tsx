@@ -85,14 +85,23 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     setIsAuthOpen(true);
   };
 
-  const handleAuthSuccess = () => {
-    if (pendingAction === 'Save to Favorites') {
-      setIsFavorited((prev) => {
-        const next = !prev;
-        toast(next ? 'Property saved to favorites' : 'Property removed from favorites');
-        return next;
-      });
+  const handleToggleFavorite = async () => {
+    if (!isUserLoggedIn()) {
+      handleProtectedAction('Save to Favorites');
+      return;
     }
+    try {
+      const result = await toggleFavorite(params.id);
+      setIsFavorited(result.is_favorited);
+      toast(result.is_favorited ? 'Property saved to favorites' : 'Property removed from favorites');
+    } catch {
+      toast('Failed to update favorite. Please try again.', 'error');
+    }
+  };
+
+  const handleAuthSuccess = () => {
+    // After login, check favorite status and toggle
+    handleToggleFavorite();
   };
 
   const handleBookingSuccess = (data: BookingSchemaType) => {
@@ -177,7 +186,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleProtectedAction('Save to Favorites')}
+              onClick={handleToggleFavorite}
               className="bg-background border-border text-foreground hover:text-rose-600 rounded-xl"
             >
               <Heart className={`w-4 h-4 ${isFavorited ? 'fill-rose-600 text-rose-600' : ''}`} />

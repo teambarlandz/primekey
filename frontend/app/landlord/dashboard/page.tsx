@@ -38,6 +38,8 @@ import {
   fetchLandlordIntakes,
   fetchLandlordAppointments,
   updateLandlordAppointment,
+  isUserLoggedIn,
+  fetchUserProfile,
   LandlordProfile,
   LandlordIntake,
   LandlordAppointment,
@@ -103,13 +105,30 @@ export default function LandlordDashboardPage() {
   };
 
   useEffect(() => {
-    const id = typeof window !== 'undefined' ? getStoredLandlordId() : null;
-    setLandlordId(id);
-    if (id) {
-      loadAll(id);
-    } else {
-      setLoading(false);
-    }
+    const init = async () => {
+      // Try JWT-based auth first
+      if (isUserLoggedIn()) {
+        try {
+          const userProfile = await fetchUserProfile();
+          if (userProfile.landlord) {
+            setLandlordId(userProfile.landlord.id);
+            await loadAll(userProfile.landlord.id);
+            return;
+          }
+        } catch {
+          // JWT valid but no landlord profile - continue to fallback
+        }
+      }
+      // Fallback to localStorage UUID
+      const id = typeof window !== 'undefined' ? getStoredLandlordId() : null;
+      setLandlordId(id);
+      if (id) {
+        await loadAll(id);
+      } else {
+        setLoading(false);
+      }
+    };
+    init();
   }, []);
 
   useGSAP(() => {

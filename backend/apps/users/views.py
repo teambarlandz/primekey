@@ -9,6 +9,53 @@ from .models import Favorite
 from .serializers import FavoriteSerializer, FavoriteCreateSerializer
 
 
+class UserProfileView(APIView):
+    """GET: Return the current user's profile and associated landlord profile if any."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        data = {
+            "id": str(user.id),
+            "phone": user.username,
+            "is_staff": user.is_staff,
+        }
+
+        # Check if user has an associated landlord profile
+        try:
+            from apps.landlords.models import LandlordProfile
+            landlord = LandlordProfile.objects.get(phone=user.username)
+            data["landlord"] = {
+                "id": str(landlord.id),
+                "full_name": landlord.full_name,
+                "phone": landlord.phone,
+                "email": landlord.email,
+                "verification_status": landlord.verification_status,
+                "created_at": landlord.created_at.isoformat(),
+            }
+        except LandlordProfile.DoesNotExist:
+            data["landlord"] = None
+
+        # Check if user has an associated agent profile
+        try:
+            from apps.dashboard.models import AgentProfile
+            agent = AgentProfile.objects.get(user=user, is_active=True)
+            data["agent"] = {
+                "id": str(agent.id),
+                "full_name": agent.full_name,
+                "role": agent.role,
+                "phone": agent.phone,
+            }
+        except AgentProfile.DoesNotExist:
+            data["agent"] = None
+
+        # Count favorites
+        data["favorites_count"] = Favorite.objects.filter(user=user).count()
+
+        return Response({"success": True, "data": data})
+
+
 class FavoriteListView(APIView):
     """GET: List all favorites for the authenticated user."""
 
