@@ -1,4 +1,5 @@
 import uuid
+from django.core.validators import MinValueValidator
 from django.db import models
 
 
@@ -52,7 +53,7 @@ class Property(models.Model):
     property_type = models.CharField(max_length=50, choices=PROPERTY_TYPE_CHOICES)
 
     # Pricing fields (in NGN - Naira)
-    price = models.DecimalField(max_digits=12, decimal_places=2)
+    price = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
     currency = models.CharField(max_length=10, default="NGN")
     is_negotiable = models.BooleanField(default=False)
 
@@ -63,9 +64,9 @@ class Property(models.Model):
     area = models.CharField(max_length=100)  # e.g., Lekki Phase 1, Ikeja GRA, Yaba
 
     # Features & Specifications
-    bedrooms = models.IntegerField(default=1)
-    bathrooms = models.IntegerField(default=1)
-    toilets = models.IntegerField(default=1)
+    bedrooms = models.IntegerField(default=1, validators=[MinValueValidator(0)])
+    bathrooms = models.IntegerField(default=1, validators=[MinValueValidator(0)])
+    toilets = models.IntegerField(default=1, validators=[MinValueValidator(0)])
     is_serviced = models.BooleanField(default=False)
     is_furnished = models.BooleanField(default=False)
 

@@ -267,7 +267,7 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "sessions"
 
 # Session lifecycle hardening
-SESSION_COOKIE_AGE = 8 * 60 * 60  # 8 hours absolute lifetime
+SESSION_COOKIE_AGE = 60 * 60  # 1 hour absolute lifetime
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
@@ -375,40 +375,40 @@ UNFOLD = {
     ],
     "COLORS": {
         "primary": {
-            "50": "243 240 255",       # #f3f0ff — lavender
-            "100": "228 224 245",      # #e4e0f5 — lavender border
-            "200": "143 179 226",      # #8FB3E2 — light blue accent
-            "300": "29 50 111",        # #1d326f — medium navy
-            "400": "4 22 74",          # #04164a — primary navy
-            "500": "4 22 74",          # #04164a — primary navy
-            "600": "29 50 111",        # #1d326f — hover navy
-            "700": "29 50 111",        # #1d326f — active navy
-            "800": "4 22 74",          # #04164a — dark navy
-            "900": "4 22 74",          # #04164a — darker navy
+            "50": "245 247 250",       # #f5f7fa — Moon background
+            "100": "232 235 241",      # #e8ebf1 — Moon surface
+            "200": "163 185 240",      # #a3b9f0 — blue5
+            "300": "105 145 242",      # #6991f2 — blue3
+            "400": "76 122 240",       # #4c7af0 — blue2
+            "500": "59 89 193",        # #3b59c1 — Moon primary blue
+            "600": "47 84 167",        # #2f54a7 — blue1
+            "700": "13 42 98",         # #0d2a62 — blue0 (navy)
+            "800": "13 42 98",         # #0d2a62
+            "900": "13 42 98",         # #0d2a62
         },
         "success": {
-            "50": "232 245 233",
-            "100": "200 230 201",
-            "500": "27 94 32",         # #1b5e20 — frontend success
-            "600": "27 94 32",
+            "50": "236 246 246",
+            "100": "217 238 238",
+            "500": "65 166 181",       # #41a6b5 — Moon green
+            "600": "65 166 181",
         },
         "warning": {
-            "50": "255 243 224",
-            "100": "255 224 178",
-            "500": "230 81 0",         # #e65100 — frontend warning
-            "600": "230 81 0",
+            "50": "255 244 237",
+            "100": "255 233 218",
+            "500": "255 150 108",      # #ff966c — Moon orange
+            "600": "255 150 108",
         },
         "danger": {
-            "50": "255 235 238",
-            "100": "255 205 210",
-            "500": "198 40 40",        # #c62828 — frontend error
-            "600": "198 40 40",
+            "50": "255 241 242",
+            "100": "255 222 224",
+            "500": "255 117 127",      # #ff757f — Moon red
+            "600": "255 117 127",
         },
         "info": {
-            "50": "227 242 253",
-            "100": "187 222 251",
-            "500": "2 119 189",        # #0277bd — frontend info
-            "600": "2 119 189",
+            "50": "231 249 252",
+            "100": "204 243 249",
+            "500": "13 185 215",       # #0db9d7 — Moon cyan
+            "600": "13 185 215",
         },
     },
     "SIDEBAR": {

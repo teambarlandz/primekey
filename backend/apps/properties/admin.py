@@ -1,3 +1,4 @@
+from django import forms
 from django.contrib import admin
 from unfold.admin import ModelAdmin
 from unfold.contrib.filters.admin import (
@@ -8,6 +9,18 @@ from unfold.contrib.filters.admin import (
 from unfold.decorators import display
 
 from .models import Property, PropertyImage
+
+
+class PropertyAdminForm(forms.ModelForm):
+    class Meta:
+        model = Property
+        fields = "__all__"
+        widgets = {
+            "bedrooms": forms.NumberInput(attrs={"min": 0}),
+            "bathrooms": forms.NumberInput(attrs={"min": 0}),
+            "toilets": forms.NumberInput(attrs={"min": 0}),
+            "price": forms.NumberInput(attrs={"min": 0, "step": "0.01"}),
+        }
 
 
 class PriceRangeFilter(RangeNumericListFilter):
@@ -23,6 +36,7 @@ class PropertyImageInline(admin.TabularInline):
 
 @admin.register(Property)
 class PropertyAdmin(ModelAdmin):
+    form = PropertyAdminForm
     list_display = (
         "title",
         "thumb",
