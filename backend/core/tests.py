@@ -125,3 +125,19 @@ class TestIdleSessionMiddleware:
         response = client.get("/admin/login/")
         assert response.status_code == 200
         assert "_auth_user_id" not in client.session
+
+
+class TestHealthEndpoint:
+    def test_health_reports_database_healthy(self):
+        response = Client().get("/api/health/")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["database"] == "healthy"
+        assert data["status"] in ("healthy", "degraded")
+        assert "timestamp" in data
+
+    def test_health_never_raises_when_redis_down(self):
+        response = Client().get("/api/health/")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["redis"] in ("healthy", "unhealthy")

@@ -13,9 +13,10 @@ User = get_user_model()
 @pytest.fixture
 def agent_client():
     user = User.objects.create_user(username="08050000000", password="testpass123")
-    AgentProfile.objects.create(user=user, phone="08050000000", full_name="Test Agent")
+    profile = AgentProfile.objects.create(user=user, phone="08050000000", full_name="Test Agent")
     client = APIClient()
     client.force_authenticate(user=user)
+    client.profile = profile
     return client
 
 
@@ -57,8 +58,8 @@ class TestWhatsAppThreads:
         assert response.status_code == 401
 
     def test_list_threads(self, agent_client):
-        WhatsAppThread.objects.create(phone="08011111111", display_name="Buyer One")
-        WhatsAppThread.objects.create(phone="08022222222", display_name="Buyer Two")
+        WhatsAppThread.objects.create(phone="08011111111", display_name="Buyer One", assigned_agent=agent_client.profile)
+        WhatsAppThread.objects.create(phone="08022222222", display_name="Buyer Two", assigned_agent=agent_client.profile)
         response = agent_client.get("/api/v1/messaging/threads/")
         assert response.status_code == 200
         assert len(response.data["data"]) == 2
@@ -66,7 +67,7 @@ class TestWhatsAppThreads:
 
 class TestWhatsAppMessages:
     def test_message_history(self, agent_client):
-        thread = WhatsAppThread.objects.create(phone="08012345678")
+        thread = WhatsAppThread.objects.create(phone="08012345678", assigned_agent=agent_client.profile)
         WhatsAppMessage.objects.create(thread=thread, body="Hi there")
         WhatsAppMessage.objects.create(thread=thread, body="We have a listing for you", direction="outbound")
 
@@ -76,7 +77,7 @@ class TestWhatsAppMessages:
         assert response.data["data"][0]["body"] == "Hi there"
 
     def test_add_message_updates_thread(self, agent_client):
-        thread = WhatsAppThread.objects.create(phone="08012345678")
+        thread = WhatsAppThread.objects.create(phone="08012345678", assigned_agent=agent_client.profile)
         response = agent_client.post(
             f"/api/v1/messaging/threads/{thread.id}/messages/",
             {"body": "See our new offers"},

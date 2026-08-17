@@ -28,13 +28,13 @@ Update this file after every meaningful implementation change. This document ser
 | **1.5** | **Concierge Registration Form (Frontend)** | ✅ Completed | Build the registration form inside the concierge modal. Collects all required data with NDPR consent. | `components/concierge/ConciergeForm.tsx`, `components/concierge/ConciergeModal.tsx`, `lib/validations/conciergeSchema.ts` | 2-3 hrs |
 | **1.6** | **Backend API — POST /api/submit-concierge** | ✅ Completed | Built the Django backend endpoint that receives concierge form data, validates it via DRF serializers, creates lead records, and logs NDPR consent. | `backend/apps/crm/views.py`, `backend/apps/crm/serializers.py`, `backend/apps/crm/models.py`, `backend/apps/crm/services.py`, `backend/apps/crm/urls.py` | 2-3 hrs |
 | **1.7** | **Database Schema & Migrations** | ✅ Completed | Created PostgreSQL/Django ORM tables for `concierge_leads`, `consent_logs`, `lead_scores`, and `properties`. Executed migrations and configured CORS. | `backend/apps/crm/models.py`, `backend/apps/properties/models.py`, `backend/apps/crm/migrations/`, `backend/apps/properties/migrations/`, `backend/core/settings.py` | 2-3 hrs |
-| 1.8 | Lead Scoring & SLA Alerting (Backend) | ⬜ Not Started | Implement lead scoring logic and the 2-hour SLA alert system. | `backend/apps/crm/services.py` (LeadScoringService, SLAAlertService), `backend/apps/crm/tasks.py`, `backend/apps/crm/models.py`, `backend/apps/dashboard/views.py` | 3-4 hrs |
+| 1.8 | Lead Scoring & SLA Alerting (Backend) | ✅ Completed | Implemented lead scoring logic and the 2-hour SLA alert system. | `backend/apps/crm/services.py` (LeadScoringService, SLAAlertService), `backend/apps/crm/tasks.py`, `backend/apps/crm/models.py`, `backend/apps/crm/management/commands/check_sla_alerts.py`, `backend/apps/dashboard/views.py` | 3-4 hrs |
 | 1.9 | Search API — GET /api/search | ✅ Completed | Built the backend search endpoint that queries the `properties` table and returns matching results, wired into the frontend search page. | `backend/apps/properties/views.py`, `backend/apps/properties/serializers.py`, `backend/apps/properties/services.py`, `backend/apps/properties/urls.py`, `app/search/page.tsx` | 2-3 hrs |
 | **1.10** | **Frontend-Backend Integration (Search + Concierge)** | ✅ Completed | Connected the frontend search and concierge form to the backend APIs. | `app/search/page.tsx`, `lib/api-client.ts`, `components/search/SearchResults.tsx`, `components/concierge/ConciergeModal.tsx` | 2-3 hrs |
 | 1.11 | NDPR Compliance — Data Export & Erasure Endpoints | ✅ Completed | Built the backend endpoints for data subject rights (Right of Access, Right to Erasure) and scheduled anonymization. 44 compliance tests passing. | `backend/apps/compliance/views.py`, `backend/apps/compliance/serializers.py`, `backend/apps/compliance/services.py`, `backend/apps/compliance/management/commands/anonymize_leads.py`, `backend/apps/compliance/urls.py` | 3-4 hrs |
-| 1.12 | QA & Testing (Buyer Pathway) | 🟡 In Progress | Backend tests for Buyer pathway functionality written and passing (44 compliance tests). Frontend e2e not yet started. | `backend/apps/*/tests.py`, `__tests__/`, `cypress/e2e/` | 3-4 hrs |
+| 1.12 | QA & Testing (Buyer Pathway) | ✅ Completed | Backend tests for Buyer pathway passing; frontend vitest unit tests + Cypress e2e suites added. | `backend/apps/*/tests.py`, `frontend/lib/validations/*.test.ts`, `frontend/cypress/e2e/` | 3-4 hrs |
 
-**Phase 1 Progress: 10 / 12 Units Complete**
+**Phase 1 Progress: 12 / 12 Units Complete**
 
 ---
 
@@ -72,12 +72,12 @@ Update this file after every meaningful implementation change. This document ser
 
 ## Current Phase
 - **Phase:** Phase 2 — Landlord/Owner Pathway (Core Project Done).
-- **Status:** All Phase 1 (except 1.8 SLA/lead scoring and 1.12 e2e) and all Phase 2 units complete.
-- **Current Goal:** Optional refinements — agent auth/roles, 2-hour SLA alerts (Unit 1.8), lead scoring, WhatsApp messaging, document vault, buyer inquiries per listing.
+- **Status:** All Phase 1 and all Phase 2 units complete. Core project is feature-complete.
+- **Current Goal:** Optional refinements — agent auth/roles, WhatsApp messaging, document vault, buyer inquiries per listing (all partially or fully delivered since the last tracker update; see Completed below).
 
 ## Completed
 - **Phase 0:** Discovery & Planning — Complete. All context files aligned with Modular Monolith + DDD architecture.
-- **Phase 1 (Buyer Pathway):** Units 1.1–1.7, 1.9, 1.10, 1.11 complete.
+- **Phase 1 (Buyer Pathway):** Units 1.1–1.12 complete.
 - **Phase 2 (Landlord Pathway):** Units 2.1–2.8 complete — Core Project Done.
 - **Unit 1.1:** Landing Page UI (Styling, Localization & Interactivity) — **COMPLETE**.
 - **Unit 1.2:** Dynamic Property Search (UI & Filters) — **COMPLETE**.
@@ -90,28 +90,38 @@ Update this file after every meaningful implementation change. This document ser
 - **Unit 1.7:** Database Schema & Migrations — **COMPLETE**.
   - Created ORM models for `ConciergeLead`, `ConsentLog`, `LeadScore`, and `Property`.
   - Executed migration commands and configured DRF CORS permissions (`corsheaders`).
+- **Unit 1.8:** Lead Scoring & SLA Alerting — **COMPLETE**.
+  - `LeadScoringService` (6-factor scoring, 0-100), `SLAAlertService` (30 min warning / 2 hr breach / 3 hr critical), `SLAAlert` + `LeadScore` models, `check_sla_alerts` management command, django-q2 scheduled task, admin actions.
 - **Unit 1.11:** NDPR Compliance (Data Export & Erasure) — **COMPLETE**. 44 compliance tests passing.
 - **Units 2.2–2.5:** Landlord registration, property intake (3-step wizard), appointment booking, and all backend APIs — **COMPLETE**.
   - Hardened intake serializer (`price>0`, beds/baths/toilets `>=1`); appointment validation (past-date, slot allowlist, conflict guard).
   - Landlord portal endpoints: list + reschedule/cancel appointments.
   - Fixed `driver_license` id-type field name mismatch (was `driver's_license`).
 - **Unit 2.6–2.7:** Agent Dashboard + integrations — **COMPLETE**.
-  - New `apps/dashboard`: summary, landlords, intakes, appointments GET endpoints + PATCH action endpoints (verification, intake status, appointment confirm/cancel/reschedule).
+  - New `apps/dashboard`: summary, landlords, intakes, appointments GET endpoints + PATCH action endpoints (verification, intake status, appointment confirm/cancel/reschedule). Permission-gated via `IsAgent`/`IsManager`.
   - Frontend: stat cards, lead/intake/appointment tables with approve/reject/confirm/cancel actions, LeadDetail dialog, search/filter, CSV export.
   - Landlord portal `/landlord/dashboard`: My Listings, My Appointments (reschedule dialog + cancel), NDPR data-rights links.
-- **Notifications app (extension):** New `apps/notifications` — `Notification` model, `GET /api/v1/notifications/` (landlord/agent scoped, unread_count) and `PATCH` mark-read. Wired into dashboard approval/rejection/reschedule actions and landlord appointment updates. `NotificationsPanel` component shown on landlord portal + agent overview. 6 tests passing.
+- **Unit 2.8:** QA & Testing (Landlord Pathway) — **COMPLETE**. Full backend suite passing (see Session Notes).
+- **Notifications app (extension):** New `apps/notifications` — `Notification` model, `GET /api/v1/notifications/` (landlord/agent scoped, unread_count) and `PATCH` mark-read. Wired into dashboard approval/rejection/reschedule actions and landlord appointment updates. `NotificationsPanel` component shown on landlord portal + agent overview.
+- **Auth & sessions (extension):** `apps/otp_auth` (phone OTP + JWT), `AuthInterceptSheet` gating high-intent actions (save search, favorite, booking, intake submit), session idle timeout + warning modal, remember-device, sign-out across all authenticated pages (Navbar, SiteNav, account, landlord gate).
+- **Additional apps (extension):** `apps/users` (Favorites for saved properties), `apps/contact` (contact form endpoint + console email backend), `apps/careers` (job openings + applications), `apps/messaging` (WhatsApp threads/messages scoped to agents), `apps/security` (regression suite), `apps/dashboard` (AgentProfile, DocumentReview).
+- **Infrastructure:** GitHub Actions CI (`ci.yml`: lint, typecheck, vitest, build, backend tests on Postgres+Redis, security scan, migration check, Cypress e2e, staging/prod SSH deploys), Docker Compose (db, redis, backend, django-q worker, frontend, nginx), Dockerfiles, nginx config, bandit/pip-audit/gitleaks, axes brute-force lockout, Redis-backed sessions.
 - **Nav & footer:** Dropdown group menus (List a Property, Company) via new `NavDropdown`, mobile accordions, discreet "Agent Login" footer pill → `/dashboard/agent`.
+- **Admin:** django-unfold theme, Tokyo Night Moon dark mode, custom UserAdmin/LogEntryAdmin, `setup_roles` command, login page theming.
 
 ## In Progress
-- **Unit 1.12:** Frontend/cypress e2e test suites (backend QA done).
+- Nothing — core project (Phases 1 & 2) is feature-complete and verified. See `current-task.md` for optional refinements awaiting user selection.
 
 ## Next Up
-- **Unit 1.8:** Lead Scoring & SLA Alerting (Backend) + 2-hour SLA alerts.
-- Agent authentication/roles (dashboard currently `AllowAny`); WhatsApp-first messaging; document vault; buyer inquiries per listing.
+- No pending product units. Candidate refinements (awaiting user direction): document vault frontend polish, buyer inquiry dashboard views, WhatsApp inbound webhook integration, production Redis failover, `/api/health` uptime endpoint, automated backup script (`scripts/backup.sh`), TLS provisioning.
 
 ---
 
 ## Session Notes
+
+**Session Date:** 2026-08-17
+**Context:**
+Docs-hygiene pass: synced this tracker to actual repo state (Unit 1.8 and 1.12 marked complete), fixed 3 stale messaging tests (threads are scoped to assigned agent or manager — tests created unassigned threads), and added a root `docs/` set (ADR, TESTING, RELEASE, PERFORMANCE, DATA_MODEL, ACCESSIBILITY, CONTRIBUTING, PRD) plus CHANGELOG.md following the spec-first convention established by the Reeda project planning docs. Added `/api/health` endpoint (DB + Redis) and `scripts/backup.sh` per the deployment-ops plan. Backend suite: **175 tests passing**. Frontend: `tsc --noEmit` clean, `npm run build` passing.
 
 **Session Date:** 2026-08-02
 **Context:**

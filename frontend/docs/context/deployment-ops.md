@@ -305,14 +305,18 @@ EMAIL_HOST_PASSWORD=change_me
 
 Backup Strategy
 
+> **Implemented (2026-08-17):** `scripts/backup.sh` (DB) and `scripts/backup_media.sh`
+> (media volume) ship in the repository. Configure `COMPOSE_DIR`, `RCLONE_REMOTE`,
+> and `RETENTION_DAYS` as needed; schedule via the cron lines below.
+
 PostgreSQL Backup (Automated)
 
 A daily backup script (scripts/backup.sh) that:
 
-1. Dumps the entire database using pg_dump
+1. Dumps the entire database using pg_dump (via `docker exec primekey-db`)
 2. Compresses with gzip
-3. Uploads to a secure remote storage (e.g., S3-compatible, SFTP, or external VPS)
-4. Retains last 30 daily backups
+3. Uploads to a secure remote storage (e.g., S3-compatible, SFTP, or external VPS) via rclone
+4. Retains last 30 daily backups on the remote
 
 ```bash
 #!/bin/bash

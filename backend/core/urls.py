@@ -12,8 +12,13 @@ from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
+from core.views import health_check
+
 urlpatterns = [
     path('admin/', admin.site.urls),
+
+    # Uptime monitoring endpoint (deployment-ops.md)
+    path('api/health/', health_check, name='health'),
 
     # Legacy/unversioned route used by frontend lib/api-client.ts
     path('api/crm/', include('apps.crm.urls', namespace='crm_legacy')),

@@ -151,7 +151,7 @@ jobs:
         run: python manage.py migrate --noinput
 
       - name: Run backend tests
-        run: python -m pytest apps/landlords/tests.py apps/compliance/tests.py apps/otp_auth/tests.py apps/security/tests.py -q
+        run: python -m pytest -q
 
   security-scan:
     name: Security Scan
