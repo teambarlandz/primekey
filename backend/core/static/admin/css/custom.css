@@ -90,13 +90,6 @@ a[href].bg-white:hover {
   border-radius: var(--pk-radius-lg) !important;
 }
 
-/* Dark mode card surfaces */
-.dark .bg-white,
-.dark [class*="dark:bg-base-900"] {
-  background-color: rgba(26, 27, 38, 0.92) !important;
-  border-color: rgba(59, 89, 193, 0.12) !important;
-}
-
 /* ── Buttons — Pill-Shaped CTAs ───────────────────────────────────────────── */
 /* Primary buttons */
 a.button,
@@ -484,26 +477,6 @@ td span:not([class]):contains("completed") {
   border-top: 1px solid var(--pk-lavender-border);
 }
 
-/* Dark mode KPI cards */
-.dark .kpi-card,
-[class*="dark"] .kpi-card {
-  background: rgba(26, 27, 38, 0.92);
-  border-color: rgba(59, 89, 193, 0.12);
-}
-
-.dark .kpi-card__metric {
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.dark .kpi-card__title,
-.dark .kpi-card__footer {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.dark .kpi-card__footer {
-  border-top-color: rgba(59, 89, 193, 0.12);
-}
-
 /* ── Pipeline Value — Hero Treatment ──────────────────────────────────────── */
 .pipeline-banner {
   background: var(--pk-gradient-hero);
@@ -710,27 +683,93 @@ td span:not([class]):contains("completed") {
 .kpi-card:nth-child(6) { animation-delay: 300ms; }
 
 /* ── Dark Mode Overrides ──────────────────────────────────────────────────── */
+/* Palette: bg #1a1b26, surfaces rgba(26,27,38,0.92), borders rgba(59,89,193,0.12) */
+/*           text rgba(255,255,255,0.9), muted rgba(255,255,255,0.5)              */
+
+/* ── Body & Layout ──────────────────────────────────────────────────────── */
 .dark body,
 .dark #content-main,
 [class*="dark"] body {
   background-color: #1a1b26 !important;
 }
 
-.dark table tbody tr:nth-child(even),
-[class*="dark"] table tbody tr:nth-child(even) {
-  background-color: rgba(59, 89, 193, 0.04) !important;
+/* ── Scrollbar ──────────────────────────────────────────────────────────── */
+.dark ::-webkit-scrollbar-track {
+  background: #1a1b26 !important;
 }
 
-.dark table tbody tr:hover,
-[class*="dark"] table tbody tr:hover {
-  background-color: rgba(59, 89, 193, 0.08) !important;
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(59, 89, 193, 0.4) !important;
 }
 
-.dark table thead th,
-[class*="dark"] table thead th {
-  background-color: rgba(13, 42, 98, 0.8) !important;
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 89, 193, 0.6) !important;
 }
 
+/* ── Cards — Frosted Glass ──────────────────────────────────────────────── */
+.dark .bg-white,
+.dark [class*="dark:bg-base-900"] {
+  background-color: rgba(26, 27, 38, 0.92) !important;
+  border-color: rgba(59, 89, 193, 0.12) !important;
+}
+
+.dark a[href].bg-white:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark .module {
+  background-color: rgba(26, 27, 38, 0.92) !important;
+  border-color: rgba(59, 89, 193, 0.12) !important;
+}
+
+/* ── Buttons ────────────────────────────────────────────────────────────── */
+.dark a.button,
+.dark input[type="submit"],
+.dark .button,
+.dark .btn-primary,
+.dark [type="submit"] {
+  background-color: rgba(59, 89, 193, 0.9) !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark a.button:hover,
+.dark input[type="submit"]:hover,
+.dark .button:hover,
+.dark .btn-primary:hover,
+.dark [type="submit"]:hover {
+  background-color: rgba(76, 122, 240, 0.9) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+.dark a.button-secondary,
+.dark .button-secondary,
+.dark .cancel-link {
+  color: rgba(255, 255, 255, 0.8) !important;
+  border-color: rgba(59, 89, 193, 0.3) !important;
+}
+
+.dark a.button-secondary:hover,
+.dark .button-secondary:hover,
+.dark .cancel-link:hover {
+  background-color: rgba(59, 89, 193, 0.15) !important;
+  border-color: rgba(76, 122, 240, 0.5) !important;
+  color: white !important;
+}
+
+.dark .button-danger,
+.dark .deletelink {
+  background-color: rgba(255, 117, 127, 0.85) !important;
+  box-shadow: 0 2px 8px rgba(255, 117, 127, 0.2) !important;
+}
+
+.dark .button-danger:hover,
+.dark .deletelink:hover {
+  background-color: rgba(255, 117, 127, 1) !important;
+  box-shadow: 0 4px 12px rgba(255, 117, 127, 0.35) !important;
+}
+
+/* ── Form Inputs ────────────────────────────────────────────────────────── */
 .dark input[type="text"],
 .dark input[type="email"],
 .dark input[type="password"],
@@ -747,8 +786,242 @@ td span:not([class]):contains("completed") {
   color: rgba(255, 255, 255, 0.9) !important;
 }
 
+.dark input[type="text"]:focus,
+.dark input[type="email"]:focus,
+.dark input[type="password"]:focus,
+.dark input[type="number"]:focus,
+.dark input[type="url"]:focus,
+.dark input[type="tel"]:focus,
+.dark input[type="date"]:focus,
+.dark textarea:focus,
+.dark select:focus,
+.dark .vTextField:focus,
+.dark .vURLField:focus {
+  border-color: rgba(76, 122, 240, 0.5) !important;
+  box-shadow: 0 0 0 3px rgba(59, 89, 193, 0.15) !important;
+}
+
+/* ── Fieldsets ──────────────────────────────────────────────────────────── */
 .dark fieldset {
   border-color: rgba(59, 89, 193, 0.12) !important;
+}
+
+.dark fieldset h2,
+.dark fieldset legend,
+.dark .module caption {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* ── Tables ─────────────────────────────────────────────────────────────── */
+.dark table thead th,
+[class*="dark"] table thead th {
+  background-color: rgba(13, 42, 98, 0.8) !important;
+}
+
+.dark table tbody tr:nth-child(even),
+[class*="dark"] table tbody tr:nth-child(even) {
+  background-color: rgba(59, 89, 193, 0.04) !important;
+}
+
+.dark table tbody tr:hover,
+[class*="dark"] table tbody tr:hover {
+  background-color: rgba(59, 89, 193, 0.08) !important;
+}
+
+.dark table tbody td {
+  border-bottom-color: rgba(59, 89, 193, 0.1) !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* ── Badges ─────────────────────────────────────────────────────────────── */
+.dark .badge-success,
+.dark .success {
+  background-color: rgba(65, 166, 181, 0.15) !important;
+  color: rgba(65, 166, 181, 0.9) !important;
+}
+
+.dark .badge-warning,
+.dark .warning {
+  background-color: rgba(255, 150, 108, 0.15) !important;
+  color: rgba(255, 150, 108, 0.9) !important;
+}
+
+.dark .badge-danger,
+.dark .error,
+.dark .danger {
+  background-color: rgba(255, 117, 127, 0.15) !important;
+  color: rgba(255, 117, 127, 0.9) !important;
+}
+
+.dark .badge-info,
+.dark .info {
+  background-color: rgba(13, 185, 215, 0.15) !important;
+  color: rgba(13, 185, 215, 0.9) !important;
+}
+
+.dark .badge-primary,
+.dark .primary {
+  background-color: rgba(76, 122, 240, 0.15) !important;
+  color: rgba(76, 122, 240, 0.9) !important;
+}
+
+.dark .badge-neutral,
+.dark .neutral {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* ── Sidebar ────────────────────────────────────────────────────────────── */
+.dark #nav-sidebar,
+.dark .sidebar {
+  background-color: rgba(22, 23, 34, 1) !important;
+  border-right-color: rgba(59, 89, 193, 0.1) !important;
+}
+
+.dark #nav-sidebar h2,
+.dark .sidebar h2,
+.dark #nav-sidebar .module-caption,
+.dark .sidebar .module-caption {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.dark #nav-sidebar a,
+.dark .sidebar a {
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+
+.dark #nav-sidebar a:hover,
+.dark .sidebar a:hover {
+  color: white !important;
+  background-color: rgba(59, 89, 193, 0.12) !important;
+}
+
+.dark #nav-sidebar a:focus,
+.dark .sidebar a:focus {
+  background-color: rgba(59, 89, 193, 0.15) !important;
+}
+
+/* ── Header / Brand Bar ─────────────────────────────────────────────────── */
+.dark #header {
+  background-color: rgba(10, 18, 42, 1) !important;
+  border-bottom-color: rgba(59, 89, 193, 0.1) !important;
+}
+
+.dark #header a {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.dark #header a:hover {
+  color: white !important;
+}
+
+/* ── KPI Cards ──────────────────────────────────────────────────────────── */
+.dark .kpi-card,
+[class*="dark"] .kpi-card {
+  background: rgba(26, 27, 38, 0.92) !important;
+  border-color: rgba(59, 89, 193, 0.12) !important;
+}
+
+.dark .kpi-card:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark .kpi-card__icon {
+  color: rgba(76, 122, 240, 0.8) !important;
+}
+
+.dark .kpi-card__metric {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.dark .kpi-card__title,
+.dark .kpi-card__footer {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.dark .kpi-card__footer {
+  border-top-color: rgba(59, 89, 193, 0.12) !important;
+}
+
+/* ── Pipeline Banner ────────────────────────────────────────────────────── */
+.dark .pipeline-banner {
+  background: linear-gradient(135deg, rgba(10, 18, 42, 1) 0%, rgba(47, 84, 167, 0.8) 100%) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark .pipeline-banner::after {
+  background: radial-gradient(circle, rgba(76, 122, 240, 0.15) 0%, transparent 70%) !important;
+}
+
+/* ── Charts ─────────────────────────────────────────────────────────────── */
+.dark .chart-container {
+  background: rgba(26, 27, 38, 0.92) !important;
+  border-color: rgba(59, 89, 193, 0.12) !important;
+}
+
+.dark .chart-container:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+}
+
+.dark .chart-container__title {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.dark .chart-container__subtitle {
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
+/* ── Quick Actions ──────────────────────────────────────────────────────── */
+.dark .quick-actions a {
+  background: rgba(59, 89, 193, 0.85) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark .quick-actions a:hover {
+  background: rgba(76, 122, 240, 0.9) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* ── Footer ─────────────────────────────────────────────────────────────── */
+.dark #footer {
+  background-color: rgba(22, 23, 34, 1) !important;
+  border-top-color: rgba(59, 89, 193, 0.1) !important;
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
+.dark #footer a {
+  color: rgba(76, 122, 240, 0.9) !important;
+}
+
+.dark #footer a:hover {
+  color: rgba(105, 145, 242, 1) !important;
+}
+
+/* ── Messages / Alerts ──────────────────────────────────────────────────── */
+.dark .message-success {
+  background-color: rgba(65, 166, 181, 0.1) !important;
+}
+
+.dark .message-warning {
+  background-color: rgba(255, 150, 108, 0.1) !important;
+}
+
+.dark .message-error {
+  background-color: rgba(255, 117, 127, 0.1) !important;
+}
+
+.dark .message-info {
+  background-color: rgba(13, 185, 215, 0.1) !important;
+}
+
+/* ── Delete Confirmation ────────────────────────────────────────────────── */
+.dark .delete-confirmation {
+  background: rgba(255, 117, 127, 0.08) !important;
+  border-color: rgba(255, 117, 127, 0.2) !important;
+}
+
+.dark .delete-confirmation h2 {
+  color: rgba(255, 117, 127, 0.9) !important;
 }
 
 /* ── Responsive ───────────────────────────────────────────────────────────── */

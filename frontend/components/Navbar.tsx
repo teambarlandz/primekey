@@ -2,9 +2,12 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { LogOut } from 'lucide-react';
 import { NavDropdown, NavDropdownItem } from './NavDropdown';
 import { ChevronDown } from 'lucide-react';
+import { isUserLoggedIn, clearUserSession } from '@/lib/api-client';
 
 // Deep Navy color from logo SVG
 const BRAND_COLOR = '#04164a';
@@ -24,8 +27,20 @@ const COMPANY_LINKS: NavDropdownItem[] = [
 ];
 
 export default function Navbar() {
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileGroup, setMobileGroup] = useState<string | null>(null);
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setLoggedIn(isUserLoggedIn());
+  }, []);
+
+  const handleSignOut = () => {
+    clearUserSession();
+    setLoggedIn(false);
+    router.push('/');
+  };
 
   const closeMobile = () => {
     setMobileMenuOpen(false);
@@ -141,13 +156,24 @@ export default function Navbar() {
         <div className="flex items-center gap-5">
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-6">
-            <Link 
-              href="/login" 
-              className={`text-base opacity-90 hover:opacity-100 transition-opacity duration-200 font-body`}
-              style={{ color: BRAND_COLOR }}
-            >
-              Login
-            </Link>
+            {loggedIn ? (
+              <button
+                onClick={handleSignOut}
+                className={`inline-flex items-center gap-1.5 text-base opacity-90 hover:opacity-100 transition-opacity duration-200 font-body`}
+                style={{ color: BRAND_COLOR }}
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </button>
+            ) : (
+              <Link 
+                href="/login" 
+                className={`text-base opacity-90 hover:opacity-100 transition-opacity duration-200 font-body`}
+                style={{ color: BRAND_COLOR }}
+              >
+                Login
+              </Link>
+            )}
             
             {/* CTA Button in Lora */}
             <Link 
@@ -207,9 +233,20 @@ export default function Navbar() {
               </li>
               {renderMobileGroup('Company', COMPANY_LINKS)}
               <li className="pt-4 border-t border-purple-200/50 flex flex-col gap-3">
-                <Link href="/login" className="block text-center py-2" style={{ color: BRAND_COLOR }} onClick={closeMobile}>
-                  Login
-                </Link>
+                {loggedIn ? (
+                  <button
+                    onClick={() => { handleSignOut(); closeMobile(); }}
+                    className="flex items-center justify-center gap-1.5 py-2"
+                    style={{ color: BRAND_COLOR }}
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sign Out
+                  </button>
+                ) : (
+                  <Link href="/login" className="block text-center py-2" style={{ color: BRAND_COLOR }} onClick={closeMobile}>
+                    Login
+                  </Link>
+                )}
                 <Link 
                   href="/contact" 
                   className={`block text-center text-sm font-semibold text-white py-3 rounded-full font-body`}

@@ -2,9 +2,10 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
-import { CalendarCheck, CheckCircle2, ArrowRight, PhoneCall } from 'lucide-react';
+import { CalendarCheck, CheckCircle2, ArrowRight, PhoneCall, LogOut } from 'lucide-react';
 import { ANIMATION_TOKENS, prefersReducedMotion } from '@/lib/animations';
 import { AppointmentBookingForm } from '@/components/landlord/AppointmentBookingForm';
 import { LandlordGate } from '@/components/landlord/LandlordGate';
@@ -15,10 +16,17 @@ import Breadcrumbs from '@/components/Breadcrumbs';
 const BRAND_COLOR = '#04164a';
 
 export default function InspectionBookingPage() {
+  const router = useRouter();
   const [landlordId, setLandlordId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [summary, setSummary] = useState<{ date: string; slot: string; tourType: string } | null>(null);
+
+  const handleSignOut = () => {
+    localStorage.removeItem('primekey_landlord_id');
+    document.cookie = 'pk_landlord_session=; path=/; max-age=0';
+    router.push('/');
+  };
 
   useGSAP(() => {
     if (typeof window !== 'undefined') {
@@ -76,6 +84,15 @@ export default function InspectionBookingPage() {
 
         <div className="container mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 relative z-10">
           <header className="booking-anim opacity-0 text-center mb-10">
+            <div className="flex justify-end mb-4">
+              <button
+                onClick={handleSignOut}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-rose-600 border border-slate-200 hover:border-rose-200 rounded-lg transition-colors"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                Sign Out
+              </button>
+            </div>
             <div
               className="mx-auto w-14 h-14 rounded-2xl text-white flex items-center justify-center mb-5"
               style={{ backgroundColor: BRAND_COLOR }}

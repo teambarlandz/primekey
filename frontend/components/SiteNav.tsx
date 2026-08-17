@@ -3,8 +3,10 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Fragment, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { NavDropdownItem } from './NavDropdown';
-import { Menu, X, ChevronDown, ChevronRight, Home, Search } from 'lucide-react';
+import { Menu, X, ChevronDown, ChevronRight, Home, Search, LogOut } from 'lucide-react';
+import { isUserLoggedIn, clearUserSession } from '@/lib/api-client';
 
 const BRAND_COLOR = '#04164a';
 
@@ -39,9 +41,22 @@ interface SiteNavProps {
 }
 
 export default function SiteNav({ pageTitle, variant = 'default', breadcrumb }: SiteNavProps) {
+  const router = useRouter();
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [openMobileGroup, setOpenMobileGroup] = useState<string | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setLoggedIn(isUserLoggedIn());
+  }, []);
+
+  const handleSignOut = () => {
+    clearUserSession();
+    setLoggedIn(false);
+    setIsNavOpen(false);
+    router.push('/');
+  };
 
   // Reveal the page title in the navbar once the user scrolls past the hero
   useEffect(() => {
@@ -235,14 +250,25 @@ export default function SiteNav({ pageTitle, variant = 'default', breadcrumb }: 
             })}
 
             <div className="pt-4 mt-2 border-t border-purple-100 space-y-3">
-              <Link
-                href="/login"
-                onClick={() => setIsNavOpen(false)}
-                className="block text-center py-3 rounded-xl border border-[#04164a]/20 text-sm font-semibold hover:bg-[#04164a]/5 transition-colors"
-                style={{ color: BRAND_COLOR }}
-              >
-                Login
-              </Link>
+              {loggedIn ? (
+                <button
+                  onClick={handleSignOut}
+                  className="flex items-center justify-center gap-1.5 w-full py-3 rounded-xl border border-[#04164a]/20 text-sm font-semibold hover:bg-[#04164a]/5 transition-colors"
+                  style={{ color: BRAND_COLOR }}
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </button>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={() => setIsNavOpen(false)}
+                  className="block text-center py-3 rounded-xl border border-[#04164a]/20 text-sm font-semibold hover:bg-[#04164a]/5 transition-colors"
+                  style={{ color: BRAND_COLOR }}
+                >
+                  Login
+                </Link>
+              )}
               <Link
                 href="/contact"
                 onClick={() => setIsNavOpen(false)}

@@ -2,13 +2,14 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Heart, Loader2 } from 'lucide-react';
+import { Heart, Loader2, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PropertyCard } from '@/components/search/PropertyCard';
 import {
   fetchFavorites,
   removeFavorite,
   isUserLoggedIn,
+  clearUserSession,
   FavoriteItem,
 } from '@/lib/api-client';
 import { Property } from '@/types/property';
@@ -72,6 +73,11 @@ export default function SavedPropertiesPage() {
     }
   };
 
+  const handleSignOut = () => {
+    clearUserSession();
+    router.push('/');
+  };
+
   if (loading) {
     return (
       <main className="min-h-screen bg-secondary/40 py-12 px-4 md:px-8 font-body">
@@ -103,13 +109,22 @@ export default function SavedPropertiesPage() {
   return (
     <main className="min-h-screen bg-secondary/40 py-12 px-4 md:px-8 font-body">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-2xl md:text-3xl font-heading font-bold" style={{ color: BRAND_COLOR }}>
-            My Saved Properties
-          </h1>
-          <p className="text-sm text-[#4a607a] mt-2">
-            {favorites.length} {favorites.length === 1 ? 'property' : 'properties'} saved
-          </p>
+        <div className="flex items-start justify-between mb-8">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-heading font-bold" style={{ color: BRAND_COLOR }}>
+              My Saved Properties
+            </h1>
+            <p className="text-sm text-[#4a607a] mt-2">
+              {favorites.length} {favorites.length === 1 ? 'property' : 'properties'} saved
+            </p>
+          </div>
+          <button
+            onClick={handleSignOut}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-rose-600 border border-slate-200 hover:border-rose-200 rounded-lg transition-colors"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            Sign Out
+          </button>
         </div>
 
         {favorites.length === 0 ? (

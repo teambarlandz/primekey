@@ -233,6 +233,91 @@
             .login-logo svg { height: 48px; }
             .login-logo h1 { font-size: 20px; }
         }
+
+        /* ── Dark Mode (OS preference) ────────────────────────────────────── */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: linear-gradient(135deg, #0f1120 0%, #1a1b26 50%, #12131f 100%) !important;
+            }
+
+            body::before {
+                background: radial-gradient(circle, rgba(59, 89, 193, 0.08) 0%, transparent 70%) !important;
+            }
+
+            body::after {
+                background: radial-gradient(circle, rgba(59, 89, 193, 0.05) 0%, transparent 70%) !important;
+            }
+
+            .login-logo h1 {
+                color: rgba(255, 255, 255, 0.9) !important;
+            }
+
+            .login-logo p {
+                color: rgba(255, 255, 255, 0.45) !important;
+            }
+
+            .login-card {
+                background: rgba(26, 27, 38, 0.92) !important;
+                border-color: rgba(59, 89, 193, 0.15) !important;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
+            }
+
+            .login-card h2 {
+                color: rgba(255, 255, 255, 0.9) !important;
+            }
+
+            .login-card .subtitle {
+                color: rgba(255, 255, 255, 0.45) !important;
+            }
+
+            .form-row label {
+                color: rgba(255, 255, 255, 0.8) !important;
+            }
+
+            .form-row input[type="text"],
+            .form-row input[type="password"] {
+                background: rgba(26, 27, 38, 0.6) !important;
+                border-color: rgba(59, 89, 193, 0.15) !important;
+                color: rgba(255, 255, 255, 0.9) !important;
+            }
+
+            .form-row input[type="text"]:focus,
+            .form-row input[type="password"]:focus {
+                border-color: rgba(76, 122, 240, 0.5) !important;
+                box-shadow: 0 0 0 3px rgba(59, 89, 193, 0.15) !important;
+            }
+
+            .errornote {
+                background: rgba(255, 117, 127, 0.1) !important;
+                border-color: rgba(255, 117, 127, 0.2) !important;
+                color: rgba(255, 117, 127, 0.9) !important;
+            }
+
+            .errorlist li {
+                color: rgba(255, 117, 127, 0.85) !important;
+            }
+
+            .submit-row input[type="submit"] {
+                background: rgba(59, 89, 193, 0.9) !important;
+                box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+            }
+
+            .submit-row input[type="submit"]:hover {
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45) !important;
+            }
+
+            .password-reset-link a {
+                color: rgba(105, 145, 242, 0.9) !important;
+            }
+
+            .password-reset-link a:hover {
+                color: rgba(130, 170, 255, 1) !important;
+            }
+
+            .login-footer {
+                color: rgba(255, 255, 255, 0.3) !important;
+            }
+        }
     </style>
 </head>
 <body>
