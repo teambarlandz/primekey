@@ -169,11 +169,11 @@ export default function LegalPage({
               </p>
               <div className="relative flex flex-col sm:flex-row gap-3 justify-center">
                 <a
-                  href="mailto:hello@primekeyhomes.com"
+                  href="mailto:hello@primekeyhomesandpropertiesltd.com"
                   className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#f3f0ff] text-[#04164a] font-semibold font-heading text-sm hover:bg-purple-100 transition-colors"
                 >
                   <Mail className="w-4 h-4" />
-                  hello@primekeyhomes.com
+                  hello@primekeyhomesandpropertiesltd.com
                 </a>
                 <a
                   href="tel:+2349017368499"

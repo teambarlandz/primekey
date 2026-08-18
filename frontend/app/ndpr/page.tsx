@@ -55,7 +55,7 @@ const sections: LegalSection[] = [
           <p><strong>Primekey Homes and Properties Ltd</strong></p>
           <p>Registered in the Federal Republic of Nigeria (RC: 0000000).</p>
           <p>Office: Victoria Island, Lagos, Nigeria (by appointment only).</p>
-          <p>Email: <a href="mailto:hello@primekeyhomes.com" className="underline font-semibold">hello@primekeyhomes.com</a></p>
+          <p>Email: <a href="mailto:hello@primekeyhomesandpropertiesltd.com" className="underline font-semibold">hello@primekeyhomesandpropertiesltd.com</a></p>
         </div>
       </>
     ),
@@ -176,7 +176,7 @@ const sections: LegalSection[] = [
           <div>
             <p className="font-semibold" style={{ color: '#04164a' }}>a) Through the Platform</p>
             <p>
-              Our compliance service provides secure, code-verified processes for data requests. You may request a copy of your data (data export) or request erasure (right to be forgotten) by contacting us at <a href="mailto:hello@primekeyhomes.com" className="underline font-semibold">hello@primekeyhomes.com</a>, and we will verify your identity before processing your request.
+              Our compliance service provides secure, code-verified processes for data requests. You may request a copy of your data (data export) or request erasure (right to be forgotten) by contacting us at <a href="mailto:hello@primekeyhomesandpropertiesltd.com" className="underline font-semibold">hello@primekeyhomesandpropertiesltd.com</a>, and we will verify your identity before processing your request.
             </p>
           </div>
           <div>
@@ -226,7 +226,7 @@ const sections: LegalSection[] = [
           <p>Victoria Island, Lagos, Nigeria</p>
           <p className="flex items-center gap-2">
             <Mail className="w-4 h-4 shrink-0" />
-            Email: <a href="mailto:hello@primekeyhomes.com" className="underline font-semibold">hello@primekeyhomes.com</a>
+            Email: <a href="mailto:hello@primekeyhomesandpropertiesltd.com" className="underline font-semibold">hello@primekeyhomesandpropertiesltd.com</a>
           </p>
         </div>
       </>

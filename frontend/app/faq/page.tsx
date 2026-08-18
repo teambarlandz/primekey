@@ -110,7 +110,7 @@ const categories: FAQCategory[] = [
       },
       {
         question: 'Can I request a copy of or delete my data?',
-        answer: 'Yes. You have the right to access, rectify, and erase your personal data. Contact our Data Protection Officer at hello@primekeyhomes.com and we will verify your identity and process your request within the legally required timeframe.',
+        answer: 'Yes. You have the right to access, rectify, and erase your personal data. Contact our Data Protection Officer at hello@primekeyhomesandpropertiesltd.com and we will verify your identity and process your request within the legally required timeframe.',
       },
       {
         question: 'Where can I read the legal documents?',
@@ -246,7 +246,7 @@ export default function FAQPage() {
               +234 901 736 8499
             </a>
             <a
-              href="mailto:hello@primekeyhomes.com"
+              href="mailto:hello@primekeyhomesandpropertiesltd.com"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full border-2 border-white/30 hover:border-white text-white font-semibold font-heading text-sm transition-colors"
             >
               <Mail className="w-4 h-4" />

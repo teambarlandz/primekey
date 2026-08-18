@@ -30,7 +30,7 @@ class JobOpening(models.Model):
     )
     summary = models.TextField(blank=True)
     application_email = models.EmailField(
-        default="careers@primekeyhomes.com",
+        default="careers@primekeyhomesandpropertiesltd.com",
         verbose_name="Application Email",
     )
     is_active = models.BooleanField(default=True)

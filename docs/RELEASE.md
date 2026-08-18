@@ -77,7 +77,7 @@ Rules:
 ## 7. Operational contacts
 
 - VPS + domain: hosting partner (see deployment-ops.md handoff checklist).
-- Email delivery: Hostinger SMTP (`hello@primekeyhomes.com`) — see root
+- Email delivery: Hostinger SMTP (`hello@primekeyhomesandpropertiesltd.com`) — see root
   `TODO.md` §"To switch to real Hostinger SMTP".
 - Monitoring: UptimeRobot/Better Stack pinging `https://<domain>/api/health`
   every 5 minutes (register at go-live).

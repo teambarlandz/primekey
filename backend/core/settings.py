@@ -140,10 +140,10 @@ EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=True)
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL = env(
-    "DEFAULT_FROM_EMAIL", default="Primekey Homes <hello@primekeyhomes.com>"
+    "DEFAULT_FROM_EMAIL", default="Primekey Homes <hello@primekeyhomesandpropertiesltd.com>"
 )
 CONTACT_RECIPIENT_EMAIL = env(
-    "CONTACT_RECIPIENT_EMAIL", default="hello@primekeyhomes.com"
+    "CONTACT_RECIPIENT_EMAIL", default="hello@primekeyhomesandpropertiesltd.com"
 )
 
 

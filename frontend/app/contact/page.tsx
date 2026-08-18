@@ -273,13 +273,13 @@ export default function ContactPage() {
                     </div>
                   </a>
 
-                  <a href="mailto:hello@primekeyhomes.com" className="flex items-center gap-4 p-4 bg-[#f3f0ff]/60 rounded-2xl border border-purple-100 hover:bg-[#f3f0ff] transition-colors group">
+                  <a href="mailto:hello@primekeyhomesandpropertiesltd.com" className="flex items-center gap-4 p-4 bg-[#f3f0ff]/60 rounded-2xl border border-purple-100 hover:bg-[#f3f0ff] transition-colors group">
                     <div className="w-12 h-12 rounded-xl bg-[#f3f0ff] flex items-center justify-center text-[#04164a] shrink-0 group-hover:bg-[#04164a] group-hover:text-white transition-colors">
                       <Mail className="w-5 h-5" />
                     </div>
                     <div>
                       <p className="font-semibold text-sm text-[#04164a]">Email Us</p>
-                      <p className="text-slate-600 font-body text-sm">hello@primekeyhomes.com</p>
+                      <p className="text-slate-600 font-body text-sm">hello@primekeyhomesandpropertiesltd.com</p>
                       <p className="text-xs text-slate-400 font-body">Response within 24 hours</p>
                     </div>
                   </a>

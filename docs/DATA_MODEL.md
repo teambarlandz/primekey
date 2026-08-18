@@ -178,7 +178,7 @@ by `(recipient_type, recipient_id)`.
 
 ### `careers_job_openings` — JobOpening
 `title`, `team`, `location`, `employment_type`, `summary`,
-`application_email` (default careers@primekeyhomes.com), `is_active`
+`application_email` (default careers@primekeyhomesandpropertiesltd.com), `is_active`
 (public API exposes active only), `order`.
 
 ### `careers_job_applications` — JobApplication

@@ -270,7 +270,7 @@ const sections: LegalSection[] = [
           <p>Victoria Island, Lagos, Nigeria</p>
           <p className="flex items-center gap-2">
             <Mail className="w-4 h-4 shrink-0" />
-            Email: <a href="mailto:hello@primekeyhomes.com" className="underline font-semibold">hello@primekeyhomes.com</a>
+            Email: <a href="mailto:hello@primekeyhomesandpropertiesltd.com" className="underline font-semibold">hello@primekeyhomesandpropertiesltd.com</a>
           </p>
           <p className="text-sm">Our team typically responds within 24 hours on business days.</p>
         </div>

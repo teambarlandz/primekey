@@ -166,13 +166,13 @@ Sample Nginx Configuration (nginx/conf.d/app.conf)
 ```nginx
 server {
     listen 80;
-    server_name yourdomain.com www.yourdomain.com;
+    server_name primekeyhomesandpropertiesltd.com www.primekeyhomesandpropertiesltd.com;
     return 301 https://$server_name$request_uri;
 }
 
 server {
     listen 443 ssl http2;
-    server_name yourdomain.com www.yourdomain.com;
+    server_name primekeyhomesandpropertiesltd.com www.primekeyhomesandpropertiesltd.com;
 
     ssl_certificate /etc/nginx/ssl/fullchain.pem;
     ssl_certificate_key /etc/nginx/ssl/privkey.pem;
@@ -232,10 +232,10 @@ Initial Setup
 apt update && apt install certbot python3-certbot-nginx -y
 
 # Obtain certificate for domain
-certbot --nginx -d yourdomain.com -d www.yourdomain.com
+certbot --nginx -d primekeyhomesandpropertiesltd.com -d www.primekeyhomesandpropertiesltd.com
 
 # Verify certificate location
-ls /etc/letsencrypt/live/yourdomain.com/
+ls /etc/letsencrypt/live/primekeyhomesandpropertiesltd.com/
 ```
 
 Automatic Renewal
@@ -294,10 +294,10 @@ POSTGRES_PASSWORD=change_me_secure
 DJANGO_SECRET_KEY=change_me_secure_50_chars
 DJANGO_DEBUG=False
 NEXT_PUBLIC_API_URL=/api
-NEXT_PUBLIC_APP_URL=https://yourdomain.com
+NEXT_PUBLIC_APP_URL=https://primekeyhomesandpropertiesltd.com
 PAYMENT_GATEWAY_KEY=sk_test_xxx  # Phase 3 only
 EMAIL_HOST=smtp.yourprovider.com
-EMAIL_HOST_USER=noreply@yourdomain.com
+EMAIL_HOST_USER=noreply@primekeyhomesandpropertiesltd.com
 EMAIL_HOST_PASSWORD=change_me
 ```
 

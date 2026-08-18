@@ -65,11 +65,11 @@ export default function Footer() {
                 <span className="font-semibold text-emerald-800">WhatsApp Us</span>
               </a>
               <a 
-                href="mailto:hello@primekeyhomes.com" 
+                href="mailto:hello@primekeyhomesandpropertiesltd.com" 
                 className="flex items-center gap-3 hover:opacity-80 transition-opacity"
               >
                 <Mail className="w-4 h-4 flex-shrink-0" aria-hidden="true" style={{ color: BRAND_COLOR }} />
-                <span>hello@primekeyhomes.com</span>
+                <span>hello@primekeyhomesandpropertiesltd.com</span>
               </a>
               <div className="flex items-start gap-3 text-[#4a607a]">
                 <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" aria-hidden="true" style={{ color: BRAND_COLOR }} />

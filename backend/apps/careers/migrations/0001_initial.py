@@ -44,7 +44,7 @@ class Migration(migrations.Migration):
                 (
                     "application_email",
                     models.EmailField(
-                        default="careers@primekeyhomes.com",
+                        default="careers@primekeyhomesandpropertiesltd.com",
                         max_length=254,
                         verbose_name="Application Email",
                     ),

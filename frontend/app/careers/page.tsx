@@ -189,7 +189,7 @@ export default function CareersPage() {
               <ArrowRight className="w-4 h-4" />
             </a>
             <a
-              href="mailto:careers@primekeyhomes.com"
+              href="mailto:careers@primekeyhomesandpropertiesltd.com"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-white/80 hover:bg-white border border-purple-200/80 font-semibold font-heading text-sm transition-all duration-200 shadow-sm"
               style={{ color: BRAND_COLOR }}
             >
@@ -308,8 +308,8 @@ export default function CareersPage() {
                 </p>
                 <p className="text-sm font-body text-[#4a607a]">
                   We are always looking for exceptional talent — submit your CV to{' '}
-                  <a href="mailto:careers@primekeyhomes.com" className="font-semibold underline" style={{ color: BRAND_COLOR }}>
-                    careers@primekeyhomes.com
+                  <a href="mailto:careers@primekeyhomesandpropertiesltd.com" className="font-semibold underline" style={{ color: BRAND_COLOR }}>
+                    careers@primekeyhomesandpropertiesltd.com
                   </a>{' '}
                   and we will keep you in mind for future opportunities.
                 </p>
@@ -405,11 +405,11 @@ export default function CareersPage() {
           </header>
           <div className="section-anim opacity-0 flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="mailto:careers@primekeyhomes.com"
+              href="mailto:careers@primekeyhomesandpropertiesltd.com"
               className="inline-flex items-center justify-center px-8 py-4 rounded-full text-[#04164a] font-semibold font-heading text-sm transition-all duration-200 shadow-md hover:shadow-lg hover:bg-purple-100"
               style={{ backgroundColor: '#f3f0ff' }}
             >
-              careers@primekeyhomes.com
+              careers@primekeyhomesandpropertiesltd.com
               <ArrowRight className="w-4 h-4 ml-2" />
             </a>
             <Link

@@ -83,26 +83,26 @@ ROLE_ACCOUNTS = [
     {
         "role": "admin",
         "username": "admin",
-        "email": "admin@primekeyhomes.ng",
+        "email": "admin@primekeyhomesandpropertiesltd.com",
         "name": "Administrator",
         "is_superuser": True,
     },
     {
         "role": "ceo",
         "username": "ceo",
-        "email": "ceo@primekeyhomes.ng",
+        "email": "ceo@primekeyhomesandpropertiesltd.com",
         "name": "CEO",
     },
     {
         "role": "cto",
         "username": "cto",
-        "email": "cto@primekeyhomes.ng",
+        "email": "cto@primekeyhomesandpropertiesltd.com",
         "name": "CTO",
     },
     {
         "role": "coo",
         "username": "coo",
-        "email": "coo@primekeyhomes.ng",
+        "email": "coo@primekeyhomesandpropertiesltd.com",
         "name": "COO",
     },
 ]
