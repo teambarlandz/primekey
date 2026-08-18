@@ -106,7 +106,7 @@ export default function SocialProof() {
             ────────────────────────────────────────────────────────────── */}
         <div className="sp-anim opacity-0 grid grid-cols-2 md:grid-cols-4 gap-8 mb-20 border-y border-purple-200/70 py-10">
           <div className="text-center">
-            <p className="text-4xl md:text-5xl font-bold font-heading mb-1" style={{ color: BRAND_COLOR }}>10,000+</p>
+            <p className="text-4xl md:text-5xl font-bold font-heading mb-1" style={{ color: BRAND_COLOR }}>300+</p>
             <p className="text-sm md:text-base text-[#4a607a] font-body">Happy customers</p>
           </div>
           <div className="text-center">
@@ -114,7 +114,7 @@ export default function SocialProof() {
             <p className="text-sm md:text-base text-[#4a607a] font-body">Cities covered</p>
           </div>
           <div className="text-center">
-            <p className="text-4xl md:text-5xl font-bold font-heading mb-1" style={{ color: BRAND_COLOR }}>₦85B+</p>
+            <p className="text-4xl md:text-5xl font-bold font-heading mb-1" style={{ color: BRAND_COLOR }}>$1B+</p>
             <p className="text-sm md:text-base text-[#4a607a] font-body">Transacted value</p>
           </div>
           <div className="text-center">
