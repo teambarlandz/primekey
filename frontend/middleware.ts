@@ -15,8 +15,8 @@ function hasSessionCookie(request: NextRequest, cookieName: string): boolean {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Check agent-protected routes
-  if (AGENT_PROTECTED.some((route) => pathname.startsWith(route))) {
+  // Check agent-protected routes (exempt the login page itself)
+  if (pathname !== '/dashboard/agent/login' && AGENT_PROTECTED.some((route) => pathname.startsWith(route))) {
     if (!hasSessionCookie(request, 'pk_agent_session')) {
       const loginUrl = new URL('/dashboard/agent/login', request.url);
       loginUrl.searchParams.set('callbackUrl', pathname);
