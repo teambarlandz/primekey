@@ -6,6 +6,7 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ANIMATION_TOKENS, prefersReducedMotion } from '@/lib/animations';
 import SiteNav from '@/components/SiteNav';
+import { COMPANY } from '@/lib/companyInfo';
 import { HelpCircle, MessageCircle, Phone, Mail, ChevronDown, ChevronRight } from 'lucide-react';
 
 const BRAND_COLOR = '#04164a';
@@ -118,7 +119,7 @@ const categories: FAQCategory[] = [
       },
       {
         question: 'Where is Primekey Homes registered?',
-        answer: 'Primekey Homes and Properties Ltd is registered in the Federal Republic of Nigeria, with our office in Victoria Island, Lagos. We are NDPR-compliant and subject to the oversight of the Nigeria Data Protection Commission (NDPC).',
+        answer: `${COMPANY.name} is registered in the Federal Republic of Nigeria, with our Head Office in Abeokuta, Ogun State and a branch office in Agege, Lagos. We are NDPR-compliant and subject to the oversight of the Nigeria Data Protection Commission (NDPC).`,
       },
     ],
   },

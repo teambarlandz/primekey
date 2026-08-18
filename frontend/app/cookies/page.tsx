@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Cookie, Info, Settings2, BarChart3, Megaphone, SlidersHorizontal, HelpCircle, Mail } from 'lucide-react';
 import LegalPage, { LegalSection } from '@/components/legal/LegalPage';
+import { COMPANY } from '@/lib/companyInfo';
 
 const sections: LegalSection[] = [
   {
@@ -137,8 +138,8 @@ const sections: LegalSection[] = [
           If you have questions about our use of cookies or how to control them, please contact us:
         </p>
         <div className="space-y-3 bg-[#f3f0ff]/60 border border-purple-100 rounded-xl p-5">
-          <p><strong>Primekey Homes and Properties Ltd</strong></p>
-          <p>Victoria Island, Lagos, Nigeria</p>
+          <p><strong>{COMPANY.name}</strong></p>
+          <p>{COMPANY.headOffice.full}</p>
           <p className="flex items-center gap-2">
             <Mail className="w-4 h-4 shrink-0" />
             Email: <a href="mailto:hello@primekeyhomesandpropertiesltd.com" className="underline font-semibold">hello@primekeyhomesandpropertiesltd.com</a>

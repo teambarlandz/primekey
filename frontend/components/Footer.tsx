@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Phone, MessageCircle, Mail, MapPin, Facebook, Instagram, Linkedin, Twitter, Lock } from 'lucide-react';
+import { COMPANY } from '@/lib/companyInfo';
 
 // Exact Brand Navy
 const BRAND_COLOR = '#04164a';
@@ -73,7 +74,11 @@ export default function Footer() {
               </a>
               <div className="flex items-start gap-3 text-[#4a607a]">
                 <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" aria-hidden="true" style={{ color: BRAND_COLOR }} />
-                <span>Lagos, Nigeria</span>
+                <span>{COMPANY.headOffice.full}</span>
+              </div>
+              <div className="flex items-start gap-3 text-[#4a607a]">
+                <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" aria-hidden="true" style={{ color: BRAND_COLOR }} />
+                <span>{COMPANY.lagosOffice.full}</span>
               </div>
             </address>
 

@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Scale, Landmark, User, ShieldCheck, FileCheck2, Database, ClipboardCheck, Lock, Trash2, Users, Inbox, AlertTriangle, Mail } from 'lucide-react';
 import LegalPage, { LegalSection } from '@/components/legal/LegalPage';
+import { COMPANY } from '@/lib/companyInfo';
 
 const sections: LegalSection[] = [
   {
@@ -52,9 +53,9 @@ const sections: LegalSection[] = [
           The data controller responsible for the processing of personal data on the Platform is:
         </p>
         <div className="space-y-3 bg-[#f3f0ff]/60 border border-purple-100 rounded-xl p-5">
-          <p><strong>Primekey Homes and Properties Ltd</strong></p>
+          <p><strong>{COMPANY.name}</strong></p>
           <p>Registered in the Federal Republic of Nigeria (RC: 0000000).</p>
-          <p>Office: Victoria Island, Lagos, Nigeria (by appointment only).</p>
+          <p>Office: {COMPANY.headOffice.full} (by appointment only).</p>
           <p>Email: <a href="mailto:hello@primekeyhomesandpropertiesltd.com" className="underline font-semibold">hello@primekeyhomesandpropertiesltd.com</a></p>
         </div>
       </>
@@ -222,8 +223,8 @@ const sections: LegalSection[] = [
           Primekey Homes has appointed a Data Protection Officer (DPO) who is responsible for overseeing our data protection strategy and compliance programme. You may contact the DPO directly at:
         </p>
         <div className="space-y-3 bg-[#f3f0ff]/60 border border-purple-100 rounded-xl p-5">
-          <p><strong>Data Protection Officer</strong>, Primekey Homes and Properties Ltd</p>
-          <p>Victoria Island, Lagos, Nigeria</p>
+          <p><strong>Data Protection Officer</strong>, {COMPANY.name}</p>
+          <p>{COMPANY.headOffice.full}</p>
           <p className="flex items-center gap-2">
             <Mail className="w-4 h-4 shrink-0" />
             Email: <a href="mailto:hello@primekeyhomesandpropertiesltd.com" className="underline font-semibold">hello@primekeyhomesandpropertiesltd.com</a>

@@ -25,6 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import SiteNav from '@/components/SiteNav';
 import { AlertCircle, CheckCircle2, Mail, Phone, MessageCircle, MapPin, Building2, Send, ChevronRight } from 'lucide-react';
 import { submitContactForm } from '@/lib/api-client';
+import { COMPANY } from '@/lib/companyInfo';
 
 const BRAND_COLOR = '#04164a';
 
@@ -247,7 +248,7 @@ export default function ContactPage() {
                   Contact Information
                 </h2>
                 <p className="text-slate-600 font-body mb-8">
-                  We're based in Lagos and serve clients across Nigeria. Reach out through any of the channels below.
+                  We serve clients across Nigeria from our offices in Abeokuta and Lagos. Reach out through any of the channels below.
                 </p>
 
                 <div className="space-y-6">
@@ -289,8 +290,19 @@ export default function ContactPage() {
                       <MapPin className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className="font-semibold text-sm text-[#04164a]">Visit Our Office</p>
-                      <p className="text-slate-600 font-body text-sm">Victoria Island, Lagos</p>
+                      <p className="font-semibold text-sm text-[#04164a]">Head Office</p>
+                      <p className="text-slate-600 font-body text-sm">{COMPANY.headOffice.full}</p>
+                      <p className="text-xs text-slate-400 font-body">By appointment only</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 p-4 bg-[#f3f0ff]/60 rounded-2xl border border-purple-100">
+                    <div className="w-12 h-12 rounded-xl bg-[#f3f0ff] flex items-center justify-center text-[#04164a] shrink-0">
+                      <MapPin className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm text-[#04164a]">Lagos Office</p>
+                      <p className="text-slate-600 font-body text-sm">{COMPANY.lagosOffice.full}</p>
                       <p className="text-xs text-slate-400 font-body">By appointment only</p>
                     </div>
                   </div>
