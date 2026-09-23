@@ -35,3 +35,38 @@ class AgentProfile(models.Model):
     @property
     def can_manage(self) -> bool:
         return self.role in ('manager', 'admin')
+
+
+class PropertyAgentAssignment(models.Model):
+    ROLE_CHOICES = [
+        ('managing_agent', 'Managing Agent'),
+        ('co_agent', 'Co-Agent'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    property = models.ForeignKey(
+        'properties.Property',
+        on_delete=models.CASCADE,
+        related_name='agent_assignments',
+    )
+    landlord = models.ForeignKey(
+        'landlords.LandlordProfile',
+        on_delete=models.CASCADE,
+        related_name='agent_assignments',
+    )
+    agent = models.ForeignKey(
+        'dashboard.AgentProfile',
+        on_delete=models.CASCADE,
+        related_name='assigned_properties',
+    )
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='managing_agent')
+    assigned_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'property_agent_assignments'
+        constraints = [
+            models.UniqueConstraint(fields=['property', 'agent'], name='unique_property_agent')
+        ]
+
+    def __str__(self):
+        return f"{self.agent.full_name} manages {self.property.title} for {self.landlord.full_name}"

@@ -3,6 +3,7 @@ from rest_framework import serializers
 from apps.landlords.models import LandlordProfile, PropertyIntake, Appointment, DocumentVault
 from apps.landlords.serializers import APPOINTMENT_TIME_SLOTS, document_download_url
 from apps.crm.models import ConciergeLead
+from apps.tenancy.models import Unit, Lease, Tenant
 
 
 class DashboardDocumentSerializer(serializers.ModelSerializer):
@@ -36,6 +37,9 @@ class DocumentReviewSerializer(serializers.Serializer):
 class DashboardLandlordSerializer(serializers.ModelSerializer):
     intake_count = serializers.SerializerMethodField()
     appointment_count = serializers.SerializerMethodField()
+    unit_count = serializers.SerializerMethodField()
+    occupied_units = serializers.SerializerMethodField()
+    active_leases = serializers.SerializerMethodField()
 
     class Meta:
         model = LandlordProfile
@@ -43,6 +47,7 @@ class DashboardLandlordSerializer(serializers.ModelSerializer):
             'id', 'full_name', 'phone', 'email', 'id_type',
             'verification_status', 'property_count',
             'intake_count', 'appointment_count',
+            'unit_count', 'occupied_units', 'active_leases',
             'created_at', 'updated_at',
         ]
 
@@ -51,6 +56,15 @@ class DashboardLandlordSerializer(serializers.ModelSerializer):
 
     def get_appointment_count(self, obj):
         return obj.appointments.count()
+
+    def get_unit_count(self, obj):
+        return Unit.objects.filter(property__agent_assignments__landlord=obj).distinct().count()
+
+    def get_occupied_units(self, obj):
+        return Unit.objects.filter(property__agent_assignments__landlord=obj, status='occupied').distinct().count()
+
+    def get_active_leases(self, obj):
+        return Lease.objects.filter(landlord=obj, status='active').count()
 
 
 class DashboardIntakeSerializer(serializers.ModelSerializer):
@@ -97,6 +111,10 @@ class DashboardSummarySerializer(serializers.Serializer):
     leads_warm = serializers.IntegerField()
     leads_cold = serializers.IntegerField()
     leads_sla_breached = serializers.IntegerField()
+    total_units = serializers.IntegerField()
+    occupied_units = serializers.IntegerField()
+    active_leases = serializers.IntegerField()
+    total_tenants = serializers.IntegerField()
 
 
 class DashboardLeadSerializer(serializers.ModelSerializer):

@@ -1916,3 +1916,165 @@ export async function checkFavorite(
 
   return data.is_favorited ?? false;
 }
+
+// ─── TENANCY API ──────────────────────────────────────────────
+
+export interface Unit {
+  id: string;
+  property: string;
+  property_title: string;
+  property_address: string;
+  unit_number: string;
+  unit_type: string;
+  bedrooms: number;
+  bathrooms: number;
+  rent_amount: number;
+  status: string;
+  is_furnished: boolean;
+  description: string;
+  tenant_name: string | null;
+  lease_status: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Tenant {
+  id: string;
+  unit: string;
+  unit_number: string;
+  property_title: string;
+  full_name: string;
+  phone: string;
+  email: string | null;
+  id_type: string | null;
+  id_number: string | null;
+  is_verified: boolean;
+  lease_status: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Lease {
+  id: string;
+  unit: string;
+  unit_number: string;
+  property_title: string;
+  tenant: string;
+  tenant_name: string;
+  landlord: string;
+  landlord_name: string;
+  agent: string | null;
+  agent_name: string | null;
+  start_date: string;
+  end_date: string;
+  rent_amount: number;
+  rent_due_day: number;
+  rent_frequency: string;
+  status: string;
+  quit_notice_date: string | null;
+  quit_notice_reason: string;
+  notice_period_days: number;
+  ndpr_consent: boolean;
+  next_rent_due: string;
+  quit_notice_deadline: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TenancySummary {
+  total_units: number;
+  occupied_units: number;
+  available_units: number;
+  maintenance_units: number;
+  total_tenants: number;
+  active_leases: number;
+  total_rent_revenue: number;
+  quit_notice_pending: number;
+  leases_expiring_30d: number;
+}
+
+export interface LandlordPropertyData {
+  property_id: string;
+  title: string;
+  address: string;
+  city: string;
+  area: string;
+  property_type: string;
+  purpose: string;
+  status: string;
+  units: Unit[];
+}
+
+export interface LandlordTenancyDashboardData {
+  properties: LandlordPropertyData[];
+  leases: Lease[];
+  total_units: number;
+  occupied_units: number;
+  active_leases: number;
+  quit_notice_pending: number;
+}
+
+/**
+ * Fetch units for the agent's assigned properties.
+ */
+export async function fetchUnits(): Promise<Unit[]> {
+  const response = await fetch(`${API_BASE_URL}/tenancy/units/`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new ApiClientError(data?.message || "Failed to fetch units.", response.status);
+  return (data?.data ?? []) as Unit[];
+}
+
+/**
+ * Fetch tenants for the agent's assigned properties.
+ */
+export async function fetchTenants(): Promise<Tenant[]> {
+  const response = await fetch(`${API_BASE_URL}/tenancy/tenants/`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new ApiClientError(data?.message || "Failed to fetch tenants.", response.status);
+  return (data?.data ?? []) as Tenant[];
+}
+
+/**
+ * Fetch leases for the agent's assigned properties.
+ */
+export async function fetchLeases(): Promise<Lease[]> {
+  const response = await fetch(`${API_BASE_URL}/tenancy/leases/`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new ApiClientError(data?.message || "Failed to fetch leases.", response.status);
+  return (data?.data ?? []) as Lease[];
+}
+
+/**
+ * Fetch landlord tenancy dashboard data.
+ */
+export async function fetchLandlordTenancyDashboard(): Promise<LandlordTenancyDashboardData> {
+  const response = await fetch(`${API_BASE_URL}/tenancy/landlord/dashboard/`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new ApiClientError(data?.message || "Failed to fetch dashboard.", response.status);
+  return (data?.data ?? {}) as LandlordTenancyDashboardData;
+}
+
+/**
+ * Fetch tenancy summary for agent dashboard.
+ */
+export async function fetchTenancySummary(): Promise<TenancySummary> {
+  const response = await fetch(`${API_BASE_URL}/tenancy/dashboard/tenancy-summary/`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new ApiClientError(data?.message || "Failed to fetch tenancy summary.", response.status);
+  return (data?.data ?? {}) as TenancySummary;
+}

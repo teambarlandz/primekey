@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.db.models import Sum
 from django.utils import timezone
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -8,6 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from apps.landlords.models import LandlordProfile, PropertyIntake, Appointment, DocumentVault
 from apps.crm.models import ConciergeLead
+from apps.tenancy.models import Unit, Lease, Tenant
 from apps.notifications.services import create_notification
 from .permissions import IsAgent, IsManager
 from .serializers import (
@@ -51,6 +53,11 @@ class DashboardSummaryView(APIView):
             "leads_warm": ConciergeLead.objects.filter(score_breakdown__tier='WARM').count(),
             "leads_cold": ConciergeLead.objects.filter(score_breakdown__tier='COLD').count(),
             "leads_sla_breached": ConciergeLead.objects.filter(sla_breached_at__isnull=False).count(),
+            "total_units": Unit.objects.count(),
+            "occupied_units": Unit.objects.filter(status='occupied').count(),
+            "active_leases": Lease.objects.filter(status='active').count(),
+            "total_tenants": Tenant.objects.count(),
+            "total_rent_revenue": Lease.objects.filter(status='active').aggregate(total=models.Sum('rent_amount'))['total'] or 0,
         }
 
         serializer = DashboardSummarySerializer(summary)

@@ -74,6 +74,7 @@ INSTALLED_APPS = [
     "apps.careers",
     "apps.properties",
     "apps.landlords",
+    "apps.tenancy",
     "apps.compliance",
     "apps.ecommerce",
     "apps.otp_auth",

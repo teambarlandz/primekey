@@ -28,6 +28,7 @@ urlpatterns = [
     path('api/v1/careers/', include('apps.careers.urls', namespace='careers')),
     path('api/v1/properties/', include('apps.properties.urls', namespace='properties')),
     path('api/v1/landlords/', include('apps.landlords.urls', namespace='landlords')),
+    path('api/v1/tenancy/', include('apps.tenancy.urls', namespace='tenancy')),
     path('api/v1/compliance/', include('apps.compliance.urls', namespace='compliance')),
     path('api/v1/ecommerce/', include('apps.ecommerce.urls', namespace='ecommerce')),
     path('api/v1/auth/otp/', include('apps.otp_auth.urls', namespace='otp_auth')),
