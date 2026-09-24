@@ -148,6 +148,13 @@ CONTACT_RECIPIENT_EMAIL = env(
     "CONTACT_RECIPIENT_EMAIL", default="hello@primekeyhomesandpropertiesltd.com"
 )
 
+# OTP Providers: Resend (email) and Sendchamp (SMS)
+# In dev, keys may be empty — OTP flow still works via dev_code (is_dev_client).
+RESEND_API_KEY = env("RESEND_API_KEY", default="")
+SENDCHAMP_API_KEY = env("SENDCHAMP_API_KEY", default="")
+SENDCHAMP_SENDER_ID = env("SENDCHAMP_SENDER_ID", default="Primekey")
+SENDCHAMP_ROUTE = env("SENDCHAMP_ROUTE", default="dnd")
+
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators

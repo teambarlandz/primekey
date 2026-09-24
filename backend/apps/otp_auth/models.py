@@ -36,7 +36,9 @@ class OTPCode(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    phone = models.CharField(max_length=20, db_index=True)
+    phone = models.CharField(max_length=20, db_index=True, blank=True, null=True, help_text="Nigerian phone for SMS (Sendchamp)")
+    email = models.EmailField(blank=True, null=True, db_index=True, help_text="Email for Resend delivery")
+    channel = models.CharField(max_length=10, choices=[('sms', 'SMS via Sendchamp'), ('email', 'Email via Resend')], default='sms')
     code = models.CharField(max_length=128, help_text="Salted HMAC-SHA256 digest of the 6-digit code")
     purpose = models.CharField(max_length=20, choices=PURPOSE_CHOICES, default='login')
     
@@ -59,10 +61,12 @@ class OTPCode(models.Model):
         verbose_name_plural = 'OTP Codes'
         indexes = [
             models.Index(fields=['phone', 'purpose', 'used']),
+            models.Index(fields=['email', 'purpose', 'used']),
         ]
 
     def __str__(self):
-        return f"OTP for {self.phone} ({self.purpose}) - {'Used' if self.used else 'Active'}"
+        ident = self.phone or self.email or "unknown"
+        return f"OTP for {ident} ({self.purpose}/{self.channel}) - {'Used' if self.used else 'Active'}"
 
     @staticmethod
     def hash_code(code):
@@ -75,16 +79,24 @@ class OTPCode(models.Model):
         return generate_secure_code(6)
 
     @classmethod
-    def create_otp(cls, phone, purpose='login', expiry_minutes=5, ip_address=None, user_agent=None):
-        """Create a new OTP code for the given phone."""
-        # Invalidate any existing unused OTPs for this phone/purpose
-        cls.objects.filter(phone=phone, purpose=purpose, used=False).update(used=True)
+    def create_otp(cls, phone=None, email=None, purpose='login', expiry_minutes=5, ip_address=None, user_agent=None, channel=None):
+        """Create a new OTP code for phone (SMS) or email (Resend)."""
+        # Auto-detect channel if not provided
+        if channel is None:
+            channel = 'email' if email else 'sms'
+        # Invalidate any existing unused OTPs for this identifier/purpose
+        if email:
+            cls.objects.filter(email=email, purpose=purpose, used=False).update(used=True)
+        if phone:
+            cls.objects.filter(phone=phone, purpose=purpose, used=False).update(used=True)
         
         code = cls.generate_code()
         expires_at = timezone.now() + timezone.timedelta(minutes=expiry_minutes)
         
         otp = cls.objects.create(
-            phone=phone,
+            phone=phone or "",
+            email=email or None,
+            channel=channel,
             code=hash_code(code),
             purpose=purpose,
             expires_at=expires_at,
@@ -95,7 +107,8 @@ class OTPCode(models.Model):
         return otp
 
     def _lock_key(self):
-        return f"{OTP_LOCK_PREFIX}{self.phone}:{self.purpose}"
+        ident = self.email or self.phone
+        return f"{OTP_LOCK_PREFIX}{ident}:{self.purpose}"
 
     def verify(self, code, ip_address=None, user_agent=None):
         """

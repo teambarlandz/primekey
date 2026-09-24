@@ -36,6 +36,14 @@ services:
           name: primekey-redis
           type: redis
           property: connectionString
+      - key: RESEND_API_KEY
+        sync: false
+      - key: SENDCHAMP_API_KEY
+        sync: false
+      - key: SENDCHAMP_SENDER_ID
+        value: Primekey
+      - key: SENDCHAMP_ROUTE
+        value: dnd
 
   - type: worker
     name: primekey-worker
@@ -71,6 +79,14 @@ services:
           name: primekey-redis
           type: redis
           property: connectionString
+      - key: RESEND_API_KEY
+        sync: false
+      - key: SENDCHAMP_API_KEY
+        sync: false
+      - key: SENDCHAMP_SENDER_ID
+        value: Primekey
+      - key: SENDCHAMP_ROUTE
+        value: dnd
 
 databases:
   - name: primekey-db

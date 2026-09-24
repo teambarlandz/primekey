@@ -388,18 +388,26 @@ export interface AuthResponse {
 }
 
 export interface SendOtpResponse {
-  data: { phone: string; purpose: string; expires_in_minutes: number; dev_code?: string };
+  data: { phone?: string; email?: string; channel?: 'sms' | 'email'; purpose: string; expires_in_minutes: number; dev_code?: string };
+}
+
+function isEmailIdentifier(value: string): boolean {
+  return value.includes('@');
 }
 
 /**
  * Request an OTP code (agent_login purpose for agents).
+ * Accepts phone (Sendchamp SMS) or email (Resend) — channel auto-detected.
+ * For explicit email, pass email string (contains @); for phone, pass 080... / +234...
  */
 export async function sendOtp(phone: string, purpose: "login" | "agent_login" | "register" = "login"): Promise<SendOtpResponse> {
+  const isEmail = isEmailIdentifier(phone);
+  const payload = isEmail ? { email: phone, channel: 'email' as const, purpose } : { phone, channel: 'sms' as const, purpose };
   try {
     const response = await fetch(`${API_BASE_URL}/auth/otp/send/`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
-      body: JSON.stringify({ phone, purpose }),
+      body: JSON.stringify(payload),
     });
 
     const data = await response.json().catch(() => null);
@@ -428,13 +436,16 @@ export async function sendOtp(phone: string, purpose: "login" | "agent_login" | 
 
 /**
  * Verify an OTP and store the returned agent JWT session.
+ * Accepts phone (SMS) or email (Resend) — channel auto-detected.
  */
 export async function verifyAgentOtp(phone: string, code: string): Promise<AgentSessionProfile> {
+  const isEmail = isEmailIdentifier(phone);
+  const payload = isEmail ? { email: phone, code, purpose: "agent_login" } : { phone, code, purpose: "agent_login" };
   try {
     const response = await fetch(`${API_BASE_URL}/auth/otp/verify/`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
-      body: JSON.stringify({ phone, code, purpose: "agent_login" }),
+      body: JSON.stringify(payload),
     });
 
     const data = await response.json().catch(() => null);
@@ -1185,6 +1196,8 @@ export async function verifyOTP(
   code: string,
   purpose: 'login' | 'register' | 'password_reset' = 'login'
 ): Promise<ApiSuccessResponse> {
+  const isEmail = phone.includes('@');
+  const payload = isEmail ? { email: phone, code, purpose } : { phone, code, purpose };
   try {
     const response = await fetch(`${API_BASE_URL}/auth/otp/verify/`, {
       method: "POST",
@@ -1192,7 +1205,7 @@ export async function verifyOTP(
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify({ phone, code, purpose }),
+      body: JSON.stringify(payload),
     });
 
     const data = await response.json().catch(() => null);

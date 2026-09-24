@@ -55,16 +55,23 @@ export function OtpAuthCard<T = unknown>({
     return () => clearInterval(timer);
   }, [step, resendTimer]);
 
+  const isEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
   const validateNigerianPhone = (num: string) => {
     const cleaned = num.replace(/\s+/g, '');
     const regex = /^(?:\+234|234|0)[789][01]\d{8}$/;
     return regex.test(cleaned);
   };
+  const validateIdentifier = (val: string) => {
+    const v = val.trim();
+    if (!v) return false;
+    if (v.includes('@')) return isEmail(v);
+    return validateNigerianPhone(v);
+  };
 
   const handleSendOtp = async (phoneNumber: string) => {
     setApiError('');
-    if (!validateNigerianPhone(phoneNumber)) {
-      setPhoneError('Please enter a valid Nigerian phone number (e.g., 08012345678)');
+    if (!validateIdentifier(phoneNumber)) {
+      setPhoneError('Please enter a valid Nigerian phone number (e.g., 08012345678) or email address');
       return;
     }
     setPhoneError('');
@@ -157,12 +164,12 @@ export function OtpAuthCard<T = unknown>({
               <div className="relative">
                 <Phone className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
                 <Input
-                  type="tel"
+                  type="text"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder={config.phonePlaceholder ?? '08012345678 or +234...'}
+                  placeholder={config.phonePlaceholder ?? '08012345678 or you@example.com'}
                   className="pl-10 h-11 border-slate-200 font-body focus:ring-[#04164a]/20 rounded-xl"
-                  autoComplete="tel"
+                  autoComplete="email"
                   disabled={isSubmitting}
                 />
               </div>
