@@ -394,6 +394,7 @@ export default function AgentDashboardPage() {
     concierge: ['all', 'active_sla_queue', 'assigned', 'contacted', 'closed_won', 'closed_lost'],
     documents: ['all', 'pending', 'approved', 'rejected'],
     whatsapp: ['all'],
+    tenancy: ['all'],
   };
 
   const handleExport = () => {

@@ -10,7 +10,7 @@ env:
   NODE_VERSION: '20.x'
   PYTHON_VERSION: '3.12'
   DJANGO_SETTINGS_MODULE: core.settings
-  SECRET_KEY: ci-only-non-production-secret-key
+  SECRET_KEY: ci-only-non-production-secret-key-1234567890-abcdefghij-klmnopqrst-50chars
   DEBUG: "False"
   ALLOWED_HOSTS: localhost,127.0.0.1,testserver
   CORS_ALLOWED_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
