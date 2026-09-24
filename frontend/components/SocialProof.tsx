@@ -87,7 +87,7 @@ export default function SocialProof() {
             Trusted by leading brands & featured in
           </p>
           <ul className="flex flex-wrap justify-center items-center gap-8 md:gap-16" role="list">
-            {[1, 2, 3, 4, 5].map((num) => (
+            {[1, 2, 3].map((num) => (
               <li key={num} className="flex items-center justify-center">
                 <Image
                   src={`/assets/brands/brand-${num}.svg`}
