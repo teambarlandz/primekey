@@ -67,8 +67,8 @@ export const AuthInterceptSheet: React.FC<AuthInterceptSheetProps> = ({
     try {
       const response = await submitOTP(phone, 'login');
       const responseData = response.data as { dev_code?: string } | undefined;
-      if (responseData?.dev_code) {
-        // Development mode - show the code for testing
+      if (responseData?.dev_code && process.env.NODE_ENV !== 'production') {
+        // DEV ONLY — dev_code is never returned in production (is_dev_client guard)
         console.log('DEV OTP Code:', responseData.dev_code);
       }
       setIsSubmitting(false);

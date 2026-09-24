@@ -17,11 +17,8 @@ from core.views import health_check
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    # Uptime monitoring endpoint (deployment-ops.md)
+    # Uptime monitoring endpoint (deployment-ops.md) — AllowAny + ratelimited in view
     path('api/health/', health_check, name='health'),
-
-    # Legacy/unversioned route used by frontend lib/api-client.ts
-    path('api/crm/', include('apps.crm.urls', namespace='crm_legacy')),
 
     # API v1 endpoints
     path('api/v1/crm/', include('apps.crm.urls', namespace='crm')),
@@ -30,6 +27,7 @@ urlpatterns = [
     path('api/v1/landlords/', include('apps.landlords.urls', namespace='landlords')),
     path('api/v1/tenancy/', include('apps.tenancy.urls', namespace='tenancy')),
     path('api/v1/compliance/', include('apps.compliance.urls', namespace='compliance')),
+    # Phase 3 gated — no endpoints yet; keep include so future builder marketplace can mount without URL churn
     path('api/v1/ecommerce/', include('apps.ecommerce.urls', namespace='ecommerce')),
     path('api/v1/auth/otp/', include('apps.otp_auth.urls', namespace='otp_auth')),
     path('api/v1/dashboard/', include('apps.dashboard.urls', namespace='dashboard')),

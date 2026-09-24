@@ -1,6 +1,4 @@
 // lib/animations.ts
-import gsap from 'gsap';
-
 // Standard animation tokens for consistency across components
 export const ANIMATION_TOKENS = {
   duration: 0.8,

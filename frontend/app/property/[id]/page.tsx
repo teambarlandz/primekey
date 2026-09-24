@@ -104,8 +104,8 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     handleToggleFavorite();
   };
 
-  const handleBookingSuccess = (data: BookingSchemaType) => {
-    console.log('Inspection tour scheduled successfully:', data);
+  const handleBookingSuccess = () => {
+    // InspectionBookingModal handles success UI/closure; no dev log in prod
   };
 
   if (isLoading) {

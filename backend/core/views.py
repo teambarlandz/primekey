@@ -8,6 +8,7 @@ from django.conf import settings
 from django.db import connections
 from django.db.utils import OperationalError
 from django.http import JsonResponse
+from django_ratelimit.decorators import ratelimit
 
 
 def _database_healthy() -> bool:
@@ -30,19 +31,11 @@ def _redis_healthy() -> bool:
         return False
 
 
+@ratelimit(key='ip', rate='30/m', method='GET')
 def health_check(request):
     """
-    GET /api/health
-
-    Returns the connectivity state of the database and Redis. Intended for
-    uptime monitors (UptimeRobot / Better Stack) and the go-live checklist.
-
-    {
-      "status": "healthy" | "degraded",
-      "database": "healthy" | "unhealthy",
-      "redis": "healthy" | "unhealthy",
-      "timestamp": "2026-08-17T12:00:00+00:00"
-    }
+    GET /api/health — AllowAny, rate-limited (30/m). No PII, intentionally
+    public for uptime monitors; real auth is on API data endpoints.
     """
     db_ok = _database_healthy()
     redis_ok = _redis_healthy()

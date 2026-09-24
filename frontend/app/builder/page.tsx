@@ -59,6 +59,8 @@ export default function BuilderPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    // Phase 3 gated — no backend yet; mock waitlist (see ADR-001 ecommerce stub)
+    // TODO: wire to POST /api/v1/ecommerce/waitlist/ when builder marketplace is live
     await new Promise((resolve) => setTimeout(resolve, 1200));
     setIsSubmitting(false);
     setSubmitted(true);

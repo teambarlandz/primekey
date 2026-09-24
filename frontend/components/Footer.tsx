@@ -149,6 +149,21 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/account/saved" className="hover:underline transition-all" style={{ color: BRAND_COLOR }}>
+                  Saved Properties
+                </Link>
+              </li>
+              <li>
+                <Link href="/builder" className="hover:underline transition-all" style={{ color: BRAND_COLOR }}>
+                  For Builders
+                </Link>
+              </li>
+              <li>
+                <Link href="/demo" className="hover:underline transition-all" style={{ color: BRAND_COLOR }}>
+                  Demo
+                </Link>
+              </li>
+              <li>
                 <Link href="/about" className="hover:underline transition-all" style={{ color: BRAND_COLOR }}>
                   About Us
                 </Link>

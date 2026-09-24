@@ -5,12 +5,13 @@ import Image from 'next/image';
 import { Fragment, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { NavDropdownItem } from './NavDropdown';
-import { Menu, X, ChevronDown, ChevronRight, Home, Search, LogOut } from 'lucide-react';
+import { Menu, X, ChevronDown, ChevronRight, Home, Search, LogOut, Heart } from 'lucide-react';
 import { isUserLoggedIn, clearUserSession } from '@/lib/api-client';
 
 const BRAND_COLOR = '#04164a';
 
 const LIST_PROPERTY_LINKS: NavDropdownItem[] = [
+  { label: 'Overview — For Landlords', href: '/landlord', description: 'How Primekey lists your property' },
   { label: 'Register as Landlord', href: '/landlord/register', description: 'Free, NDPR-compliant registration' },
   { label: 'Add a Property', href: '/landlord/intake', description: 'Submit your listing details' },
   { label: 'Book an Inspection', href: '/landlord/inspection-booking', description: 'Schedule a consultation' },
@@ -20,6 +21,8 @@ const LIST_PROPERTY_LINKS: NavDropdownItem[] = [
 const COMPANY_LINKS: NavDropdownItem[] = [
   { label: 'About Us', href: '/about' },
   { label: 'Careers', href: '/careers' },
+  { label: 'For Builders', href: '/builder', description: 'Phase 3 — B2B marketplace preview' },
+  { label: 'Demo', href: '/demo', description: 'Watch product walkthrough' },
   { label: 'FAQ', href: '/faq' },
   { label: 'Contact', href: '/contact' },
 ];
@@ -210,6 +213,15 @@ export default function SiteNav({ pageTitle, variant = 'default', breadcrumb }: 
               style={{ color: BRAND_COLOR }}
             >
               <Search className="w-4 h-4" /> Buy / Rent
+            </Link>
+            <Link
+              href="/account/saved"
+              onClick={() => setIsNavOpen(false)}
+              className="flex items-center gap-3 py-3 px-3 rounded-xl hover:bg-purple-50/70 transition-colors text-base font-semibold"
+              style={{ color: BRAND_COLOR }}
+            >
+              <Heart className="w-4 h-4" /> Saved Properties
+              {!loggedIn && <span className="ml-auto text-xs font-normal text-[#4a607a]">Login required</span>}
             </Link>
 
             {NAV_GROUPS.map((group) => {

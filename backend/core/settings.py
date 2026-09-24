@@ -232,7 +232,11 @@ if not DEBUG:
     ]
 
 # Rate limiting (django-ratelimit uses cache backend)
-RATELIMIT_USE_CACHE = "default"
+# Security-sensitive counters MUST NOT silently bypass when Redis is down.
+# `default` is allowed to degrade (IGNORE_EXCEPTIONS=True) for general caching,
+# but ratelimit/axes use a strict cache that fails closed (500) rather than
+# silently disabling lockouts.
+RATELIMIT_USE_CACHE = "axes"
 
 # Redis Cache Configuration
 REDIS_CACHE_URL = env("REDIS_CACHE_URL")
@@ -261,6 +265,19 @@ CACHES = {
         },
         "KEY_PREFIX": "primekey_session",
     },
+    "axes": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": REDIS_CACHE_URL,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            # No IGNORE_EXCEPTIONS — brute-force counters must fail closed, not bypass
+            "SOCKET_CONNECT_TIMEOUT": 5,
+            "SOCKET_TIMEOUT": 5,
+            "CONNECTION_POOL_KWARGS": {"protocol": 2},
+        },
+        "KEY_PREFIX": "primekey_axes",
+        "TIMEOUT": 300,
+    },
 }
 
 # Session engine using Redis
@@ -283,7 +300,7 @@ AUTHENTICATION_BACKENDS = [
 AXES_FAILURE_LIMIT = 5
 AXES_COOLOFF_TIME = timedelta(minutes=15)
 AXES_LOCKOUT_PARAMETERS = ["ip_address"]
-AXES_CACHE = "default"
+AXES_CACHE = "axes"
 
 # Django Q2 Configuration for background tasks
 DJANGO_Q_REDIS_URL = env("DJANGO_Q_REDIS_URL")

@@ -1,3 +1,5 @@
+from django.utils.decorators import method_decorator
+from django_ratelimit.decorators import ratelimit
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -63,6 +65,7 @@ class JobOpeningDetailView(APIView):
         )
 
 
+@method_decorator(ratelimit(key='ip', rate='5/m', method='POST'), name='post')
 class JobApplicationCreateView(APIView):
     """
     Public Endpoint: POST /api/v1/careers/applications/

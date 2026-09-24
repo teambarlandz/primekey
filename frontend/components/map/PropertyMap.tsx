@@ -21,7 +21,9 @@ interface PropertyMapProps {
   landmarks?: Landmark[];
 }
 
-const DEFAULT_LANDMARKS: Landmark[] = [
+// Real landmarks must be supplied by the property detail API; no fake data in prod.
+// Kept for Storybook/dev only — provide via `landmarks` prop when available.
+const DEV_LANDMARKS: Landmark[] = [
   { name: 'Admiralty Way Hub', distance: '1.2 km', driveTime: '4 mins', category: 'transit' },
   { name: 'Victoria Island CBD', distance: '4.8 km', driveTime: '12 mins', category: 'business' },
   { name: 'Lekki Conservation Centre', distance: '6.5 km', driveTime: '15 mins', category: 'recreation' },
@@ -32,8 +34,15 @@ export const PropertyMap: React.FC<PropertyMapProps> = ({
   title,
   location,
   coordinates,
-  landmarks = DEFAULT_LANDMARKS,
+  landmarks,
 }) => {
+  // Show real landmarks if provided, dev fallback only in non-production
+  const displayLandmarks =
+    landmarks && landmarks.length > 0
+      ? landmarks
+      : process.env.NODE_ENV !== 'production'
+        ? DEV_LANDMARKS
+        : [];
   const [isLoaded, setIsLoaded] = useState(false);
   const [mapError, setMapError] = useState(false);
 
@@ -109,13 +118,14 @@ export const PropertyMap: React.FC<PropertyMapProps> = ({
         )}
       </div>
 
-      {/* Proximity Metrics Grid */}
-      <div className="space-y-3 pt-2">
-        <h3 className="font-heading text-xs font-bold text-[#04164a] uppercase tracking-wider">
-          Nearby Hubs & Drive Times
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {landmarks.map((hub, idx) => (
+      {/* Proximity Metrics Grid — only when we have real landmarks (or dev fallback) */}
+      {displayLandmarks.length > 0 && (
+        <div className="space-y-3 pt-2">
+          <h3 className="font-heading text-xs font-bold text-[#04164a] uppercase tracking-wider">
+            Nearby Hubs & Drive Times
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {displayLandmarks.map((hub, idx) => (
             <div
               key={idx}
               className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-[#f3f0ff]/40 hover:bg-[#f3f0ff] transition-colors"
@@ -134,7 +144,8 @@ export const PropertyMap: React.FC<PropertyMapProps> = ({
             </div>
           ))}
         </div>
-      </div>
+        </div>
+      )}
     </div>
   );
 };

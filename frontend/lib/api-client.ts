@@ -108,10 +108,6 @@ export function buildWhatsAppLink(phone: string, message: string): string {
   return `https://wa.me/${international}?text=${encodeURIComponent(message)}`;
 }
 
-export function formatWhatsAppPhone(phone: string): string {
-  return phone.replace(/[^0-9]/g, '');
-}
-
 export interface DashboardLandlord {
   id: string;
   full_name: string;
@@ -238,6 +234,10 @@ export type LandlordRegistrationPayload = {
 const BASE_URL_RAW = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 const API_BASE_URL = BASE_URL_RAW.replace(/\/+$/, "");
 
+// Note: `isTokenExpired` is intentionally internal — not exported to keep
+// the public API surface closed. Only `isAgentLoggedIn`/`isUserLoggedIn`
+// and `ensureValidAgentToken` should be used by UI code.
+
 // --- Agent auth token helpers (sessionStorage-backed) ---
 // Tokens live in sessionStorage so they die with the browser tab:
 // closing the tab ends the agent session instead of persisting for days.
@@ -264,7 +264,7 @@ function decodeJwtPayload(token: string): { exp?: number } | null {
   }
 }
 
-export function isTokenExpired(token: string, leewaySeconds = 30): boolean {
+function isTokenExpired(token: string, leewaySeconds = 30): boolean {
   const payload = decodeJwtPayload(token);
   if (!payload || typeof payload.exp !== 'number') return false;
   return Date.now() / 1000 + leewaySeconds >= payload.exp;
@@ -314,6 +314,15 @@ function authHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+function landlordAuthHeaders(): Record<string, string> {
+  // Landlords authenticate via OTP user JWT (sessionStorage/localStorage),
+  // agents via agent JWT. Try user token first, fall back to agent token
+  // so agent dashboards can also access landlord data when needed.
+  const userToken = getUserAccessToken();
+  if (userToken) return { Authorization: `Bearer ${userToken}` };
+  return authHeaders();
+}
+
 // --- Public (landlord/buyer) user session helpers (sessionStorage-backed) ---
 const USER_ACCESS_KEY = "primekey_user_access";
 const USER_REFRESH_KEY = "primekey_user_refresh";
@@ -342,22 +351,6 @@ export function getUserAccessToken(): string | null {
   if (token) return token;
   // Fallback to persistent session
   return window.localStorage.getItem(USER_ACCESS_KEY);
-}
-
-export function getUserRefreshToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.sessionStorage.getItem(USER_REFRESH_KEY);
-}
-
-export function getUserProfile(): UserSessionProfile | null {
-  if (typeof window === "undefined") return null;
-  const raw = window.sessionStorage.getItem(USER_PROFILE_KEY);
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as UserSessionProfile;
-  } catch {
-    return null;
-  }
 }
 
 export function isUserLoggedIn(): boolean {
@@ -639,6 +632,7 @@ export async function submitPropertyIntake(
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
+        ...landlordAuthHeaders(),
       },
       body: JSON.stringify(payload),
     });
@@ -888,7 +882,7 @@ export async function updateAppointment(
 export async function fetchLandlordProfile(id: string): Promise<LandlordProfile> {
   const response = await fetch(`${API_BASE_URL}/landlords/profiles/${id}/`, {
     method: "GET",
-    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...landlordAuthHeaders() },
   });
 
   const data = await response.json().catch(() => null);
@@ -907,7 +901,7 @@ export async function fetchLandlordProfile(id: string): Promise<LandlordProfile>
 export async function fetchLandlordIntakes(id: string): Promise<LandlordIntake[]> {
   const response = await fetch(`${API_BASE_URL}/landlords/landlords/${id}/intakes/`, {
     method: "GET",
-    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...landlordAuthHeaders() },
   });
 
   const data = await response.json().catch(() => null);
@@ -926,7 +920,7 @@ export async function fetchLandlordIntakes(id: string): Promise<LandlordIntake[]
 export async function fetchLandlordAppointments(id: string): Promise<LandlordAppointment[]> {
   const response = await fetch(`${API_BASE_URL}/landlords/landlords/${id}/appointments/`, {
     method: "GET",
-    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...landlordAuthHeaders() },
   });
 
   const data = await response.json().catch(() => null);
@@ -948,7 +942,7 @@ export async function updateLandlordAppointment(
 ): Promise<LandlordAppointment> {
   const response = await fetch(`${API_BASE_URL}/landlords/appointments/${id}/`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json", Accept: "application/json", ...authHeaders() },
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...landlordAuthHeaders() },
     body: JSON.stringify(payload),
   });
 
@@ -1084,7 +1078,7 @@ export async function sendWhatsAppMessage(threadId: string, body: string): Promi
 }
 
 /**
- * Upload a document to the vault (landlord-side, unauthenticated).
+ * Upload a document to the vault (landlord-side, authenticated).
  */
 export async function uploadLandlordDocument(payload: {
   landlord_id: string;
@@ -1100,7 +1094,7 @@ export async function uploadLandlordDocument(payload: {
 
   const response = await fetch(`${API_BASE_URL}/landlords/documents/`, {
     method: "POST",
-    headers: { Accept: "application/json" },
+    headers: { Accept: "application/json", ...landlordAuthHeaders() },
     body: form,
   });
 
@@ -1118,7 +1112,7 @@ export async function uploadLandlordDocument(payload: {
 export async function fetchLandlordDocuments(landlordId: string): Promise<DocumentVaultEntry[]> {
   const response = await fetch(`${API_BASE_URL}/landlords/landlords/${landlordId}/documents/`, {
     method: "GET",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...landlordAuthHeaders() },
   });
 
   const data = await response.json().catch(() => null);
@@ -1169,52 +1163,22 @@ export async function reviewDocument(
 }
 
 /**
- * Send OTP code to phone number
+ * Send OTP code to phone number — legacy alias that delegates to canonical `sendOtp` (ADR-010).
+ * Kept for backwards-compat with AuthInterceptSheet / login pages; prefer `sendOtp` in new code.
  */
 export async function submitOTP(
   phone: string,
   purpose: 'login' | 'register' | 'password_reset' = 'login'
 ): Promise<ApiSuccessResponse> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/auth/otp/send/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({ phone, purpose }),
-    });
-
-    const data = await response.json().catch(() => null);
-
-    if (!response.ok) {
-      const errorMessage =
-        data?.message ||
-        data?.detail ||
-        (typeof data?.errors === "object" && data?.errors !== null
-          ? Object.entries(data.errors)
-              .map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(", ") : val}`)
-              .join(" | ")
-          : "Failed to send OTP. Please try again.");
-
-      throw new ApiClientError(errorMessage, response.status, data?.errors);
-    }
-
-    return data as ApiSuccessResponse;
-  } catch (error) {
-    if (error instanceof ApiClientError) {
-      throw error;
-    }
-
-    throw new ApiClientError(
-      "Unable to connect to Primekey server. Please check your network connection.",
-      0
-    );
-  }
+  // Map legacy purposes to canonical sendOtp purposes; `password_reset` → `login` for OTP send
+  const canonicalPurpose = purpose === 'register' ? 'register' : 'login';
+  const res = await sendOtp(phone, canonicalPurpose as 'login' | 'register');
+  return res as unknown as ApiSuccessResponse;
 }
 
 /**
- * Verify OTP code and get JWT tokens
+ * Verify OTP code and get JWT tokens — legacy alias that delegates to canonical verify flow.
+ * Uses the same endpoint as `verifyAgentOtp` but without auto-saving an agent session.
  */
 export async function verifyOTP(
   phone: string,

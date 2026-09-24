@@ -16,7 +16,7 @@ import { isUserLoggedIn, toggleFavorite, fetchFavorites } from '@/lib/api-client
 import { NavDropdown, NavDropdownItem } from '@/components/NavDropdown';
 import Footer from '@/components/Footer';
 import { SearchFilterValues } from '@/lib/validations/searchSchema';
-import { Property, searchProperties, SearchPropertiesResponse } from '@/lib/api-client';
+import { Property, searchProperties, SearchPropertiesResponse, ApiClientError } from '@/lib/api-client';
 import {
   Filter,
   RotateCcw,
@@ -69,7 +69,9 @@ const PURPOSE_TABS: { value: SearchFilterValues['purpose']; label: string }[] = 
   { value: 'short_let', label: 'Short Let' },
 ];
 
-// Fallback mock properties for when API is unavailable
+// Dev-only placeholder listings — never shown in production. In prod, API
+// failures surface as an error state (no silent fallback) so broken search
+// is noticed instead of showing fake data.
 const MOCK_PROPERTIES: Property[] = [
   {
     id: '1',
@@ -193,7 +195,7 @@ export default function SearchPage() {
     };
   }, [isNavOpen]);
 
-  // Fetch properties from API with fallback to mock data
+  // Fetch properties from API — errors surface to the UI; no silent mock fallback in production
   const executeSearch = useCallback(async (searchFilters: SearchFilterValues) => {
     setIsLoading(true);
     setSearchError(null);
@@ -207,31 +209,40 @@ export default function SearchPage() {
         throw new Error('Invalid response format');
       }
     } catch (error: any) {
-      console.warn('API search failed, falling back to mock data:', error.message);
-      setSearchError('Using fallback data. Some results may be limited.');
+      const isDev = process.env.NODE_ENV !== 'production';
+      const message =
+        error instanceof ApiClientError
+          ? error.message
+          : error?.message || 'Failed to search properties. Please try again.';
 
-      // Fallback to client-side filtering with mock data
-      const targetLocation = (searchFilters.location || '').toLowerCase().trim();
-      const filtered = MOCK_PROPERTIES.filter((p) => {
-        const matchesLocation =
-          !targetLocation ||
-          p.location.toLowerCase().includes(targetLocation) ||
-          p.city.toLowerCase().includes(targetLocation) ||
-          p.state.toLowerCase().includes(targetLocation);
-
-        const matchesPrice = p.price >= searchFilters.minPrice && p.price <= searchFilters.maxPrice;
-        const matchesType = searchFilters.propertyType === 'any' || p.propertyType === searchFilters.propertyType;
-        const matchesPurpose = searchFilters.purpose === 'all' || p.category === searchFilters.purpose;
-        const matchesBeds =
-          searchFilters.bedrooms === 'any' ||
-          (searchFilters.bedrooms === '5'
-            ? p.bedrooms >= 5
-            : p.bedrooms === Number(searchFilters.bedrooms));
-
-        return matchesLocation && matchesPrice && matchesType && matchesPurpose && matchesBeds;
-      });
-      setProperties(filtered);
-      setTotalCount(filtered.length);
+      // In development, fall back to local mocks so UI work isn't blocked by API downtime.
+      if (isDev) {
+        console.warn('API search failed, using dev mocks:', message);
+        setSearchError(`Dev fallback — API unavailable: ${message}`);
+        const targetLocation = (searchFilters.location || '').toLowerCase().trim();
+        const filtered = MOCK_PROPERTIES.filter((p) => {
+          const matchesLocation =
+            !targetLocation ||
+            p.location.toLowerCase().includes(targetLocation) ||
+            p.city.toLowerCase().includes(targetLocation) ||
+            p.state.toLowerCase().includes(targetLocation);
+          const matchesPrice = p.price >= searchFilters.minPrice && p.price <= searchFilters.maxPrice;
+          const matchesType = searchFilters.propertyType === 'any' || p.propertyType === searchFilters.propertyType;
+          const matchesPurpose = searchFilters.purpose === 'all' || p.category === searchFilters.purpose;
+          const matchesBeds =
+            searchFilters.bedrooms === 'any' ||
+            (searchFilters.bedrooms === '5' ? p.bedrooms >= 5 : p.bedrooms === Number(searchFilters.bedrooms));
+          return matchesLocation && matchesPrice && matchesType && matchesPurpose && matchesBeds;
+        });
+        setProperties(filtered);
+        setTotalCount(filtered.length);
+      } else {
+        // Production: surface the real error — never show fake listings as if they were real
+        console.error('API search failed:', message);
+        setSearchError(message);
+        setProperties([]);
+        setTotalCount(0);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -652,9 +663,15 @@ export default function SearchPage() {
           </div>
         </div>
 
-        {/* Results Area */}
+        {/* Results Area — errors are real API messages in prod, dev fallback notice in dev */}
         {searchError && (
-          <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2 text-amber-700 text-xs font-body">
+          <div
+            className={`p-3 border rounded-xl flex items-center gap-2 text-xs font-body ${
+              searchError.startsWith('Dev fallback')
+                ? 'bg-amber-50 border-amber-200 text-amber-700'
+                : 'bg-rose-50 border-rose-200 text-rose-700'
+            }`}
+          >
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{searchError}</span>
           </div>

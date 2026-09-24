@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -25,6 +24,7 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ANIMATION_TOKENS, prefersReducedMotion } from '@/lib/animations';
+import { submitConciergeLead } from '@/lib/api-client';
 
 // Register ScrollTrigger plugin
 gsap.registerPlugin(ScrollTrigger);
@@ -62,14 +62,31 @@ export default function FinalCTA() {
 
   const { isSubmitting } = form.formState;
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log('Form submitted:', values);
-    
-    // Simulate API call
-    setTimeout(() => {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    // Wire to Concierge lead capture (phone-first, NDPR-aware) — no silent mock
+    const interestToType: Record<string, string> = {
+      buy: 'any',
+      rent: 'flat_apartment',
+      sell: 'any',
+      landlord: 'any',
+    };
+    try {
+      await submitConciergeLead({
+        fullName: values.name,
+        phone: values.phone,
+        email: undefined,
+        preferredLocation: 'Lagos',
+        propertyType: interestToType[values.interest] ?? 'any',
+        budgetMin: 0,
+        budgetMax: 500000000,
+        bedrooms: 'any',
+        ndprConsent: true,
+      } as any);
       form.reset();
       alert('Thank you! A Primekey Homes expert will call you shortly.');
-    }, 1500);
+    } catch (err: any) {
+      alert(err?.message ?? 'Failed to submit. Please try again or contact us.');
+    }
   }
 
   // ─────────────────────────────────────────────────────────────
