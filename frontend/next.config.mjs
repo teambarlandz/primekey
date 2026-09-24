@@ -26,10 +26,16 @@ const nextConfig = {
     ],
   },
   async rewrites() {
+    // On Vercel NEXT_PUBLIC_API_URL is absolute (https://primekey-api.onrender.com/api/v1)
+    // — frontend calls it directly via lib/api-client.ts, no proxy needed.
+    // Only keep the /api proxy for local Docker (relative or localhost) to avoid double-prefix /api/v1.
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+    const isAbsolute = /^https?:\/\//.test(apiUrl);
+    if (isAbsolute) return [];
     return [
       {
         source: '/api/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/:path*`,
+        destination: `${apiUrl}/:path*`,
       },
     ];
   },
