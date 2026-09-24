@@ -19,6 +19,7 @@ import {
   LogOut,
   MessageCircle,
   FolderOpen,
+  Building2,
 } from 'lucide-react';
 import { ANIMATION_TOKENS, prefersReducedMotion } from '@/lib/animations';
 import {
@@ -35,12 +36,20 @@ import {
   isAgentLoggedIn,
   ensureValidAgentToken,
   clearAgentSession,
+  fetchUnits,
+  fetchTenants,
+  fetchLeases,
+  fetchTenancySummary,
   DashboardSummary,
   DashboardLandlord,
   DashboardIntake,
   DashboardAppointment,
   DashboardLead,
   DocumentVaultEntry,
+  Unit,
+  Tenant,
+  Lease,
+  TenancySummary,
 } from '@/lib/api-client';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { LeadTable } from '@/components/dashboard/LeadTable';
@@ -64,7 +73,7 @@ import {
 
 const BRAND_COLOR = '#04164a';
 
-type Tab = 'overview' | 'leads' | 'intakes' | 'appointments' | 'concierge' | 'whatsapp' | 'documents';
+type Tab = 'overview' | 'leads' | 'intakes' | 'appointments' | 'concierge' | 'whatsapp' | 'documents' | 'tenancy';
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'overview', label: 'Overview', icon: <LayoutDashboard className="w-4 h-4" /> },
@@ -74,6 +83,7 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'concierge', label: 'Concierge Leads', icon: <TrendingUp className="w-4 h-4" /> },
   { id: 'documents', label: 'Documents', icon: <FolderOpen className="w-4 h-4" /> },
   { id: 'whatsapp', label: 'WhatsApp', icon: <MessageCircle className="w-4 h-4" /> },
+  { id: 'tenancy', label: 'Tenancy', icon: <Building2 className="w-4 h-4" /> },
 ];
 
 function toCsv(rows: Record<string, unknown>[]): string {
@@ -120,6 +130,10 @@ export default function AgentDashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [selectedLead, setSelectedLead] = useState<DashboardLandlord | null>(null);
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [leases, setLeases] = useState<Lease[]>([]);
+  const [tenancySummary, setTenancySummary] = useState<TenancySummary | null>(null);
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -231,13 +245,14 @@ export default function AgentDashboardPage() {
     setLoading(true);
     setError(null);
     try {
-      const [summaryData, leadsData, intakesData, appointmentsData, conciergeData, documentsData] = await Promise.all([
+      const [summaryData, leadsData, intakesData, appointmentsData, conciergeData, documentsData, tenancyData] = await Promise.all([
         fetchDashboardSummary(),
         fetchLandlordLeads(),
         fetchIntakes(),
         fetchAppointments(),
         fetchDashboardLeads(),
         fetchDashboardDocuments(),
+        Promise.all([fetchUnits(), fetchTenants(), fetchLeases(), fetchTenancySummary()]).then(([u, t, l, s]) => ({ units: u, tenants: t, leases: l, summary: s })),
       ]);
       setSummary(summaryData);
       setLeads(leadsData);
@@ -245,6 +260,12 @@ export default function AgentDashboardPage() {
       setAppointments(appointmentsData);
       setConciergeLeads(conciergeData);
       setDocuments(documentsData);
+      if (tenancyData) {
+        setUnits(tenancyData.units);
+        setTenants(tenancyData.tenants);
+        setLeases(tenancyData.leases);
+        setTenancySummary(tenancyData.summary);
+      }
     } catch (e: any) {
       setError(e?.message ?? 'Failed to load dashboard data.');
     } finally {
@@ -253,8 +274,10 @@ export default function AgentDashboardPage() {
   };
 
   useEffect(() => {
-    loadAll();
-  }, []);
+    if (tab === 'tenancy') {
+      loadAll();
+    }
+  }, [tab]);
 
   useGSAP(() => {
     if (prefersReducedMotion()) {
@@ -719,11 +742,74 @@ export default function AgentDashboardPage() {
                   <DocumentReviewTable documents={filteredDocuments} onReload={loadAll} canReview={isManager} />
                 </div>
               )}
-              {tab === 'whatsapp' && (
-                <div className="dash-anim opacity-0">
-                  <WhatsAppPanel />
-                </div>
-              )}
+{tab === 'whatsapp' && (
+                  <div className="dash-anim opacity-0">
+                    <WhatsAppPanel />
+                  </div>
+                )}
+                {tab === 'tenancy' && (
+                  <div className="dash-anim opacity-0">
+                    {tenancySummary && (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div className="bg-white/90 rounded-xl border border-purple-100 shadow-sm p-4">
+                          <p className="text-2xl font-bold" style={{ color: BRAND_COLOR }}>{tenancySummary.total_units}</p>
+                          <p className="text-xs text-[#4a607a]">Total Units</p>
+                        </div>
+                        <div className="bg-white/90 rounded-xl border border-purple-100 shadow-sm p-4">
+                          <p className="text-2xl font-bold" style={{ color: BRAND_COLOR }}>{tenancySummary.occupied_units}</p>
+                          <p className="text-xs text-[#4a607a]">Occupied</p>
+                        </div>
+                        <div className="bg-white/90 rounded-xl border border-purple-100 shadow-sm p-4">
+                          <p className="text-2xl font-bold" style={{ color: BRAND_COLOR }}>{tenancySummary.active_leases}</p>
+                          <p className="text-xs text-[#4a607a]">Active Leases</p>
+                        </div>
+                        <div className="bg-white/90 rounded-xl border border-purple-100 shadow-sm p-4">
+                          <p className="text-2xl font-bold" style={{ color: BRAND_COLOR }}>{tenancySummary.total_tenants}</p>
+                          <p className="text-xs text-[#4a607a]">Tenants</p>
+                        </div>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+                      <div className="bg-white/90 rounded-2xl border border-purple-100 shadow-sm p-4">
+                        <h3 className="font-bold font-heading mb-3" style={{ color: BRAND_COLOR }}>Units ({units.length})</h3>
+                        <div className="space-y-2 max-h-64 overflow-y-auto text-sm">
+                          {units.map((u, i) => (
+                            <div key={i} className="flex justify-between p-2 rounded-lg bg-purple-50/50">
+                              <span className="font-semibold">{u.unit_number}</span>
+                              <span className="text-[#4a607a]">{u.status}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="bg-white/90 rounded-2xl border border-purple-100 shadow-sm p-4">
+                        <h3 className="font-bold font-heading mb-3" style={{ color: BRAND_COLOR }}>Tenants ({tenants.length})</h3>
+                        <div className="space-y-2 max-h-64 overflow-y-auto text-sm">
+                          {tenants.map((t, i) => (
+                            <div key={i} className="flex justify-between p-2 rounded-lg bg-purple-50/50">
+                              <span className="font-semibold">{t.full_name}</span>
+                              <span className="text-[#4a607a]">{t.phone}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="bg-white/90 rounded-2xl border border-purple-100 shadow-sm p-4">
+                        <h3 className="font-bold font-heading mb-3" style={{ color: BRAND_COLOR }}>Leases ({leases.length})</h3>
+                        <div className="space-y-2 max-h-64 overflow-y-auto text-sm">
+                          {leases.map((l, i) => (
+                            <div key={i} className="p-2 rounded-lg bg-purple-50/50">
+                              <div className="flex justify-between font-semibold">
+                                <span>{l.id}</span>
+                                <span className={l.status === 'active' ? 'text-emerald-600' : 'text-amber-600'}>{l.status}</span>
+                              </div>
+                              <p className="text-xs text-[#4a607a]">Next rent: {l.next_rent_due ?? '—'}</p>
+                              <p className="text-xs text-[#4a607a]">Quit deadline: {l.quit_notice_deadline ?? '—'}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
             </>
           )}
         </div>

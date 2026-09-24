@@ -40,9 +40,11 @@ import {
   updateLandlordAppointment,
   isUserLoggedIn,
   fetchUserProfile,
+  fetchLandlordTenancyDashboard,
   LandlordProfile,
   LandlordIntake,
   LandlordAppointment,
+  LandlordTenancyDashboardData,
 } from '@/lib/api-client';
 import { LandlordGate } from '@/components/landlord/LandlordGate';
 import { NotificationsPanel } from '@/components/NotificationsPanel';
@@ -84,19 +86,22 @@ export default function LandlordDashboardPage() {
   const [rescheduleDate, setRescheduleDate] = useState('');
   const [rescheduleSlot, setRescheduleSlot] = useState('');
   const [rescheduleError, setRescheduleError] = useState<string | null>(null);
+  const [tenancyData, setTenancyData] = useState<LandlordTenancyDashboardData | null>(null);
 
   const loadAll = async (id: string) => {
     setLoading(true);
     setError(null);
     try {
-      const [profileData, intakesData, appointmentsData] = await Promise.all([
+      const [profileData, intakesData, appointmentsData, tenancyResult] = await Promise.all([
         fetchLandlordProfile(id),
         fetchLandlordIntakes(id),
         fetchLandlordAppointments(id),
+        fetchLandlordTenancyDashboard(),
       ]);
       setProfile(profileData);
       setIntakes(intakesData);
       setAppointments(appointmentsData);
+      setTenancyData(tenancyResult);
     } catch (e: any) {
       setError(e?.message ?? 'Failed to load your dashboard.');
     } finally {
@@ -350,6 +355,77 @@ export default function LandlordDashboardPage() {
                       </table>
                     </div>
                   </div>
+
+                  {/* My Tenancies */}
+                  {tenancyData && (
+                    <div>
+                      <h2 className="flex items-center gap-2 text-xl font-bold font-heading mb-4" style={{ color: BRAND_COLOR }}>
+                        <Building2 className="w-5 h-5" />
+                        My Properties ({tenancyData.properties.length})
+                      </h2>
+                      {tenancyData.properties.map((prop) => (
+                        <div key={prop.property_id} className="bg-white/90 backdrop-blur-sm rounded-2xl border border-purple-100 shadow-sm p-6 mb-4">
+                          <h3 className="font-bold font-heading text-lg mb-2" style={{ color: BRAND_COLOR }}>
+                            {prop.title} — {prop.address}, {prop.city}
+                          </h3>
+                          <p className="text-xs text-[#4a607a] font-body mb-3">
+                            {prop.property_type} · {prop.purpose} · Status: {prop.status} · {prop.units.length} unit(s)
+                          </p>
+                          <table className="w-full text-left text-sm">
+                            <thead>
+                              <tr className="border-b border-purple-100 bg-purple-50/50 text-xs uppercase tracking-wider text-[#4a607a] font-heading font-semibold">
+                                <th className="p-3">Unit</th>
+                                <th className="p-3">Type</th>
+                                <th className="p-3">Rent</th>
+                                <th className="p-3">Status</th>
+                                <th className="p-3">Tenant</th>
+                                <th className="p-3">Lease</th>
+                                <th className="p-3">Next Rent Due</th>
+                                <th className="p-3">Quit Notice Deadline</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {prop.units.map((unit, idx) => {
+                                const lease = tenancyData.leases.find((l) => l.unit_number === unit.unit_number);
+                                return (
+                                  <tr key={idx} className="border-b border-purple-100/70 last:border-0">
+                                    <td className="p-3 font-semibold">{unit.unit_number}</td>
+                                    <td className="p-3">{unit.unit_type}</td>
+                                    <td className="p-3">{unit.rent_amount}</td>
+                                    <td className="p-3">{unit.status}</td>
+                                    <td className="p-3">{unit.tenant_name ?? '—'}</td>
+                                    <td className="p-3">{unit.lease_status ?? '—'}</td>
+                                    <td className="p-3">{lease?.next_rent_due ?? '—'}</td>
+                                    <td className="p-3">{lease?.quit_notice_deadline ?? '—'}</td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      ))}
+                      {tenancyData.total_units > 0 && (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                          <div className="bg-white/90 rounded-xl border border-purple-100 shadow-sm p-4">
+                            <p className="text-2xl font-bold" style={{ color: BRAND_COLOR }}>{tenancyData.total_units}</p>
+                            <p className="text-xs text-[#4a607a]">Total Units</p>
+                          </div>
+                          <div className="bg-white/90 rounded-xl border border-purple-100 shadow-sm p-4">
+                            <p className="text-2xl font-bold" style={{ color: BRAND_COLOR }}>{tenancyData.occupied_units}</p>
+                            <p className="text-xs text-[#4a607a]">Occupied</p>
+                          </div>
+                          <div className="bg-white/90 rounded-xl border border-purple-100 shadow-sm p-4">
+                            <p className="text-2xl font-bold" style={{ color: BRAND_COLOR }}>{tenancyData.active_leases}</p>
+                            <p className="text-xs text-[#4a607a]">Active Leases</p>
+                          </div>
+                          <div className="bg-white/90 rounded-xl border border-purple-100 shadow-sm p-4">
+                            <p className="text-2xl font-bold" style={{ color: BRAND_COLOR }}>{tenancyData.quit_notice_pending}</p>
+                            <p className="text-xs text-[#4a607a]">Quit Notices</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* My Appointments */}
                   <div>
