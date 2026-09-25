@@ -29,14 +29,14 @@ describe('Primekey Homes - Critical User Paths', () => {
     });
 
     it('filters properties by location', () => {
-      cy.get('input[placeholder*="Abeokuta"]').type('Lekki');
+      cy.get('[data-testid="location-filter"]').should('be.visible').type('Lekki');
       cy.contains('button', 'Apply Filters').click();
       cy.contains('Available Properties').should('be.visible');
     });
 
     it('opens concierge modal when no results', () => {
       // Type a location that won't match any listing
-      cy.get('input[placeholder*="Abeokuta"]').clear().type('NonExistentLocation123');
+      cy.get('[data-testid="location-filter"]').should('be.visible').clear().type('NonExistentLocation123');
       cy.contains('button', 'Apply Filters').click();
       // Should show empty state with concierge CTA
       cy.contains('No instant public listings').should('be.visible');
@@ -50,7 +50,7 @@ describe('Primekey Homes - Critical User Paths', () => {
       cy.visit('/search');
       cy.waitForPageLoad();
       // Force empty results to open concierge
-      cy.get('input[placeholder*="Abeokuta"]').clear().type('NonExistentLocation123');
+      cy.get('[data-testid="location-filter"]').should('be.visible').clear().type('NonExistentLocation123');
       cy.contains('button', 'Apply Filters').click();
       cy.contains('button', 'Request Concierge Match').click();
       cy.contains("We'll Find Your Property").should('be.visible');
