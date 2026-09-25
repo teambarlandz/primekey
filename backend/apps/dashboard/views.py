@@ -57,7 +57,7 @@ class DashboardSummaryView(APIView):
             "occupied_units": Unit.objects.filter(status='occupied').count(),
             "active_leases": Lease.objects.filter(status='active').count(),
             "total_tenants": Tenant.objects.count(),
-            "total_rent_revenue": Lease.objects.filter(status='active').aggregate(total=models.Sum('rent_amount'))['total'] or 0,
+            "total_rent_revenue": Lease.objects.filter(status='active').aggregate(total=Sum('rent_amount'))['total'] or 0,
         }
 
         serializer = DashboardSummarySerializer(summary)

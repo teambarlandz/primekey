@@ -1,6 +1,9 @@
 import io
+from datetime import timedelta
+
 import pytest
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from .models import LandlordProfile, PropertyIntake, Appointment, DocumentVault
@@ -71,7 +74,7 @@ def valid_intake_payload(landlord_id):
 def valid_appointment_payload(landlord_id):
     return {
         "landlord": str(landlord_id),
-        "preferred_date": "2026-09-01",
+        "preferred_date": (timezone.localdate() + timedelta(days=1)).isoformat(),
         "time_slot": "11:00 AM",
         "tour_type": "virtual",
         "notes": "Please call before visiting.",

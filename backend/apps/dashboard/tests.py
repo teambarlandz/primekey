@@ -1,7 +1,10 @@
+from datetime import timedelta
+
 import pytest
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.landlords.models import LandlordProfile, PropertyIntake, Appointment, DocumentVault
@@ -267,9 +270,11 @@ def test_update_intake_status(make_landlord, manager_client):
 @pytest.mark.django_db
 def test_update_appointment_status_and_reschedule(make_landlord, agent_client):
     landlord = make_landlord()
+    initial_date = timezone.localdate() + timedelta(days=1)
+    rescheduled_date = initial_date + timedelta(days=1)
     appointment = Appointment.objects.create(
         landlord=landlord,
-        preferred_date="2026-09-10",
+        preferred_date=initial_date.isoformat(),
         time_slot="09:00 AM",
         tour_type="in_person",
     )
@@ -285,12 +290,12 @@ def test_update_appointment_status_and_reschedule(make_landlord, agent_client):
 
     response = agent_client.patch(
         f"/api/v1/dashboard/appointments/{appointment.id}/",
-        {"preferred_date": "2026-09-11", "time_slot": "02:00 PM"},
+        {"preferred_date": rescheduled_date.isoformat(), "time_slot": "02:00 PM"},
         format="json",
     )
     assert response.status_code == 200
     appointment.refresh_from_db()
-    assert appointment.preferred_date.isoformat() == "2026-09-11"
+    assert appointment.preferred_date == rescheduled_date
     assert appointment.time_slot == "02:00 PM"
 
 
