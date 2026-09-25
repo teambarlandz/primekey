@@ -233,7 +233,7 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "Nigerian real estate platform API (Buyer, Landlord, Builder pathways).",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
-    "SERVE_PERMISSIONS": None,
+    "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
 }
 if env.bool("SPECTACULAR_RESTRICT_DOCS", default=False):
     SPECTACULAR_SETTINGS["SERVE_PERMISSIONS"] = [

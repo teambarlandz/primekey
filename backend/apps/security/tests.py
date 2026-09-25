@@ -522,4 +522,4 @@ class TestAPIDocsAccess:
         with override_settings(DEBUG=True):
             pass
         perms = settings.SPECTACULAR_SETTINGS.get("SERVE_PERMISSIONS")
-        assert perms is None
+        assert "rest_framework.permissions.AllowAny" in perms

@@ -71,10 +71,14 @@ def valid_intake_payload(landlord_id):
     }
 
 
+def future_date(days):
+    return (timezone.localdate() + timedelta(days=days)).isoformat()
+
+
 def valid_appointment_payload(landlord_id):
     return {
         "landlord": str(landlord_id),
-        "preferred_date": (timezone.localdate() + timedelta(days=1)).isoformat(),
+        "preferred_date": future_date(1),
         "time_slot": "11:00 AM",
         "tour_type": "virtual",
         "notes": "Please call before visiting.",
@@ -267,9 +271,14 @@ class TestAppointmentCreation:
         landlord_cl = landlord_client(landlord)
         agent_cl = agent_client()
 
+        first_payload = {
+            **valid_appointment_payload(landlord.id),
+            "preferred_date": future_date(1),
+            "time_slot": "11:00 AM",
+        }
         first = landlord_cl.post(
             "/api/v1/landlords/appointments/",
-            valid_appointment_payload(landlord.id),
+            first_payload,
             format="json",
         )
         assert first.status_code == 201
@@ -277,8 +286,8 @@ class TestAppointmentCreation:
         other = landlord_cl.post(
             "/api/v1/landlords/appointments/",
             {
-                **valid_appointment_payload(landlord.id),
-                "preferred_date": "2026-09-03",
+                **first_payload,
+                "preferred_date": future_date(2),
                 "time_slot": "02:00 PM",
             },
             format="json",
@@ -288,7 +297,10 @@ class TestAppointmentCreation:
 
         reschedule = agent_cl.patch(
             f"/api/v1/landlords/appointments/{other_id}/",
-            {"preferred_date": "2026-09-01", "time_slot": "11:00 AM"},
+            {
+                "preferred_date": first_payload["preferred_date"],
+                "time_slot": first_payload["time_slot"],
+            },
             format="json",
         )
         assert reschedule.status_code == 400
@@ -314,20 +326,28 @@ class TestAppointmentCreation:
     def test_appointment_list_for_landlord(self):
         landlord = make_landlord()
         client = landlord_client(landlord)
-        client.post(
-            "/api/v1/landlords/appointments/",
-            valid_appointment_payload(landlord.id),
-            format="json",
-        )
-        client.post(
+
+        first = client.post(
             "/api/v1/landlords/appointments/",
             {
                 **valid_appointment_payload(landlord.id),
-                "preferred_date": "2026-09-04",
+                "preferred_date": future_date(1),
+                "time_slot": "11:00 AM",
+            },
+            format="json",
+        )
+        assert first.status_code == 201
+
+        second = client.post(
+            "/api/v1/landlords/appointments/",
+            {
+                **valid_appointment_payload(landlord.id),
+                "preferred_date": future_date(2),
                 "time_slot": "04:00 PM",
             },
             format="json",
         )
+        assert second.status_code == 201
 
         response = client.get(f"/api/v1/landlords/landlords/{landlord.id}/appointments/")
         assert response.status_code == 200
