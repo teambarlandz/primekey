@@ -865,6 +865,7 @@ export default function SearchPage() {
               onChange={(loc) => setFilters((prev) => ({ ...prev, location: loc }))}
               onSearch={() => setIsMobileFiltersOpen(false)}
               onSelectSuggestion={(loc) => setFilters((prev) => ({ ...prev, location: loc }))}
+              testId="mobile-location-filter"
             />
             <FilterDropdown
               propertyType={filters.propertyType}

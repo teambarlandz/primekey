@@ -10,6 +10,7 @@ interface SearchBarProps {
   onChange: (val: string) => void;
   onSearch: () => void;
   onSelectSuggestion: (loc: string) => void;
+  testId?: string;
 }
 
 const SUGGESTED_LOCATIONS = [
@@ -27,6 +28,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   onChange,
   onSearch,
   onSelectSuggestion,
+  testId = 'location-filter',
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -50,7 +52,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
       <div className="relative flex items-center">
         <MapPin className="absolute left-4 w-5 h-5 text-[#04164a]" />
         <Input
-          data-testid="location-filter"
+          data-testid={testId}
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
