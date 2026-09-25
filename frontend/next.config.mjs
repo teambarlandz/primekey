@@ -3,14 +3,6 @@ const nextConfig = {
   output: 'standalone',
   reactStrictMode: true,
   images: {
-    // `domains` is deprecated but kept for Next 14 compat with existing
-    // encrypted-tbn hosts; `remotePatterns` is authoritative.
-    domains: [
-      'encrypted-tbn0.gstatic.com',
-      'encrypted-tbn1.gstatic.com',
-      'encrypted-tbn2.gstatic.com',
-      'encrypted-tbn3.gstatic.com',
-    ],
     remotePatterns: [
       { protocol: 'https', hostname: 'images.nigeriapropertycentre.com', port: '', pathname: '/**' },
       { protocol: 'https', hostname: '*.nigeriapropertycentre.com', port: '', pathname: '/**' },
