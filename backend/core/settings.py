@@ -35,7 +35,7 @@ environ.Env.read_env(BASE_DIR / ".env")
 SECRET_KEY = env("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env("DEBUG")
+DEBUG = env.bool("DEBUG")
 
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 
@@ -233,9 +233,9 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "Nigerian real estate platform API (Buyer, Landlord, Builder pathways).",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    "SERVE_PERMISSIONS": None,
 }
-if not DEBUG:
-    # Do not expose the API surface (schema/docs/redoc) publicly in production.
+if env.bool("SPECTACULAR_RESTRICT_DOCS", default=False):
     SPECTACULAR_SETTINGS["SERVE_PERMISSIONS"] = [
         "rest_framework.permissions.IsAdminUser",
     ]
@@ -366,9 +366,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Security settings for production
 SECURE_REFERRER_POLICY = "same-origin"
 SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
+SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=False)
 
 if not DEBUG:
-    SECURE_SSL_REDIRECT = True
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
