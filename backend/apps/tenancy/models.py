@@ -3,6 +3,7 @@ from datetime import date, timedelta
 import calendar
 
 from django.conf import settings
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 
@@ -31,9 +32,9 @@ class Unit(models.Model):
     )
     unit_number = models.CharField(max_length=20)
     unit_type = models.CharField(max_length=20, choices=UNIT_TYPE_CHOICES, default='flat')
-    bedrooms = models.IntegerField(default=1, validators=[models.MinValueValidator(0)])
-    bathrooms = models.IntegerField(default=1, validators=[models.MinValueValidator(0)])
-    rent_amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[models.MinValueValidator(0)])
+    bedrooms = models.IntegerField(default=1, validators=[MinValueValidator(0)])
+    bathrooms = models.IntegerField(default=1, validators=[MinValueValidator(0)])
+    rent_amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available')
     is_furnished = models.BooleanField(default=False)
     description = models.TextField(blank=True, default='')
@@ -66,7 +67,7 @@ class Tenant(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='tenant',
+        related_name='tenants_via_lease',
     )
     full_name = models.CharField(max_length=150)
     phone = models.CharField(max_length=20, db_index=True)
@@ -132,7 +133,7 @@ class Lease(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     rent_amount = models.DecimalField(max_digits=12, decimal_places=2)
-    rent_due_day = models.IntegerField(validators=[models.MinValueValidator(1), models.MaxValueValidator(31)])
+    rent_due_day = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(31)])
     rent_frequency = models.CharField(
         max_length=10,
         choices=[('monthly', 'Monthly'), ('weekly', 'Weekly'), ('quarterly', 'Quarterly')],

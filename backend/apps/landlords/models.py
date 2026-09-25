@@ -6,10 +6,20 @@ from django.db import models
 # Sensitive landlord documents (IDs, proof of ownership) live OUTSIDE
 # MEDIA_ROOT in protected storage and are served only via the authenticated
 # download endpoint. base_url=None guarantees no public URL is ever exposed.
-protected_storage = FileSystemStorage(
-    location=settings.PROTECTED_STORAGE_DIR,
-    base_url=None,
-)
+# Custom storage avoids hardcoding absolute paths in migrations (portable across
+# Windows/Linux CI). Location is resolved at runtime from settings.
+class ProtectedStorage(FileSystemStorage):
+    def deconstruct(self):
+        # Don't serialize the absolute location; it is resolved from settings at runtime.
+        return ("apps.landlords.models.ProtectedStorage", [], {})
+
+    def __init__(self, *args, **kwargs):
+        kwargs["location"] = settings.PROTECTED_STORAGE_DIR
+        kwargs["base_url"] = None
+        super().__init__(*args, **kwargs)
+
+
+protected_storage = ProtectedStorage()
 
 
 from core.files import _ALLOWED_SIGNATURES

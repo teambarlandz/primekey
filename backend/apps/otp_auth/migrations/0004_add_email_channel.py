@@ -27,6 +27,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="otpcode",
-            index=models.Index(fields=["email", "purpose", "used"], name="otp_email_purpose_used_idx"),
+            index=models.Index(fields=["email", "purpose", "used"], name="otp_auth_ot_email_430281_idx"),
         ),
     ]

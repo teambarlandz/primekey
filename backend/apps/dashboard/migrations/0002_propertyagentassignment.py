@@ -8,9 +8,8 @@ import uuid
 
 
 class Migration(migrations.Migration):
-    initial = True
-
     dependencies = [
+        ('dashboard', '0001_initial'),
         ('properties', '0004_alter_property_bathrooms_alter_property_bedrooms_and_more'),
         ('landlords', '0001_initial'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
