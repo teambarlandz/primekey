@@ -9,6 +9,15 @@ const NIGERIAN_PHONE_REGEX = /^(?:\+?234|0)[789][01]\d{8}$/;
 
 const ID_TYPE_CHOICES = ['nin', 'passport', 'driver_license', 'voter_card'] as const;
 
+export type LandlordIdType = (typeof ID_TYPE_CHOICES)[number];
+
+export const ID_TYPE_LABELS: Record<LandlordIdType, string> = {
+  nin: 'National ID (NIN)',
+  passport: 'International Passport',
+  driver_license: "Driver's License",
+  voter_card: "Permanent Voter's Card",
+};
+
 export const landlordRegistrationSchema = z
   .object({
     fullName: z
@@ -43,6 +52,7 @@ export const landlordRegistrationSchema = z
       .max(50, 'ID number cannot exceed 50 characters'),
 
     propertyCount: z
+      .coerce
       .number()
       .int()
       .min(1, 'You must list at least 1 property')

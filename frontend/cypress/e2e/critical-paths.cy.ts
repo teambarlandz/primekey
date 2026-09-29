@@ -12,8 +12,8 @@ describe('Primekey Homes - Critical User Paths', () => {
 
     it('navigates to search page', () => {
       cy.contains('a', 'Browse properties').click();
-      cy.url().should('include', '/search');
-      cy.contains('h1', 'Discover Premium Properties').should('be.visible');
+      cy.url({ timeout: 60000 }).should('include', '/search');
+      cy.contains('h1', 'Discover Premium Properties', { timeout: 60000 }).should('be.visible');
     });
   });
 
@@ -103,8 +103,8 @@ describe('Primekey Homes - Critical User Paths', () => {
 
     it('navigates to registration form', () => {
       cy.contains('a', 'List your property free').first().click();
-      cy.url().should('include', '/landlord/register');
-      cy.contains('h1', 'Landlord Registration').should('be.visible');
+      cy.url({ timeout: 60000 }).should('include', '/landlord/register');
+      cy.contains('h1', 'Landlord Registration', { timeout: 60000 }).should('be.visible');
     });
   });
 
@@ -138,7 +138,7 @@ describe('Primekey Homes - Critical User Paths', () => {
       });
       cy.contains('button', 'Submit Registration').click();
       cy.wait('@landlordRegister');
-      cy.url().should('include', '/landlord/intake');
+      cy.url({ timeout: 60000 }).should('include', '/landlord/intake');
     });
 
     it('rejects registration without consent', () => {

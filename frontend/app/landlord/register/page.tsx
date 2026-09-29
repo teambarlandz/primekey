@@ -23,7 +23,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ShieldCheck, User, Phone, Mail, BadgeCheck, Building2, ArrowRight, AlertCircle } from 'lucide-react';
-import { landlordRegistrationSchema, LandlordRegistrationValues, mapLandlordValuesToPayload } from '@/lib/validations/landlordSchema';
+import { landlordRegistrationSchema, LandlordRegistrationValues, mapLandlordValuesToPayload, ID_TYPE_LABELS } from '@/lib/validations/landlordSchema';
 import { submitLandlordRegistration } from '@/lib/api-client';
 import Breadcrumbs from '@/components/Breadcrumbs';
 
@@ -220,7 +220,9 @@ export default function LandlordRegisterPage() {
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger className="h-11 border-slate-200 rounded-xl focus:ring-[#04164a]/20" aria-label="Select ID type">
-                            <SelectValue placeholder="Select ID type" />
+                            <SelectValue placeholder="Select ID type">
+                              {ID_TYPE_LABELS[form.watch('idType')]}
+                            </SelectValue>
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent className="rounded-xl border-slate-200">

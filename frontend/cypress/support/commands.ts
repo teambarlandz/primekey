@@ -6,6 +6,7 @@ import '@testing-library/cypress/add-commands';
 Cypress.Commands.add('waitForPageLoad', () => {
   cy.location('pathname').should('exist');
   cy.get('body').should('be.visible');
+  cy.get('body[data-hydrated="true"]', { timeout: 60000 }).should('exist');
 });
 
 Cypress.Commands.add('fillConciergeForm', (data) => {

@@ -343,6 +343,9 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Install E2E wait helper
+        run: npm install --no-save wait-on
+
       - name: Start backend server
         run: |
           cd ../backend
@@ -351,13 +354,20 @@ jobs:
           export REDIS_CACHE_URL=redis://localhost:6379/1
           export DJANGO_Q_REDIS_URL=redis://localhost:6379/2
           python manage.py migrate --noinput
-          python manage.py runserver 0.0.0.0:8000 &
-          sleep 5
+          python manage.py seed_properties
+          nohup python manage.py runserver 0.0.0.0:8000 > ../backend-e2e.log 2>&1 &
 
       - name: Start frontend server
         run: |
-          npm run dev &
-          sleep 10
+          nohup npm run dev > ../frontend-e2e.log 2>&1 &
+
+      - name: Wait for services
+        run: |
+          npx wait-on http-get://127.0.0.1:8000/api/v1/properties/search/ --timeout 180000
+          npx wait-on http-get://127.0.0.1:3000/ --timeout 300000
+          curl -sSf -o /dev/null http://127.0.0.1:3000/search
+          curl -sSf -o /dev/null http://127.0.0.1:3000/landlord/register
+          curl -sSf -o /dev/null http://127.0.0.1:3000/landlord/intake
 
       - name: Run Cypress E2E tests
         run: npm run cypress:run
