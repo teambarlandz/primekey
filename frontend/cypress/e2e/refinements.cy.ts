@@ -9,19 +9,19 @@ describe('Primekey Homes - Refinement Features', () => {
       cy.contains('Agent Sign In').should('be.visible');
     });
 
-    it('validates phone number format', () => {
-      cy.get('input[placeholder*="08012345678"]').type('123');
+    it('validates email format', () => {
+      cy.get('input[type="email"]').type('123');
       cy.contains('button', 'Send Verification Code').click();
-      cy.contains(/valid Nigerian phone number/i).should('be.visible');
+      cy.contains(/valid email address/i).should('be.visible');
     });
 
-    it('shows OTP step after valid phone', () => {
+    it('shows OTP step after valid email', () => {
       cy.intercept('POST', '**/auth/otp/send/', {
         statusCode: 200,
         body: { success: true, message: 'OTP sent', data: { dev_code: '123456' } },
       }).as('otpSend');
 
-      cy.get('input[placeholder*="08012345678"]').type('08050000000');
+      cy.get('input[type="email"]').type('agent@primekey.test');
       cy.contains('button', 'Send Verification Code').click();
       cy.wait('@otpSend');
       cy.contains(/We sent a 6-digit code to/i).should('be.visible');

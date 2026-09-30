@@ -117,6 +117,23 @@ class ExportRequest(models.Model):
     records_count = models.IntegerField(default=0)
     expires_at = models.DateTimeField(blank=True, null=True)
     completed_at = models.DateTimeField(blank=True, null=True)
+
+    # The export itself is stored in Postgres rather than on disk. The payload is
+    # written by the django-q worker but downloaded by the web service, and a
+    # Render disk cannot be mounted on two services, so a filesystem hand-off
+    # would 404 in production. purge_expired_exports() clears both fields once
+    # expires_at passes, because this is personal data with a retention limit.
+    export_payload = models.TextField(
+        blank=True,
+        null=True,
+        help_text="JSON export body. Cleared by purge_expired_exports after expires_at.",
+    )
+    export_hash = models.CharField(
+        max_length=64,
+        blank=True,
+        null=True,
+        help_text="SHA-256 of export_payload, so a downloader can verify integrity",
+    )
     
     # Errors
     errors = models.JSONField(default=list, blank=True)

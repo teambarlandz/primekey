@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Phone, ArrowRight, RotateCcw, CheckCircle2, AlertCircle, Monitor } from 'lucide-react';
+import { Mail, ArrowRight, RotateCcw, CheckCircle2, AlertCircle, Monitor } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,15 +14,15 @@ export interface OtpAuthCardConfig {
   icon: React.ReactNode;
   title: string;
   subtitle: string;
-  phoneLabel: string;
-  phonePlaceholder?: string;
+  emailLabel: string;
+  emailPlaceholder?: string;
   verifyButtonLabel?: string;
 }
 
 interface OtpAuthCardProps<T = unknown> {
   config: OtpAuthCardConfig;
-  sendOtp: (phone: string) => Promise<{ data?: unknown }>;
-  verifyOtp: (phone: string, code: string) => Promise<T>;
+  sendOtp: (email: string) => Promise<{ data?: unknown }>;
+  verifyOtp: (email: string, code: string) => Promise<T>;
   onSuccess: (result: T, rememberDevice?: boolean) => void;
   inputPrefix?: string;
   cardClassName?: string;
@@ -38,12 +38,12 @@ export function OtpAuthCard<T = unknown>({
   cardClassName,
   children,
 }: OtpAuthCardProps<T>) {
-  const [step, setStep] = useState<'phone' | 'otp'>('phone');
-  const [phone, setPhone] = useState('');
+  const [step, setStep] = useState<'email' | 'otp'>('email');
+  const [email, setEmail] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resendTimer, setResendTimer] = useState(60);
-  const [phoneError, setPhoneError] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [apiError, setApiError] = useState('');
   const [rememberDevice, setRememberDevice] = useState(false);
 
@@ -55,30 +55,19 @@ export function OtpAuthCard<T = unknown>({
     return () => clearInterval(timer);
   }, [step, resendTimer]);
 
-  const isEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
-  const validateNigerianPhone = (num: string) => {
-    const cleaned = num.replace(/\s+/g, '');
-    const regex = /^(?:\+234|234|0)[789][01]\d{8}$/;
-    return regex.test(cleaned);
-  };
-  const validateIdentifier = (val: string) => {
-    const v = val.trim();
-    if (!v) return false;
-    if (v.includes('@')) return isEmail(v);
-    return validateNigerianPhone(v);
-  };
+  const validateEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
 
-  const handleSendOtp = async (phoneNumber: string) => {
+  const handleSendOtp = async (emailAddress: string) => {
     setApiError('');
-    if (!validateIdentifier(phoneNumber)) {
-      setPhoneError('Please enter a valid Nigerian phone number (e.g., 08012345678) or email address');
+    if (!validateEmail(emailAddress)) {
+      setEmailError('Please enter a valid email address (e.g., you@example.com)');
       return;
     }
-    setPhoneError('');
+    setEmailError('');
     setIsSubmitting(true);
 
     try {
-      const response = await sendOtp(phoneNumber);
+      const response = await sendOtp(emailAddress.trim());
       const devCode = (response?.data as { dev_code?: string } | undefined)?.dev_code;
       if (devCode && process.env.NODE_ENV !== 'production') {
         console.log(`DEV OTP Code (${config.title}):`, devCode);
@@ -88,7 +77,7 @@ export function OtpAuthCard<T = unknown>({
       setResendTimer(60);
     } catch (error: any) {
       setIsSubmitting(false);
-      setPhoneError(error.message || 'Failed to send OTP. Please try again.');
+      setEmailError(error.message || 'Failed to send OTP. Please try again.');
     }
   };
 
@@ -113,7 +102,7 @@ export function OtpAuthCard<T = unknown>({
     setIsSubmitting(true);
 
     try {
-      const result = await verifyOtp(phone, fullCode);
+      const result = await verifyOtp(email.trim(), fullCode);
       setIsSubmitting(false);
       onSuccess(result, rememberDevice);
     } catch (error: any) {
@@ -123,10 +112,10 @@ export function OtpAuthCard<T = unknown>({
   };
 
   const handleReset = () => {
-    setStep('phone');
-    setPhone('');
+    setStep('email');
+    setEmail('');
     setOtp(['', '', '', '', '', '']);
-    setPhoneError('');
+    setEmailError('');
     setApiError('');
   };
 
@@ -149,38 +138,38 @@ export function OtpAuthCard<T = unknown>({
           </div>
         )}
 
-        {step === 'phone' && (
+        {step === 'email' && (
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              handleSendOtp(phone);
+              handleSendOtp(email);
             }}
             className="space-y-5"
           >
             <div className="space-y-1.5">
               <label className="font-body text-xs font-semibold text-[#04164a]">
-                {config.phoneLabel}
+                {config.emailLabel}
               </label>
               <div className="relative">
-                <Phone className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                <Mail className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
                 <Input
-                  type="text"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder={config.phonePlaceholder ?? '08012345678 or you@example.com'}
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={config.emailPlaceholder ?? 'you@example.com'}
                   className="pl-10 h-11 border-slate-200 font-body focus:ring-[#04164a]/20 rounded-xl"
                   autoComplete="email"
                   disabled={isSubmitting}
                 />
               </div>
-              {phoneError && (
-                <p className="font-body text-xs text-rose-600 pt-1">{phoneError}</p>
+              {emailError && (
+                <p className="font-body text-xs text-rose-600 pt-1">{emailError}</p>
               )}
             </div>
 
             <Button
               type="submit"
-              disabled={isSubmitting || !phone}
+              disabled={isSubmitting || !email.trim()}
               className="w-full bg-[#04164a] hover:bg-[#04164a]/90 text-white font-heading h-11 rounded-xl flex items-center justify-center gap-2 transition-all duration-200"
             >
               {isSubmitting ? 'Sending Code...' : 'Send Verification Code'}
@@ -193,7 +182,7 @@ export function OtpAuthCard<T = unknown>({
           <form onSubmit={handleVerifyOtp} className="space-y-5">
             <div className="space-y-2">
               <p className="font-body text-xs text-slate-500 text-center">
-                We sent a 6-digit code to <strong className="text-slate-800">{phone}</strong>
+                We sent a 6-digit code to <strong className="text-slate-800">{email}</strong>
               </p>
               <div className="flex gap-2 justify-between py-2">
                 {otp.map((digit, idx) => (
@@ -227,13 +216,13 @@ export function OtpAuthCard<T = unknown>({
                 onClick={handleReset}
                 className="text-slate-500 hover:text-[#04164a] underline"
               >
-                Change Phone
+                Change Email
               </button>
 
               <button
                 type="button"
                 disabled={resendTimer > 0}
-                onClick={() => handleSendOtp(phone)}
+                onClick={() => handleSendOtp(email)}
                 className="text-[#04164a] font-semibold disabled:text-slate-400 flex items-center gap-1"
               >
                 <RotateCcw className="w-3 h-3" />

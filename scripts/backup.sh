@@ -1,55 +1,72 @@
 #!/usr/bin/env bash
 #
-# Primekey Homes — automated PostgreSQL backup (deployment-ops.md §Backup Strategy)
+# Primekey Homes — off-site PostgreSQL backup
 #
-# - Dumps the production database via docker exec
-# - Compresses with gzip
-# - Uploads to remote storage via rclone (S3-compatible / SFTP / external VPS)
-# - Retains the last 30 daily backups on the remote
+# Production runs on Render's managed Postgres, whose scheduled backups are the
+# PRIMARY restore path (configure them in the Render dashboard). This script
+# exists to keep an additional copy somewhere Render does not control, so a
+# provider-level incident cannot take the database with it.
 #
-# Schedule (crontab, daily at 02:00 server time):
-#   0 2 * * * /root/scripts/backup.sh >> /var/log/primekey-backup.log 2>&1
+# It no longer uses `docker exec`: production is Render's native Python runtime.
+# `pg_dump` reads the same DATABASE_URL that Django uses, so this works from a
+# Render shell, a local checkout, or any cron host.
 #
 # Requirements:
-#   - docker-compose stack running with container name "primekey-db"
-#   - rclone configured (e.g. `rclone config`) — set RCLONE_REMOTE below
-#   - .env next to docker-compose.yml with POSTGRES_USER / POSTGRES_DB
+#   - PostgreSQL client tools (pg_dump) on PATH
+#   - DATABASE_URL exported, or a .env file passed via ENV_FILE
+#   - rclone configured (`rclone config`) for the upload step
 #
-# Restore drill (monthly):
-#   gunzip -c /tmp/backup_<ts>.sql.gz | docker exec -i primekey-db \
-#     psql -U $POSTGRES_USER -d $POSTGRES_DB
+# Run it:
+#   DATABASE_URL='postgresql://...' ./scripts/backup.sh
+#
+# Restore drill (monthly, into a scratch database - never over production):
+#   createdb primekey_restore
+#   gunzip -c backup_<ts>.sql.gz | psql "$DATABASE_URL" -d primekey_restore
+#
+# Cron example (any Linux host, daily 02:00):
+#   0 2 * * * DATABASE_URL='postgresql://...' /opt/primekey/scripts/backup.sh >> /var/log/primekey-backup.log 2>&1
 
 set -euo pipefail
 
 # --- Configuration ---------------------------------------------------------
-COMPOSE_DIR="${COMPOSE_DIR:-/opt/primekey-homes}"        # dir containing docker-compose.yml
-CONTAINER="${CONTAINER:-primekey-db}"
-RCLONE_REMOTE="${RCLONE_REMOTE:-remote:backups/primekey}" # rclone remote path
+ENV_FILE="${ENV_FILE:-}"                                   # optional .env holding DATABASE_URL
+BACKUP_DIR="${BACKUP_DIR:-/tmp}"                           # local staging directory
+RCLONE_REMOTE="${RCLONE_REMOTE:-remote:backups/primekey}"  # rclone remote path
 RETENTION_DAYS="${RETENTION_DAYS:-30}"
-KEEP_LOCAL="${KEEP_LOCAL:-1}"                             # keep newest N local copies
-LOG_FILE="${LOG_FILE:-/var/log/primekey-backup.log}"
+KEEP_LOCAL="${KEEP_LOCAL:-1}"                              # keep newest N local copies
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
 
-# Load POSTGRES_USER / POSTGRES_DB from the compose .env (fall back to defaults)
-if [[ -f "${COMPOSE_DIR}/.env" ]]; then
+if [[ -n "${ENV_FILE}" && -f "${ENV_FILE}" ]]; then
   set -a
-  # shellcheck disable=SC1091
-  source "${COMPOSE_DIR}/.env"
+  # shellcheck disable=SC1090
+  source "${ENV_FILE}"
   set +a
 fi
-POSTGRES_USER="${POSTGRES_USER:-primekey}"
-POSTGRES_DB="${POSTGRES_DB:-primekey}"
+
+if [[ -z "${DATABASE_URL:-}" ]]; then
+  log "ERROR: DATABASE_URL is not set. Export it or pass ENV_FILE=/path/to/.env"
+  exit 1
+fi
+
+if ! command -v pg_dump >/dev/null; then
+  log "ERROR: pg_dump not found on PATH. Install the PostgreSQL client tools."
+  exit 1
+fi
+
+# Never let a password reach the process table or the log.
+export PGCONNECT_TIMEOUT=10
 
 TIMESTAMP="$(date +%Y-%m-%d_%H-%M)"
-BACKUP_FILE="/tmp/primekey_backup_${TIMESTAMP}.sql.gz"
+BACKUP_FILE="${BACKUP_DIR}/primekey_backup_${TIMESTAMP}.sql.gz"
 
-log "Backup start: db=${POSTGRES_DB} user=${POSTGRES_USER}"
+mkdir -p "${BACKUP_DIR}"
+log "Backup start (off-site copy; Render managed backups remain primary)"
 
 # 1. Dump + compress
-if ! docker exec "${CONTAINER}" pg_dump -U "${POSTGRES_USER}" "${POSTGRES_DB}" \
+if ! pg_dump --dbname="${DATABASE_URL}" --no-owner --no-privileges --format=plain \
     | gzip > "${BACKUP_FILE}"; then
-  log "ERROR: pg_dump failed for ${POSTGRES_DB}"
+  log "ERROR: pg_dump failed"
   rm -f "${BACKUP_FILE}"
   exit 1
 fi
@@ -63,22 +80,24 @@ fi
 SIZE="$(du -h "${BACKUP_FILE}" | cut -f1)"
 log "Backup created: ${BACKUP_FILE} (${SIZE})"
 
-# 3. Upload to remote storage
-if ! rclone copy "${BACKUP_FILE}" "${RCLONE_REMOTE}/" ; then
-  log "ERROR: rclone upload failed — keeping local copy for manual recovery"
-  exit 1
-fi
-log "Uploaded to ${RCLONE_REMOTE}/"
-
-# 4. Cleanup local (keep newest N)
-ls -1t /tmp/primekey_backup_*.sql.gz 2>/dev/null \
-  | tail -n +$((KEEP_LOCAL + 1)) \
-  | xargs -r rm -f
-
-# 5. Retention on remote (delete files older than RETENTION_DAYS)
+# 3. Upload to remote storage (optional, but the point of an off-site copy)
 if command -v rclone >/dev/null; then
+  if ! rclone copy "${BACKUP_FILE}" "${RCLONE_REMOTE}/"; then
+    log "ERROR: rclone upload failed - keeping the local copy for manual recovery"
+    exit 1
+  fi
+  log "Uploaded to ${RCLONE_REMOTE}/"
+
+  # 4. Retention on the remote (delete files older than RETENTION_DAYS)
   rclone delete --min-age "${RETENTION_DAYS}d" "${RCLONE_REMOTE}/" \
     && log "Remote retention applied (${RETENTION_DAYS}d)"
+else
+  log "WARN: rclone not installed; backup left at ${BACKUP_FILE}"
 fi
+
+# 5. Cleanup local staging (keep newest N)
+find "${BACKUP_DIR}" -maxdepth 1 -name 'primekey_backup_*.sql.gz' -type f -printf '%T@ %p\n' 2>/dev/null \
+  | sort -rn | tail -n +$((KEEP_LOCAL + 1)) | cut -d' ' -f2- \
+  | xargs -r rm -f
 
 log "Backup complete."

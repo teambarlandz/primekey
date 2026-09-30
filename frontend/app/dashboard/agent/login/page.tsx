@@ -197,11 +197,12 @@ function AgentLoginContent() {
             config={{
               icon: <UserCog className="w-7 h-7" />,
               title: 'Team Access',
-              subtitle: "We'll send a 6-digit code to your registered phone",
-              phoneLabel: 'Registered Agent Phone',
+              subtitle: "We'll send a 6-digit code to your registered email",
+              emailLabel: 'Registered Agent Email',
+              emailPlaceholder: 'you@primekeyhomesandpropertiesltd.com',
               verifyButtonLabel: 'Verify & Access Dashboard',
             }}
-            sendOtp={(phone) => sendOtp(phone, 'agent_login')}
+            sendOtp={(email) => sendOtp(email, 'agent_login')}
             verifyOtp={verifyAgentOtp}
             onSuccess={(result, rememberDevice) => {
               document.cookie = 'pk_agent_session=1; path=/; max-age=86400; SameSite=Lax';

@@ -1,0 +1,24 @@
+# Development and CI tooling. Installed in addition to requirements.txt, and
+# never on Render. Keep it out of the production venv: it slows native builds,
+# pulls in transitive packages the app never imports, and hides real findings in
+# pip-audit output.
+#
+# Local:  pip install -r requirements-dev.txt
+# CI:     see .github/workflows/ci.yml (every backend job installs this file)
+-r requirements.txt
+
+# Test suite
+pytest==8.0.0
+pytest-django==4.8.0
+factory-boy==3.3.0
+Faker~=40.0
+
+# Linting, formatting, typing
+black~=26.0
+flake8==7.0.0
+isort==5.13.0
+mypy==1.8.0
+
+# Security scanning
+bandit~=1.9
+pip-audit>=2.7.0

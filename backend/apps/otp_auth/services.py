@@ -1,31 +1,20 @@
 """
-OTP delivery services — Resend (email) and Sendchamp (SMS).
+OTP delivery service — Resend (email only).
 
-Both providers are optional in dev: if API keys are not configured,
-the service logs and returns True so the OTP flow still works via
-`dev_code` (is_dev_client). In production, missing keys raise and
-the view returns 502 so the client knows delivery failed.
+Email is the sole OTP channel: SMS via Sendchamp was removed to cut
+production cost, so every code is delivered by Resend.
+
+If the API key is not configured the service returns False and the caller
+decides what to do (503 in production, dev_code in development).
 
 Resend docs: https://resend.com/docs/api-reference/emails/send-email
-Sendchamp docs: https://api.sendchamp.com/docs#send-sms
 """
 import logging
-import re
 
 import requests
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
-
-
-def _normalize_phone_for_sendchamp(phone: str) -> str:
-    """Convert 080... / +234... to 23480... for Sendchamp `to`."""
-    digits = re.sub(r"[^0-9]", "", phone)
-    if digits.startswith("0"):
-        return f"234{digits[1:]}"
-    if digits.startswith("234"):
-        return digits
-    return digits  # fallback
 
 
 def send_otp_via_resend(email: str, code: str, purpose: str = "login") -> bool:
@@ -79,54 +68,4 @@ def send_otp_via_resend(email: str, code: str, purpose: str = "login") -> bool:
         return False
     except Exception as exc:
         logger.exception("Resend exception to %s: %s", email, exc)
-        raise
-
-
-def send_otp_via_sendchamp(phone: str, code: str, purpose: str = "login") -> bool:
-    """
-    Send OTP code via Sendchamp SMS.
-    Returns True on success, False if skipped (no key), raises on hard failure.
-    """
-    api_key = getattr(settings, "SENDCHAMP_API_KEY", "") or ""
-    if not api_key:
-        logger.warning("SENDCHAMP_API_KEY not set — skipping SMS OTP to %s (dev mode)", phone)
-        return False
-
-    sender_name = getattr(settings, "SENDCHAMP_SENDER_ID", "Primekey")
-    # Sendchamp route: dnd for transactional, non_dnd for marketing. OTP is transactional.
-    route = getattr(settings, "SENDCHAMP_ROUTE", "dnd")
-
-    to = _normalize_phone_for_sendchamp(phone)
-    message = f"Your Primekey verification code is {code}. It expires in 5 minutes. Do not share this code."
-
-    try:
-        resp = requests.post(
-            "https://api.sendchamp.com/api/v1/sms/send",
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
-            json={
-                "to": [to],
-                "message": message,
-                "sender_name": sender_name,
-                "route": route,
-            },
-            timeout=10,
-        )
-        # Sendchamp returns 200 or 201 on success with {status, message, data}
-        if resp.status_code in (200, 201):
-            body = resp.json()
-            # Some Sendchamp errors return 200 with status != success, check
-            if isinstance(body, dict) and body.get("status") == "error":
-                logger.error("Sendchamp logical error %s", body)
-                resp.raise_for_status()
-            logger.info("Sendchamp OTP sent to %s (purpose=%s)", phone, purpose)
-            return True
-        logger.error("Sendchamp failed %s %s", resp.status_code, resp.text[:500])
-        resp.raise_for_status()
-        return False
-    except Exception as exc:
-        logger.exception("Sendchamp exception to %s: %s", phone, exc)
         raise

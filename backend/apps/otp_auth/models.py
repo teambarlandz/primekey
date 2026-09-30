@@ -12,8 +12,8 @@ from core.security import (
     verify_code,
 )
 
-# Global per-phone brute-force lockout shared across ALL codes for a phone,
-# so requesting a new code does not reset the backoff.
+# Global per-identifier brute-force lockout shared across ALL codes for an
+# email address, so requesting a new code does not reset the backoff.
 OTP_LOCK_PREFIX = "otp_lock:"
 OTP_MAX_FAILURES = 3
 OTP_LOCK_SECONDS = 300
@@ -21,7 +21,10 @@ OTP_LOCK_SECONDS = 300
 
 class OTPCode(models.Model):
     """
-    One-time password code for phone authentication.
+    One-time password code for email authentication.
+
+    Email is the only delivery channel (SMS via Sendchamp was removed to cut
+    production cost), so ``phone`` and ``channel`` were dropped from this model.
 
     Only a salted HMAC-SHA256 digest of the code is stored in the database;
     the plaintext is available on the in-memory ``_plaintext_code`` attribute
@@ -36,9 +39,7 @@ class OTPCode(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    phone = models.CharField(max_length=20, db_index=True, blank=True, null=True, help_text="Nigerian phone for SMS (Sendchamp)")
-    email = models.EmailField(blank=True, null=True, db_index=True, help_text="Email for Resend delivery")
-    channel = models.CharField(max_length=10, choices=[('sms', 'SMS via Sendchamp'), ('email', 'Email via Resend')], default='sms')
+    email = models.EmailField(db_index=True, help_text="Destination for Resend delivery")
     code = models.CharField(max_length=128, help_text="Salted HMAC-SHA256 digest of the 6-digit code")
     purpose = models.CharField(max_length=20, choices=PURPOSE_CHOICES, default='login')
     
@@ -60,13 +61,11 @@ class OTPCode(models.Model):
         verbose_name = 'OTP Code'
         verbose_name_plural = 'OTP Codes'
         indexes = [
-            models.Index(fields=['phone', 'purpose', 'used']),
             models.Index(fields=['email', 'purpose', 'used']),
         ]
 
     def __str__(self):
-        ident = self.phone or self.email or "unknown"
-        return f"OTP for {ident} ({self.purpose}/{self.channel}) - {'Used' if self.used else 'Active'}"
+        return f"OTP for {self.email} ({self.purpose}) - {'Used' if self.used else 'Active'}"
 
     @staticmethod
     def hash_code(code):
@@ -79,24 +78,17 @@ class OTPCode(models.Model):
         return generate_secure_code(6)
 
     @classmethod
-    def create_otp(cls, phone=None, email=None, purpose='login', expiry_minutes=5, ip_address=None, user_agent=None, channel=None):
-        """Create a new OTP code for phone (SMS) or email (Resend)."""
-        # Auto-detect channel if not provided
-        if channel is None:
-            channel = 'email' if email else 'sms'
-        # Invalidate any existing unused OTPs for this identifier/purpose
-        if email:
-            cls.objects.filter(email=email, purpose=purpose, used=False).update(used=True)
-        if phone:
-            cls.objects.filter(phone=phone, purpose=purpose, used=False).update(used=True)
-        
+    def create_otp(cls, email, purpose='login', expiry_minutes=5, ip_address=None, user_agent=None):
+        """Create a new OTP code for email delivery via Resend."""
+        email = (email or '').strip()
+        # Invalidate any existing unused OTPs for this email/purpose
+        cls.objects.filter(email=email, purpose=purpose, used=False).update(used=True)
+
         code = cls.generate_code()
         expires_at = timezone.now() + timezone.timedelta(minutes=expiry_minutes)
-        
+
         otp = cls.objects.create(
-            phone=phone or "",
-            email=email or None,
-            channel=channel,
+            email=email,
             code=hash_code(code),
             purpose=purpose,
             expires_at=expires_at,
@@ -107,14 +99,13 @@ class OTPCode(models.Model):
         return otp
 
     def _lock_key(self):
-        ident = self.email or self.phone
-        return f"{OTP_LOCK_PREFIX}{ident}:{self.purpose}"
+        return f"{OTP_LOCK_PREFIX}{self.email}:{self.purpose}"
 
     def verify(self, code, ip_address=None, user_agent=None):
         """
         Verify the provided code against this OTP.
 
-        - Enforces the global per-phone lockout (not reset by new codes).
+        - Enforces the global per-email lockout (not reset by new codes).
         - Binds verification to the IP address and user agent recorded at
           send time (enforced only when the stored values are non-empty).
         - Constant-time comparison of salted HMAC digests (legacy unsalted

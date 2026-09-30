@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.db import transaction
 from django.db.models import Q
 from django.conf import settings
+from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django_ratelimit.decorators import ratelimit
 from rest_framework.views import APIView
@@ -330,7 +331,8 @@ class ExportDownloadView(APIView):
     """
     GET /api/v1/compliance/export/download/<uuid:pk>/
     Download a completed data export (owner only, until expiry).
-    The file lives outside MEDIA_ROOT so it is never served by nginx directly.
+    The payload lives on the ExportRequest row, not on a filesystem path shared
+    with the worker, and is never reachable through MEDIA_ROOT.
     """
     permission_classes = [IsAuthenticated]
 
@@ -362,20 +364,19 @@ class ExportDownloadView(APIView):
                 status=status.HTTP_410_GONE,
             )
 
-        file_path = settings.EXPORT_STORAGE_DIR / f"{export_request.id}.json"
-        if not file_path.exists():
+        if not export_request.export_payload:
             return Response(
                 {"success": False, "message": "Export file not found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        from django.http import FileResponse
-
-        response = FileResponse(
-            open(file_path, 'rb'),
+        response = HttpResponse(
+            export_request.export_payload,
             content_type='application/json',
         )
         response['Content-Disposition'] = (
             f'attachment; filename="primekey-data-export-{export_request.id}.json"'
         )
+        if export_request.export_hash:
+            response["X-Export-SHA256"] = export_request.export_hash
         return response

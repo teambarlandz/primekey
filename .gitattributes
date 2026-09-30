@@ -1,0 +1,19 @@
+# Normalize line endings so Windows checkouts don't rewrite the whole tree as
+# "modified" (416 files appeared changed with zero content difference).
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.mp4 binary
+
+# Secrets are handled by .gitignore, not here. Note that gitattributes does not
+# support negative patterns - a "!path" line is ignored and makes every git
+# command print "Negative patterns are ignored in git attributes".
+# Local .env files are text: they stay diffable in case one is ever force-added.

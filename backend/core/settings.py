@@ -40,10 +40,14 @@ DEBUG = env.bool("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 
 # Fail fast in production if critical security settings are left at insecure defaults
+# OTP keys are read here (before the OTP_PROVIDERS block below defines them) so a
+# missing provider key stops the deploy instead of silently accepting OTPs nobody receives.
 validate_production_settings(
     secret_key=SECRET_KEY,
     debug=DEBUG,
     allowed_hosts=ALLOWED_HOSTS,
+    require_otp_providers=env.bool("REQUIRE_OTP_PROVIDERS", default=True),
+    resend_api_key=env("RESEND_API_KEY", default=""),
 )
 
 
@@ -148,12 +152,10 @@ CONTACT_RECIPIENT_EMAIL = env(
     "CONTACT_RECIPIENT_EMAIL", default="hello@primekeyhomesandpropertiesltd.com"
 )
 
-# OTP Providers: Resend (email) and Sendchamp (SMS)
-# In dev, keys may be empty — OTP flow still works via dev_code (is_dev_client).
+# OTP Provider: Resend (email is the only delivery channel — SMS was removed
+# to cut production cost). In dev, the key may be empty and the OTP flow still
+# works via dev_code (is_dev_client).
 RESEND_API_KEY = env("RESEND_API_KEY", default="")
-SENDCHAMP_API_KEY = env("SENDCHAMP_API_KEY", default="")
-SENDCHAMP_SENDER_ID = env("SENDCHAMP_SENDER_ID", default="Primekey")
-SENDCHAMP_ROUTE = env("SENDCHAMP_ROUTE", default="dnd")
 
 
 # Password validation
@@ -195,22 +197,57 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [
     BASE_DIR / "core" / "static",
 ]
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+# STORAGES replaced STATICFILES_STORAGE in Django 5.1, and the old name was
+# silently ignored: the app was running plain StaticFilesStorage with no content
+# hashes and no compression. Manifest storage also makes a missing reference
+# raise instead of 404-ing, so smoke-test /admin/login/ after changing this.
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
-
-# Protected storage for NDPR data exports (never served by nginx)
-EXPORT_STORAGE_DIR = BASE_DIR / "exports"
+# Overridable so a Render persistent disk can be mounted over these paths
+# (the container filesystem is wiped on every deploy).
+MEDIA_ROOT = env("MEDIA_ROOT", default=str(BASE_DIR / "media"))
 
 # Protected storage for sensitive landlord documents (IDs, proof of ownership).
 # Lives OUTSIDE MEDIA_ROOT so nginx/Django never serve it publicly; files are
 # delivered only through the authenticated download endpoint.
-PROTECTED_STORAGE_DIR = BASE_DIR / "protected"
+PROTECTED_STORAGE_DIR = env(
+    "PROTECTED_STORAGE_DIR", default=str(BASE_DIR / "protected")
+)
+
+# There is deliberately no EXPORT_STORAGE_DIR any more. NDPR exports used to be
+# JSON files written by the django-q worker and read by the web service, which
+# cannot work on Render because one disk cannot be mounted on two services. They
+# are stored on ExportRequest.export_payload instead and purged after expiry.
+
+# Django's static() helper is a no-op when DEBUG=False, so /media/ 404s in
+# production (breaks resume downloads). Serve MEDIA_ROOT explicitly via
+# WhiteNoise-compatible Django serving when this is on.
+SERVE_MEDIA = env.bool("SERVE_MEDIA", default=not DEBUG)
+
+for _storage_dir in (MEDIA_ROOT, PROTECTED_STORAGE_DIR):
+    try:
+        os.makedirs(_storage_dir, exist_ok=True)
+    except OSError:
+        # Read-only or not-yet-mounted path; the write attempt will fail loudly later.
+        pass
 
 
 CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
 CORS_ALLOW_CREDENTIALS = env("CORS_ALLOW_CREDENTIALS")
+
+# DRF authenticates with JWT, so this only affects admin and HTML form flows.
+# Without it, any session-backed POST from the Vercel origin fails the CSRF check
+# because SESSION_COOKIE_SAMESITE is "Lax". Derived from CORS_ALLOWED_ORIGINS so
+# there is one list to maintain, overridable only for unusual deployments.
+CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS", default=CORS_ALLOWED_ORIGINS)
 
 
 # Django REST Framework
@@ -377,6 +414,47 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+
+# Without this, the root logger had no handlers and Django's default threshold is
+# WARNING, so every logger.info() call in the project was silently discarded --
+# including the OTP-delivery audit trail. Render collects stdout/stderr, so both
+# handlers below stream to the service log. Access logging is left to gunicorn
+# (--access-logfile -) to avoid duplicating every request twice.
+LOG_LEVEL = env("LOG_LEVEL", default="DEBUG" if DEBUG else "INFO")
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {name} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
+    },
+    "loggers": {
+        # Project code logs as apps.<app>.<module> via getLogger(__name__).
+        "apps": {
+            "handlers": ["console"],
+            "level": LOG_LEVEL,
+            "propagate": False,
+        },
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO" if DEBUG else "WARNING",
+            "propagate": False,
+        },
+    },
+}
 
 
 # django-unfold admin theme — styled to match frontend Primekey Homes identity

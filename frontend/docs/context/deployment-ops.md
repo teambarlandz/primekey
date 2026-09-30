@@ -1,5 +1,26 @@
 # Deployment-ops file, now aligned with the Modular Monolith + DDD architecture and clearly distinguishing the core project (Phases 1-2) from the optional Phase 3 extension.
 
+> **⚠️ SUPERSEDED FOR PRODUCTION (updated 2026-09-30).** This runbook describes a
+> self-hosted single VPS running `docker compose` behind nginx with certbot.
+> **Production is no longer deployed that way.** The live topology is:
+>
+> | Concern | Production owner |
+> |---|---|
+> | Frontend | Vercel (git integration, builds on push) |
+> | API + django-q worker | Render native Python runtime, from `render.yaml` |
+> | Postgres / Redis | Render managed instances |
+> | Static files | WhiteNoise (`STATIC_ROOT`), no nginx |
+> | TLS | Render's and Vercel's edge — no certbot, no nginx on Render |
+> | Uploads | Render persistent disk on the web service at `/var/data` |
+> | Deploy | Push to `master`; Render + Vercel redeploy from git |
+>
+> Authoritative production runbook: **`PRODUCTION_READY.md`** at the repo root.
+> Everything below is retained as the **local-development** reference for the
+> `docker-compose` stack (`docker-compose.yml`, `backend/Dockerfile`,
+> `frontend/Dockerfile`, `nginx/nginx.conf`) and as historical context. Commands
+> that reference `docker exec`, `docker volume`, certbot or nginx do **not** apply
+> to production.
+
 ---
 
 ```markdown

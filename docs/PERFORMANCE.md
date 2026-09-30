@@ -1,9 +1,10 @@
 # Performance Specification — Primekey Homes
 
-> Status: draft · Version: 0.1 · Owner: @teambarlandz · Last updated: 2026-08-17
-> Budgets are gate criteria for go-live. Measured on the production VPS profile
-> (4GB RAM / 2 vCPU, deployment-ops.md) over a Nigerian 4G network profile
-> unless stated otherwise.
+> Status: draft · Version: 0.1 · Owner: @teambarlandz · Last updated: 2026-09-30
+> Budgets are gate criteria for go-live. Measured against the production profile
+> in `render.yaml` (Render `starter` web service = 0.5 GB RAM / 0.5 CPU, Vercel
+> for the frontend) over a Nigerian 4G network profile unless stated otherwise.
+> The `docker stats` rows below are now local-compose numbers only.
 
 ## 1. Budgets (summary)
 
@@ -19,8 +20,9 @@
 | Agent dashboard aggregates | < 1.0 s p95 (1k+ leads) | API probe |
 | Indexed search query (DB) | < 200 ms @ 10k properties | `EXPLAIN ANALYZE` |
 | SLA breach sweep cadence | <= 5 min (django-q schedule) | job logs |
-| Backend container memory | <= 1 GB (compose limit) | `docker stats` |
-| Frontend container memory | <= 512 MB (compose limit) | `docker stats` |
+| Backend memory (local compose) | <= 1 GB (compose limit) | `docker stats` |
+| Frontend memory (local compose) | <= 512 MB (compose limit) | `docker stats` |
+| Gunicorn worker memory (production) | stay under the plan's 512 MB across 3 workers | Render metrics |
 | CI pipeline wall time (green) | < 20 min | GitHub Actions |
 
 ## 2. Frontend
@@ -68,8 +70,11 @@
 
 ## 6. Known risks
 
-- 4GB VPS with Next.js + Django + Postgres + Redis: memory is the tightest
-  resource; compose limits enforce headroom for the worker container.
+- Render `starter` (0.5 GB) is the tightest resource in production: gunicorn runs
+  3 workers plus `--max-requests 1200 --max-requests-jitter 100` to recycle them,
+  so watch for OOM restarts and move to a larger plan before tuning elsewhere.
+- Redis is on the `free` plan and can be evicted, which fails closed for cache,
+  rate limits and axes — plan for a paid instance.
 - Slow search as properties grow: mitigated by the indexes above; revisit
   with materialized filtering or Postgres FTS if > 50k rows.
 - Email latency on concierge/contact submissions depends on SMTP (Hostinger);

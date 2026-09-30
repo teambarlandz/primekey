@@ -388,21 +388,15 @@ export interface AuthResponse {
 }
 
 export interface SendOtpResponse {
-  data: { phone?: string; email?: string; channel?: 'sms' | 'email'; purpose: string; expires_in_minutes: number; dev_code?: string };
-}
-
-function isEmailIdentifier(value: string): boolean {
-  return value.includes('@');
+  data: { email: string; purpose: string; expires_in_minutes: number; dev_code?: string };
 }
 
 /**
  * Request an OTP code (agent_login purpose for agents).
- * Accepts phone (Sendchamp SMS) or email (Resend) — channel auto-detected.
- * For explicit email, pass email string (contains @); for phone, pass 080... / +234...
+ * Email is the only delivery channel — codes are sent via Resend.
  */
-export async function sendOtp(phone: string, purpose: "login" | "agent_login" | "register" = "login"): Promise<SendOtpResponse> {
-  const isEmail = isEmailIdentifier(phone);
-  const payload = isEmail ? { email: phone, channel: 'email' as const, purpose } : { phone, channel: 'sms' as const, purpose };
+export async function sendOtp(email: string, purpose: "login" | "agent_login" | "register" = "login"): Promise<SendOtpResponse> {
+  const payload = { email: email.trim(), purpose };
   try {
     const response = await fetch(`${API_BASE_URL}/auth/otp/send/`, {
       method: "POST",
@@ -436,11 +430,10 @@ export async function sendOtp(phone: string, purpose: "login" | "agent_login" | 
 
 /**
  * Verify an OTP and store the returned agent JWT session.
- * Accepts phone (SMS) or email (Resend) — channel auto-detected.
+ * Email is the only delivery channel.
  */
-export async function verifyAgentOtp(phone: string, code: string): Promise<AgentSessionProfile> {
-  const isEmail = isEmailIdentifier(phone);
-  const payload = isEmail ? { email: phone, code, purpose: "agent_login" } : { phone, code, purpose: "agent_login" };
+export async function verifyAgentOtp(email: string, code: string): Promise<AgentSessionProfile> {
+  const payload = { email: email.trim(), code, purpose: "agent_login" };
   try {
     const response = await fetch(`${API_BASE_URL}/auth/otp/verify/`, {
       method: "POST",
@@ -1174,16 +1167,16 @@ export async function reviewDocument(
 }
 
 /**
- * Send OTP code to phone number — legacy alias that delegates to canonical `sendOtp` (ADR-010).
+ * Send OTP code to email — legacy alias that delegates to canonical `sendOtp` (ADR-010).
  * Kept for backwards-compat with AuthInterceptSheet / login pages; prefer `sendOtp` in new code.
  */
 export async function submitOTP(
-  phone: string,
+  email: string,
   purpose: 'login' | 'register' | 'password_reset' = 'login'
 ): Promise<ApiSuccessResponse> {
   // Map legacy purposes to canonical sendOtp purposes; `password_reset` → `login` for OTP send
   const canonicalPurpose = purpose === 'register' ? 'register' : 'login';
-  const res = await sendOtp(phone, canonicalPurpose as 'login' | 'register');
+  const res = await sendOtp(email, canonicalPurpose as 'login' | 'register');
   return res as unknown as ApiSuccessResponse;
 }
 
@@ -1192,12 +1185,11 @@ export async function submitOTP(
  * Uses the same endpoint as `verifyAgentOtp` but without auto-saving an agent session.
  */
 export async function verifyOTP(
-  phone: string,
+  email: string,
   code: string,
   purpose: 'login' | 'register' | 'password_reset' = 'login'
 ): Promise<ApiSuccessResponse> {
-  const isEmail = phone.includes('@');
-  const payload = isEmail ? { email: phone, code, purpose } : { phone, code, purpose };
+  const payload = { email: email.trim(), code, purpose };
   try {
     const response = await fetch(`${API_BASE_URL}/auth/otp/verify/`, {
       method: "POST",

@@ -142,20 +142,19 @@ def compile_export_data(export_request_id: str):
         # Calculate hash for integrity
         data_hash = hashlib.sha256(export_json.encode()).hexdigest()
         
-        # Persist the file outside MEDIA_ROOT so nginx never serves it directly.
-        export_dir = settings.EXPORT_STORAGE_DIR
-        export_dir.mkdir(parents=True, exist_ok=True)
-        file_path = export_dir / f"{export_request.id}.json"
-        with open(file_path, 'w', encoding='utf-8') as f:
-            f.write(export_json)
-        
+        # Persist the export on the request row, not on a filesystem path. The
+        # worker writes it and the web service reads it, and a Render disk cannot
+        # be mounted on two services.
         export_request.records_count = records_count
         export_request.status = 'completed'
         export_request.completed_at = timezone.now()
         export_request.expires_at = timezone.now() + timedelta(days=7)
         export_request.download_url = f"/api/v1/compliance/export/download/{export_request.id}/"
+        export_request.export_payload = export_json
+        export_request.export_hash = data_hash
         export_request.save(update_fields=[
-            'records_count', 'status', 'completed_at', 'expires_at', 'download_url'
+            'records_count', 'status', 'completed_at', 'expires_at',
+            'download_url', 'export_payload', 'export_hash'
         ])
         
         return {
@@ -170,6 +169,28 @@ def compile_export_data(export_request_id: str):
         export_request.errors.append(str(e))
         export_request.save(update_fields=['status', 'errors'])
         return {'success': False, 'error': str(e)}
+
+
+def purge_expired_exports():
+    """
+    Clear the stored export payload once its download window has closed.
+
+    The payload is a full copy of one data subject's personal data, so keeping it
+    past expires_at has no lawful basis. Previously the JSON files were written
+    to disk and never deleted at all; storing them on the row makes the purge a
+    single UPDATE. Also flips status to 'expired' so the dashboard shows the
+    real state.
+    """
+    from apps.compliance.models import ExportRequest
+
+    now = timezone.now()
+    expired = ExportRequest.objects.filter(
+        status='completed',
+        expires_at__isnull=False,
+        expires_at__lte=now,
+    )
+    purged = expired.update(export_payload=None, export_hash=None, status='expired')
+    return {'purged': purged}
 
 
 def process_erasure_request(erasure_request_id: str):

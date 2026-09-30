@@ -1,5 +1,5 @@
 # Backend Dockerfile - Multi-stage build for production
-FROM python:3.12-slim as builder
+FROM python:3.13-slim as builder
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -17,7 +17,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Production stage
-FROM python:3.12-slim as production
+FROM python:3.13-slim as production
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \

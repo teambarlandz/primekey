@@ -375,6 +375,101 @@ class TestExportRequestStatusView:
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
+class TestExportDownloadView:
+    """The export body lives on the ExportRequest row, not on a filesystem path."""
+
+    URL = '/api/v1/compliance/export/download/'
+
+    def _owner_client(self, phone='08031234567'):
+        client = APIClient()
+        user = User.objects.create_user(username=phone, password='pass')
+        client.force_authenticate(user=user)
+        return client
+
+    def _completed(self, **extra):
+        payload = json.dumps({'concierge_leads': [], 'exported_at': '2026-09-30'})
+        defaults = {
+            'phone': '08031234567',
+            'status': 'completed',
+            'export_payload': payload,
+            'export_hash': hashlib.sha256(payload.encode()).hexdigest(),
+            'expires_at': timezone.now() + timedelta(days=7),
+        }
+        defaults.update(extra)
+        return ExportRequest.objects.create(**defaults)
+
+    def test_returns_stored_payload(self, db):
+        export = self._completed()
+        response = self._owner_client().get(f'{self.URL}{export.id}/')
+        assert response.status_code == status.HTTP_200_OK
+        assert response['Content-Type'] == 'application/json'
+        assert 'attachment' in response['Content-Disposition']
+        assert json.loads(response.content.decode()) == json.loads(export.export_payload)
+
+    def test_exposes_integrity_hash(self, db):
+        export = self._completed()
+        response = self._owner_client().get(f'{self.URL}{export.id}/')
+        assert response['X-Export-SHA256'] == export.export_hash
+
+    def test_404_when_payload_missing(self, db):
+        export = self._completed(export_payload=None, export_hash=None)
+        response = self._owner_client().get(f'{self.URL}{export.id}/')
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_410_when_expired(self, db):
+        export = self._completed(expires_at=timezone.now() - timedelta(days=1))
+        response = self._owner_client().get(f'{self.URL}{export.id}/')
+        assert response.status_code == status.HTTP_410_GONE
+
+    def test_403_for_other_user(self, db):
+        export = self._completed()
+        response = self._owner_client(phone='08030000000').get(f'{self.URL}{export.id}/')
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_requires_auth(self, db):
+        export = self._completed()
+        response = APIClient().get(f'{self.URL}{export.id}/')
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+class TestPurgeExpiredExports:
+    """Personal data must not outlive its 7-day download window."""
+
+    def _completed(self, expires_at):
+        return ExportRequest.objects.create(
+            phone='08031234567',
+            status='completed',
+            export_payload='{"leads": []}',
+            export_hash='a' * 64,
+            expires_at=expires_at,
+        )
+
+    def test_clears_expired_payloads(self, db):
+        from .tasks import purge_expired_exports
+
+        stale = self._completed(timezone.now() - timedelta(hours=1))
+        self._completed(timezone.now() + timedelta(days=1))
+
+        result = purge_expired_exports()
+
+        assert result['purged'] == 1
+        stale.refresh_from_db()
+        assert stale.export_payload is None
+        assert stale.export_hash is None
+        assert stale.status == 'expired'
+
+    def test_keeps_payload_inside_window(self, db):
+        from .tasks import purge_expired_exports
+
+        current = self._completed(timezone.now() + timedelta(days=1))
+
+        purge_expired_exports()
+
+        current.refresh_from_db()
+        assert current.export_payload == '{"leads": []}'
+        assert current.status == 'completed'
+
+
 class TestErasureRequestCreateView:
     URL = '/api/v1/compliance/erase/'
 

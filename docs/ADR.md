@@ -97,8 +97,11 @@
   consent text + timestamp). Inactive leads are anonymized after 180 days via
   the `anonymize_leads` management command scheduled on django-q. Data-subject
   rights are self-serve endpoints with 6-digit verification
-  (`/api/v1/compliance/export|erase`). Export files live in `EXPORT_STORAGE_DIR`
-  (outside `MEDIA_ROOT`); landlord documents live in `PROTECTED_STORAGE_DIR`
+  (`/api/v1/compliance/export|erase`). Export payloads are stored on the
+  `ExportRequest` row in Postgres, not on a filesystem path: the django-q worker
+  writes them and the web service downloads them, and on Render a single disk
+  cannot be mounted on two services. `purge_expired_exports` clears them after
+  the 7-day window. Landlord documents live in `PROTECTED_STORAGE_DIR`
   and are served only through the authenticated download endpoint.
 - **Consequences:** No feature may collect personal data without a consent-log
   path. Retention/anonymization is a hard scheduled job, not a nice-to-have.

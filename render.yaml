@@ -1,25 +1,97 @@
+# Render Blueprint - Primekey Homes production topology
+#
+#   Frontend  Vercel   Next.js, built with NEXT_PUBLIC_API_URL pointing here.
+#   Backend   Render   this file: Django web service + django-q worker.
+#
+# The backend deploys first; Vercel then bakes the API URL into its own build.
+#
+# Runtime choices (https://render.com/docs/deploy-django):
+#   * runtime: python is Render's standard Django runtime. The Docker runtime is
+#     only for system dependencies pip cannot install, and this service has none:
+#     psycopg2-binary bundles its own libpq.
+#   * Static files are served from STATIC_ROOT by WhiteNoise, which is already in
+#     MIDDLEWARE. Render's edge terminates TLS and proxies to $PORT, so no nginx
+#     process runs on the service.
+#   * rootDir: backend because manage.py, requirements.txt and core/ live there.
+#   * The Python version is pinned with PYTHON_VERSION, not a `pythonVersion`
+#     blueprint key: that key is not in the blueprint spec, so it was silently
+#     ignored and the service would have run Render's default (currently 3.14.3)
+#     while CI verifies 3.13. PYTHON_VERSION must be fully qualified.
+#   * Migrations run in preDeployCommand (paid plan) so they happen once per
+#     release instead of racing on every container boot.
+#   * preDeployCommand and collectstatic both import settings, so the
+#     RESEND_API_KEY guard in core/config_checks.py fails the build loudly rather
+#     than booting a service that cannot deliver OTPs.
+#
+# Render Key Value (primekey-redis) is declared under `services` with
+# `type: keyvalue`, not under `databases`, which is Postgres-only. `redis` is a
+# deprecated alias and `fromService.type` must be spelled `keyvalue`.
+
 services:
   - type: web
     name: primekey-api
-    runtime: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: .
-    plan: starter
+    runtime: python
+    rootDir: backend
+    region: oregon
+    # 512 MB / 0.5 CPU. The old `starter` plan id no longer exists in Render's
+    # blueprint schema.
+    plan: 0.5c-512mb
+    # A persistent disk cannot be shared between services and cannot be mounted
+    # on a multi-instance service, so this stays pinned to a single instance.
+    numInstances: 1
+    buildCommand: >-
+      pip install --upgrade pip &&
+      pip install -r requirements.txt &&
+      python manage.py collectstatic --noinput
+    preDeployCommand: python manage.py migrate --noinput
+    # 3 workers fits the plan's 512 MB. Raise with the plan's RAM.
+    # max-requests recycles workers so a slow leak cannot grow unbounded.
+    # graceful-timeout matches maxShutdownDelaySeconds so a worker still draining
+    # requests is not killed by Render's shutdown timer.
+    startCommand: >-
+      gunicorn core.wsgi:application
+      --bind 0.0.0.0:$PORT
+      --workers 3
+      --timeout 120
+      --graceful-timeout 120
+      --max-requests 1200
+      --max-requests-jitter 100
+      --access-logfile -
+      --error-logfile -
     healthCheckPath: /api/health/
+    # A disk disables zero-downtime deploys: Render stops the old instance before
+    # starting the new one, so every deploy has a short window of downtime.
+    maxShutdownDelaySeconds: 120
+    autoDeployTrigger: commit
+    # Uploads must survive redeploys. Without this disk every deploy deletes
+    # landlord documents, resumes and photos. Sized at Render's 10 GB minimum.
+    disk:
+      name: primekey-data
+      mountPath: /var/data
+      sizeGB: 10
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.13.15"
+      - key: PYTHONUNBUFFERED
+        value: "1"
       - key: DEBUG
         value: "False"
-      - key: SECURE_SSL_REDIRECT
-        value: "True"
-      - key: SPECTACULAR_RESTRICT_DOCS
-        value: "True"
       - key: SECRET_KEY
         generateValue: true
       - key: ALLOWED_HOSTS
         value: primekey-api.onrender.com
       - key: CORS_ALLOWED_ORIGINS
         value: https://primekey.vercel.app
+      # The API is JWT-only, so this only matters for admin and HTML form
+      # flows. settings.py derives CSRF_TRUSTED_ORIGINS from
+      # CORS_ALLOWED_ORIGINS so there is only one origin list to maintain.
       - key: CORS_ALLOW_CREDENTIALS
+        value: "True"
+      - key: SPECTACULAR_RESTRICT_DOCS
+        value: "True"
+      # Render sets X-Forwarded-Proto: https and SECURE_PROXY_SSL_HEADER trusts
+      # it, so this redirects plain HTTP without looping behind the proxy.
+      - key: SECURE_SSL_REDIRECT
         value: "True"
       - key: DATABASE_URL
         fromDatabase:
@@ -28,42 +100,94 @@ services:
       - key: REDIS_URL
         fromService:
           name: primekey-redis
-          type: redis
+          type: keyvalue
           property: connectionString
       - key: REDIS_CACHE_URL
         fromService:
           name: primekey-redis
-          type: redis
+          type: keyvalue
           property: connectionString
       - key: DJANGO_Q_REDIS_URL
         fromService:
           name: primekey-redis
-          type: redis
+          type: keyvalue
           property: connectionString
+      # OTP delivery. The from address must match the verified Resend domain,
+      # and DEFAULT_FROM_EMAIL is also the Resend sender in otp_auth/services.py.
       - key: RESEND_API_KEY
         sync: false
-      - key: SENDCHAMP_API_KEY
+      # Contact form / concierge leads. The dev default is the console backend,
+      # which silently discards mail in production.
+      - key: EMAIL_BACKEND
+        value: django.core.mail.backends.smtp.EmailBackend
+      - key: EMAIL_HOST
+        value: smtp.hostinger.com
+      - key: EMAIL_PORT
+        value: "465"
+      - key: EMAIL_USE_SSL
+        value: "True"
+      - key: EMAIL_USE_TLS
+        value: "False"
+      - key: EMAIL_HOST_USER
         sync: false
-      - key: SENDCHAMP_SENDER_ID
-        value: Primekey
-      - key: SENDCHAMP_ROUTE
-        value: dnd
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        value: Primekey Homes <hello@primekeyhomesandpropertiesltd.com>
+      - key: CONTACT_RECIPIENT_EMAIL
+        value: hello@primekeyhomesandpropertiesltd.com
+      # Both live under the mounted disk so they survive redeploys. NDPR exports
+      # are not here: they are stored on ExportRequest.export_payload in Postgres
+      # because the worker writes them and the web service reads them, and a
+      # Render disk cannot be mounted on two services.
+      - key: MEDIA_ROOT
+        value: /var/data/media
+      - key: PROTECTED_STORAGE_DIR
+        value: /var/data/protected
+      # MEDIA_ROOT is served by Django (urls.py serves it explicitly because
+      # django.conf.urls.static.static() is a no-op when DEBUG=False). Set False
+      # once media moves to S3 or a CDN.
+      - key: SERVE_MEDIA
+        value: "True"
+      # Set to False only to boot before the provider key exists. OTPs then
+      # return 503 until the key is added, so do not leave it off.
+      - key: REQUIRE_OTP_PROVIDERS
+        value: "True"
 
   - type: worker
     name: primekey-worker
-    runtime: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: .
-    dockerCommand: python manage.py qcluster
-    plan: starter
+    runtime: python
+    rootDir: backend
+    region: oregon
+    # Workers have no free plan, so this cannot be `free`.
+    plan: 0.5c-512mb
+    buildCommand: >-
+      pip install --upgrade pip &&
+      pip install -r requirements.txt
+    startCommand: python manage.py qcluster
+    autoDeployTrigger: commit
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.13.15"
+      - key: PYTHONUNBUFFERED
+        value: "1"
       - key: DEBUG
         value: "False"
+      # The worker boots Django settings too, so it must pass the same
+      # production guard as the web service (ALLOWED_HOSTS is not optional).
       - key: SECRET_KEY
         fromService:
           name: primekey-api
           type: web
           property: SECRET_KEY
+      - key: ALLOWED_HOSTS
+        value: primekey-api.onrender.com
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://primekey.vercel.app
+      - key: CORS_ALLOW_CREDENTIALS
+        value: "True"
+      - key: SPECTACULAR_RESTRICT_DOCS
+        value: "True"
       - key: DATABASE_URL
         fromDatabase:
           name: primekey-db
@@ -71,34 +195,47 @@ services:
       - key: REDIS_URL
         fromService:
           name: primekey-redis
-          type: redis
+          type: keyvalue
           property: connectionString
       - key: REDIS_CACHE_URL
         fromService:
           name: primekey-redis
-          type: redis
+          type: keyvalue
           property: connectionString
       - key: DJANGO_Q_REDIS_URL
         fromService:
           name: primekey-redis
-          type: redis
+          type: keyvalue
           property: connectionString
       - key: RESEND_API_KEY
         sync: false
-      - key: SENDCHAMP_API_KEY
-        sync: false
-      - key: SENDCHAMP_SENDER_ID
-        value: Primekey
-      - key: SENDCHAMP_ROUTE
-        value: dnd
+      # No disk and no storage env vars on the worker. The only file it used to
+      # write was the NDPR export, which now lives in Postgres, and a Render disk
+      # cannot be mounted on two services in any case.
+
+  # Render Key Value lives under `services`, not `databases`, which is
+  # Postgres-only. ipAllowList is a required field; [] means internal-only.
+  - type: keyvalue
+    name: primekey-redis
+    region: oregon
+    # free = 25 MB / 50 connections / in-memory only, and this instance carries
+    # the cache, sessions, axes counters and the django-q broker. See
+    # PRODUCTION_READY.md 7.7 before the first deploy.
+    plan: free
+    ipAllowList: []
+    # allkeys-lru is a cache policy, but this instance also holds the django-q
+    # job queue: once memory fills, it can evict queued jobs. See 7.7.
+    maxmemoryPolicy: allkeys-lru
 
 databases:
   - name: primekey-db
-    plan: starter
+    region: oregon
+    plan: 0.5c-1g
+    # Cannot be changed after creation. Pinned to match the postgres:16-alpine
+    # image CI verifies migrations against; the platform default is now 18.
+    postgresMajorVersion: "16"
     databaseName: primekey
     user: primekey
+    # Private network only. scripts/backup.sh must therefore run from the Render
+    # Shell or a one-off job, not from a laptop.
     ipAllowList: []
-
-  - name: primekey-redis
-    plan: free
-    maxmemoryPolicy: allkeys-lru

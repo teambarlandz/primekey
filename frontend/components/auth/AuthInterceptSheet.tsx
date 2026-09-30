@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Phone, Lock, ArrowRight, RotateCcw, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { ShieldCheck, Mail, Lock, ArrowRight, RotateCcw, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -30,12 +30,12 @@ export const AuthInterceptSheet: React.FC<AuthInterceptSheetProps> = ({
   pendingActionData,
   onSuccess,
 }) => {
-  const [step, setStep] = useState<'phone' | 'otp'>('phone');
-  const [phone, setPhone] = useState('');
+  const [step, setStep] = useState<'email' | 'otp'>('email');
+  const [email, setEmail] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resendTimer, setResendTimer] = useState(60);
-  const [phoneError, setPhoneError] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [apiError, setApiError] = useState('');
 
   // Countdown timer for OTP resend
@@ -47,32 +47,21 @@ export const AuthInterceptSheet: React.FC<AuthInterceptSheetProps> = ({
     return () => clearInterval(timer);
   }, [step, resendTimer]);
 
-  // Accepts Nigerian phone (Sendchamp SMS) or email (Resend)
-  const isEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
-  const validateNigerianPhone = (num: string) => {
-    const cleaned = num.replace(/\s+/g, '');
-    const regex = /^(?:\+234|234|0)[789][01]\d{8}$/;
-    return regex.test(cleaned);
-  };
-  const validateIdentifier = (val: string) => {
-    const v = val.trim();
-    if (!v) return false;
-    if (v.includes('@')) return isEmail(v);
-    return validateNigerianPhone(v);
-  };
+  // Email is the only OTP channel
+  const validateEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setApiError('');
-    if (!validateIdentifier(phone)) {
-      setPhoneError('Please enter a valid Nigerian phone number (e.g., 08012345678) or email address');
+    if (!validateEmail(email)) {
+      setEmailError('Please enter a valid email address (e.g., you@example.com)');
       return;
     }
-    setPhoneError('');
+    setEmailError('');
     setIsSubmitting(true);
 
     try {
-      const response = await submitOTP(phone, 'login');
+      const response = await submitOTP(email.trim(), 'login');
       const responseData = response.data as { dev_code?: string } | undefined;
       if (responseData?.dev_code && process.env.NODE_ENV !== 'production') {
         // DEV ONLY — dev_code is never returned in production (is_dev_client guard)
@@ -83,7 +72,7 @@ export const AuthInterceptSheet: React.FC<AuthInterceptSheetProps> = ({
       setResendTimer(60);
     } catch (error: any) {
       setIsSubmitting(false);
-      setPhoneError(error.message || 'Failed to send OTP. Please try again.');
+      setEmailError(error.message || 'Failed to send OTP. Please try again.');
     }
   };
 
@@ -109,7 +98,7 @@ export const AuthInterceptSheet: React.FC<AuthInterceptSheetProps> = ({
     setIsSubmitting(true);
 
     try {
-      const response = await verifyOTP(phone, fullCode, 'login');
+      const response = await verifyOTP(email.trim(), fullCode, 'login');
       const verifyData = response.data as { access: string; refresh: string; user: { id: string; phone: string; is_new_user: boolean } } | undefined;
       if (!verifyData) throw new Error('Invalid response from server');
       const { access, refresh, user } = verifyData;
@@ -130,10 +119,10 @@ export const AuthInterceptSheet: React.FC<AuthInterceptSheetProps> = ({
   };
 
   const handleReset = () => {
-    setStep('phone');
-    setPhone('');
+    setStep('email');
+    setEmail('');
     setOtp(['', '', '', '', '', '']);
-    setPhoneError('');
+    setEmailError('');
     setApiError('');
   };
 
@@ -148,7 +137,7 @@ export const AuthInterceptSheet: React.FC<AuthInterceptSheetProps> = ({
               <ShieldCheck className="w-6 h-6" />
             </div>
             <SheetTitle className="font-heading text-2xl font-bold text-[#04164a]">
-              {step === 'phone' ? 'Quick Sign In' : 'Enter Verification Code'}
+              {step === 'email' ? 'Quick Sign In' : 'Enter Verification Code'}
             </SheetTitle>
             <SheetDescription className="font-body text-slate-600 text-sm">
               Please sign in to complete your request to{' '}
@@ -156,31 +145,32 @@ export const AuthInterceptSheet: React.FC<AuthInterceptSheetProps> = ({
             </SheetDescription>
           </SheetHeader>
 
-          {/* STEP 1: Phone Number Input */}
-          {step === 'phone' && (
+          {/* STEP 1: Email Input */}
+          {step === 'email' && (
             <form onSubmit={handleSendOtp} className="space-y-4">
               <div className="space-y-1.5">
                 <label className="font-body text-xs font-semibold text-[#04164a]">
-                  Phone or Email
+                  Email Address
                 </label>
                 <div className="relative">
-                  <Phone className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                  <Mail className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
                   <Input
-                    type="text"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="08012345678 or you@example.com"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    autoComplete="email"
                     className="pl-10 h-11 border-slate-200 font-body focus:ring-[#04164a]/20 rounded-xl"
                   />
                 </div>
-                {phoneError && (
-                  <p className="font-body text-xs text-rose-600 pt-1">{phoneError}</p>
+                {emailError && (
+                  <p className="font-body text-xs text-rose-600 pt-1">{emailError}</p>
                 )}
               </div>
 
               <Button
                 type="submit"
-                disabled={isSubmitting || !phone}
+                disabled={isSubmitting || !email.trim()}
                 className="w-full bg-[#04164a] hover:bg-[#04164a]/90 text-white font-heading h-11 rounded-xl flex items-center justify-center gap-2"
               >
                 {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Send Verification Code'}
@@ -194,7 +184,7 @@ export const AuthInterceptSheet: React.FC<AuthInterceptSheetProps> = ({
             <form onSubmit={handleVerifyOtp} className="space-y-5">
               <div className="space-y-2">
                 <p className="font-body text-xs text-slate-500">
-                  We sent a 6-digit code to <strong className="text-slate-800">{phone}</strong>
+                  We sent a 6-digit code to <strong className="text-slate-800">{email}</strong>
                 </p>
                 <div className="flex gap-2 justify-between py-2">
                   {otp.map((digit, idx) => (
@@ -223,10 +213,10 @@ export const AuthInterceptSheet: React.FC<AuthInterceptSheetProps> = ({
               <div className="flex items-center justify-between font-body text-xs pt-2">
                 <button
                   type="button"
-                  onClick={() => setStep('phone')}
+                  onClick={() => setStep('email')}
                   className="text-slate-500 hover:text-[#04164a] underline"
                 >
-                  Change Phone
+                  Change Email
                 </button>
 
                 <button

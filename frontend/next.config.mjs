@@ -1,5 +1,7 @@
 ﻿/** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Required by frontend/Dockerfile (copies .next/standalone, runs server.js)
+  // for the docker-compose/VPS deploy path. Vercel ignores this flag.
   output: 'standalone',
   reactStrictMode: true,
   images: {

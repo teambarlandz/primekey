@@ -394,6 +394,55 @@ class TestConfigGuards:
             secret_key="abc123DEF456ghi789JKL012mno345QRS678tuv901WXZ23456",
             debug=False,
             allowed_hosts=["example.com"],
+            resend_api_key="re_test",
+        )
+
+
+# ===========================================================================
+# A04: Insecure Design — OTP provider configuration guard
+# ===========================================================================
+
+class TestOTPProviderGuards:
+    """
+    Without this guard a missing RESEND_API_KEY makes the send endpoint answer
+    200 while nothing is ever delivered, so a broken OTP integration looks
+    identical to a working one.
+    """
+
+    SECRET = "abc123DEF456ghi789JKL012mno345QRS678tuv901WXZ23456"
+    HOSTS = ["primekey-api.onrender.com"]
+
+    def test_reject_missing_resend_key_in_production(self):
+        with pytest.raises(ImproperlyConfigured, match="RESEND_API_KEY"):
+            validate_production_settings(
+                secret_key=self.SECRET,
+                debug=False,
+                allowed_hosts=self.HOSTS,
+            )
+
+    def test_reject_whitespace_resend_key(self):
+        with pytest.raises(ImproperlyConfigured, match="RESEND_API_KEY"):
+            validate_production_settings(
+                secret_key=self.SECRET,
+                debug=False,
+                allowed_hosts=self.HOSTS,
+                resend_api_key="   ",
+            )
+
+    def test_explicit_opt_out_allows_bootstrap_deploy(self):
+        """REQUIRE_OTP_PROVIDERS=False is the documented escape hatch."""
+        validate_production_settings(
+            secret_key=self.SECRET,
+            debug=False,
+            allowed_hosts=self.HOSTS,
+            require_otp_providers=False,
+        )
+
+    def test_debug_skips_provider_validation(self):
+        validate_production_settings(
+            secret_key="short",
+            debug=True,
+            allowed_hosts=[],
         )
 
 

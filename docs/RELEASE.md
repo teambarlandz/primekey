@@ -1,14 +1,19 @@
 # Release & Publishing — Primekey Homes
 
-> Status: draft · Version: 0.1 · Owner: @teambarlandz · Last updated: 2026-08-17
-> From "merge to master" to "live on the VPS".
+> Status: draft · Version: 0.1 · Owner: @teambarlandz · Last updated: 2026-09-30
+> From "merge to master" to "live in production".
+>
+> Production topology is Vercel (frontend) + Render (API, worker, Postgres,
+> Redis). `PRODUCTION_READY.md` is the authoritative runbook; the
+> `docker-compose` stack and nginx are local-development only.
 
 ## 1. Versioning
 
 - **SemVer** (`X.Y.Z`): major = breaking UX/API contract; minor = features;
   patch = fixes. Pre-release: `-rc.N`.
 - Source of truth: git tag `vX.Y.Z` + `CHANGELOG.md`; the tagged commit must
-  match what CI deployed (verified by the deploy job's `git pull --ff-only`).
+  match what shipped. Render and Vercel both record the deployed commit on the
+  release, so verify the tag against those dashboards rather than CI.
 - Changelog: [CHANGELOG.md](../CHANGELOG.md) — Unreleased section merged into
   the release section at tagging (keep-a-changelog style).
 
@@ -55,29 +60,33 @@ Rules:
 
 ## 5. Rollback
 
-- Deployment is `git pull --ff-only` + `docker compose up -d` — rollback is
-  therefore: checkout the previous tag on the server and rebuild.
+- Production deploys from git: Render (`render.yaml`, `autoDeployTrigger: commit`)
+  builds the API on push to `master` and Vercel rebuilds the frontend. Rollback is
+  therefore: revert or `git revert` the bad commit on `master`, or promote the
+  previous tag — Render and Vercel both redeploy from the resulting commit. No
+  server-side build step and no SSH.
 - Database migrations are **not** automatically rolled back. If a release
-  shipped a migration that must be reverted, restore from `scripts/backup.sh`
-  output (verified restore drill monthly) or apply the reverse migration
-  manually — never silently drop data.
+  shipped a migration that must be reverted, restore from Render's managed
+  backups (or the off-site copy from `scripts/backup.sh`, restore drill monthly)
+  or apply the reverse migration manually — never silently drop data.
 - Decision gate: if the failure is data-affecting, prefer restore-from-backup
   over schema reversal.
 
 ## 6. Post-release duties
 
-- Weekly: verify backup logs (cron ran), check /api/health + error logs, disk
-  usage, SSL validity.
-- Monthly: restore drill — restore the latest backup to a staging DB and
+- Weekly: confirm Render's scheduled Postgres backups completed, check
+  `/api/health`, review logs, check `/var/data` disk usage.
+- Monthly: restore drill — restore the latest backup to a scratch database and
   verify counts (NDPR retention logs, leads).
 - Quarterly: security patches (`pip-audit`/`npm audit` output in CI artifacts),
-  Docker image updates, OS patches on the VPS.
+  dependency bumps on Render and Vercel.
 - Yearly: NDPR compliance audit logs review; update privacy policy version.
 
 ## 7. Operational contacts
 
-- VPS + domain: hosting partner (see deployment-ops.md handoff checklist).
-- Email delivery: Hostinger SMTP (`hello@primekeyhomesandpropertiesltd.com`) — see root
-  `TODO.md` §"To switch to real Hostinger SMTP".
+- Backend/API hosting: Render (services, Postgres, Redis — created from
+  `render.yaml`). Frontend hosting: Vercel. DNS: the domain registrar.
+- OTP delivery: Resend (`RESEND_API_KEY`, verified sender domain required).
+- Email delivery: Hostinger SMTP (`hello@primekeyhomesandpropertiesltd.com`).
 - Monitoring: UptimeRobot/Better Stack pinging `https://<domain>/api/health`
   every 5 minutes (register at go-live).

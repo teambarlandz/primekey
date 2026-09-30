@@ -51,7 +51,33 @@ def validate_allowed_hosts(hosts):
         )
 
 
-def validate_production_settings(*, secret_key, debug, allowed_hosts):
+def validate_otp_providers(*, resend_api_key, required=True):
+    """
+    Reject an unconfigured email OTP provider in production.
+
+    Without this, a missing API key makes ``send_otp_via_resend`` return
+    ``False`` and the send endpoint still answers 200, so the client sees
+    "OTP sent" while nothing is ever delivered. Fail at boot instead.
+    """
+    if not required:
+        return
+
+    if not (resend_api_key or "").strip():
+        raise ImproperlyConfigured(
+            "RESEND_API_KEY is not set, so email OTP cannot be delivered. "
+            "Set it in the deployment environment, or set "
+            "REQUIRE_OTP_PROVIDERS=False to boot without OTP delivery."
+        )
+
+
+def validate_production_settings(
+    *,
+    secret_key,
+    debug,
+    allowed_hosts,
+    require_otp_providers=True,
+    resend_api_key="",
+):
     """
     Full production guard. Raises ``ImproperlyConfigured`` on any violation.
     """
@@ -61,3 +87,7 @@ def validate_production_settings(*, secret_key, debug, allowed_hosts):
         return
     validate_secret_key(secret_key)
     validate_allowed_hosts(allowed_hosts)
+    validate_otp_providers(
+        resend_api_key=resend_api_key,
+        required=require_otp_providers,
+    )

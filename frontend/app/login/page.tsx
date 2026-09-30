@@ -196,12 +196,13 @@ function LoginContent() {
             config={{
               icon: <ShieldCheck className="w-7 h-7" />,
               title: 'Quick Sign In',
-              subtitle: "We'll send a 6-digit code to your phone",
-              phoneLabel: 'Nigerian Phone Number',
+              subtitle: "We'll send a 6-digit code to your email",
+              emailLabel: 'Email Address',
+              emailPlaceholder: 'you@example.com',
               verifyButtonLabel: 'Verify & Sign In',
             }}
-            sendOtp={(phone) => submitOTP(phone, 'login')}
-            verifyOtp={(phone, code) => verifyOTP(phone, code, 'login')}
+            sendOtp={(email) => submitOTP(email, 'login')}
+            verifyOtp={(email, code) => verifyOTP(email, code, 'login')}
             onSuccess={(result, rememberDevice) => {
               const verifyData = result?.data as
                 | { access: string; refresh: string; user: { id: string; phone: string; is_new_user: boolean } }

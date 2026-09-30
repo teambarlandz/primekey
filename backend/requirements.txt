@@ -1,29 +1,52 @@
-Django>=4.0.0
-djangorestframework
-django-cors-headers==4.3.0
-psycopg2-binary>=2.9.9
-whitenoise==6.6.0
-python-dotenv==1.0.0
-django-environ
-gunicorn==21.2.0
+# Runtime dependencies. Everything the application imports in production.
+# Dev/test tooling lives in requirements-dev.txt so a native Render build does
+# not compile pytest, black, mypy, bandit and their transitive dependencies,
+# and so pip-audit only reports on libraries the app actually loads.
+#
+# Django 6.1 is what CI (PYTHON_VERSION 3.13), the local venv and render.yaml's
+# PYTHON_VERSION all run. The upper bound stops a native Render build from
+# silently pulling a future major release. Other packages use ~= so a rebuild
+# can pick up patches without silently changing majors.
+
+# Core
+Django>=6.1,<6.2
+
+# API
+djangorestframework~=3.18.0
 djangorestframework-simplejwt==5.5.1
-django-allauth==0.60.0
-django-csp
-django-q2==1.11.1
+drf-spectacular==0.27.0
+
+# Database
+psycopg2-binary~=2.9.9
+
+# Cache, sessions, rate limiting, brute-force protection, task queue
+redis~=8.1.0
+django-redis==5.4.0
 django-ratelimit==4.1.0
 django-axes==8.3.1
-drf-spectacular==0.27.0
-redis>=5.0.0
-django-redis==5.4.0
-requests>=2.31.0
+django-q2==1.11.1
+
+# Transport and HTTP hardening
+django-cors-headers==4.3.0
+# Installed but NOT in INSTALLED_APPS, so no CSP is currently enforced. Wire
+# csp.middleware.CSPMiddleware or drop this line; see PRODUCTION_READY.md 7.7.
+django-csp~=4.0
+
+# Static and media files. The [brotli] extra is what Render's Django guide
+# recommends; without it compressed assets are gzip-only.
+whitenoise[brotli]==6.6.0
+
+# Configuration and process serving
+django-environ~=0.14.0
+python-dotenv==1.0.0
+gunicorn==21.2.0
+
+# Outbound HTTP (Resend OTP delivery)
+requests~=2.34.0
+
+# Admin theme
 django-unfold==0.102.0
-pytest==8.0.0
-pytest-django==4.8.0
-factory-boy==3.3.0
-Faker>=22.0.0
-black>=24.0.0
-flake8==7.0.0
-mypy==1.8.0
-isort==5.13.0
-bandit>=1.7.0
-pip-audit>=2.7.0
+
+# Also unused: no middleware and no INSTALLED_APPS entry. Kept only until the
+# auth approach is decided (PRODUCTION_READY.md 7.7).
+django-allauth==0.60.0
