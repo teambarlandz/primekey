@@ -326,9 +326,11 @@ EMAIL_HOST_PASSWORD=change_me
 
 Backup Strategy
 
-> **Implemented (2026-08-17):** `scripts/backup.sh` (DB) and `scripts/backup_media.sh`
-> (media volume) ship in the repository. Configure `COMPOSE_DIR`, `RCLONE_REMOTE`,
-> and `RETENTION_DAYS` as needed; schedule via the cron lines below.
+> **Implemented (2026-08-17):** `scripts/backup.sh` (PostgreSQL) ships in the
+> repository. Configure `COMPOSE_DIR`, `RCLONE_REMOTE`, and `RETENTION_DAYS` as
+> needed; schedule via the cron lines below. `scripts/backup_media.sh` was
+> removed once media moved to the Render disk, so the volume is now covered by
+> the database snapshot plus the disk.
 
 PostgreSQL Backup (Automated)
 

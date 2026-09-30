@@ -11,17 +11,21 @@ primekey/
 ├── docs/          Engineering specs: ADR, TESTING, RELEASE, PERFORMANCE,
 │                  DATA_MODEL, ACCESSIBILITY, PRD
 ├── frontend/docs/context/  AI-workflow context files (progress-tracker etc.)
-├── scripts/       ops scripts (backup.sh, backup_media.sh)
-├── nginx/         edge proxy config
+├── scripts/       ops scripts (backup.sh)
+├── nginx/         local-development edge proxy config
 └── .github/workflows/ci.yml  CI/CD
 ```
+
+> The `docker-compose.yml` stack (db, redis, backend, worker, frontend, nginx) is
+> local development only. Production runs the backend on Render's native Python
+> runtime and the frontend on Vercel; see `PRODUCTION_READY.md`.
 
 ## 2. Branch model
 
 | Branch | Purpose | Deploys |
 |--------|---------|---------|
-| `master` | Production. Protected: CI green + 1 review, no direct pushes | production VPS |
-| `develop` | Integration / staging | staging VPS |
+| `master` | Production. Protected: CI green + 1 review | Render (auto-deploy on push) + Vercel |
+| `develop` | Integration | none (CI only) |
 | `fix/*` | Hotfix branches off a tag (see RELEASE.md) | via master |
 
 Workflow: branch off `develop` (or `master` for hotfixes) → PR → CI green →

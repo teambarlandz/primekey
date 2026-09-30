@@ -109,8 +109,8 @@
 ## ADR-008 · Lead scoring and SLA as service-layer logic
 
 - **Status:** Accepted (2026-08)
-- **Context:** Review.md planned a scoring engine; scoring rules were not
-  product-defined (ai-workflow-rules "do not invent").
+- **Context:** An earlier project review planned a scoring engine; scoring rules
+  were not product-defined (ai-workflow-rules "do not invent").
 - **Decision:** `LeadScoringService` implements a documented 6-factor model
   (budget, location, property type, bedrooms, completeness, urgency → 0-100,
   persisted breakdown). `SLAAlertService` flags warning at 30 min, breach at
@@ -173,7 +173,7 @@
 ## ADR-013 · Vitest (unit) + Cypress (e2e) for frontend verification
 
 - **Status:** Accepted (2026-08)
-- **Context:** Review.md flagged zero frontend tests and no e2e.
+- **Context:** An earlier project review flagged zero frontend tests and no e2e.
 - **Decision:** Vitest + Testing Library for schema/component unit tests
   (`lib/validations/*.test.ts`, `vitest.config.ts`); Cypress for critical-path
   e2e (`cypress/e2e/critical-paths.cy.ts`, `refinements.cy.ts`) with base URL
