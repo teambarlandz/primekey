@@ -176,14 +176,6 @@ services:
         value: Primekey Homes <hello@primekeyhomesandpropertiesltd.com>
       - key: CONTACT_RECIPIENT_EMAIL
         value: hello@primekeyhomesandpropertiesltd.com
-      # Both live under the mounted disk so they survive redeploys. NDPR exports
-      # are not here: they are stored on ExportRequest.export_payload in Postgres
-      # because the worker writes them and the web service reads them, and a
-      # Render disk cannot be mounted on two services.
-      - key: MEDIA_ROOT
-        value: /var/data/media
-      - key: PROTECTED_STORAGE_DIR
-        value: /var/data/protected
       # MEDIA_ROOT is served by Django (urls.py serves it explicitly because
       # django.conf.urls.static.static() is a no-op when DEBUG=False). Set False
       # once media moves to S3 or a CDN.

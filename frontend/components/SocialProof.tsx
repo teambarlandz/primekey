@@ -13,6 +13,14 @@ gsap.registerPlugin(ScrollTrigger);
 // Exact Brand Navy
 const BRAND_COLOR = '#04164a';
 
+// Intrinsic pixel sizes, taken from each PNG's IHDR header. Next.js needs these
+// up front to reserve layout space and avoid a shift while the image loads.
+const BRAND_LOGOS = [
+  { src: '/assets/brands/brand-1.png', alt: 'Trusted partner brand 1', width: 1195, height: 896 },
+  { src: '/assets/brands/brand-2.png', alt: 'Trusted partner brand 2', width: 1100, height: 960 },
+  { src: '/assets/brands/brand-3.png', alt: 'Trusted partner brand 3', width: 2752, height: 688 },
+] as const;
+
 interface Testimonial {
   id: number;
   quote: string;
@@ -87,13 +95,16 @@ export default function SocialProof() {
             Trusted by leading brands & featured in
           </p>
           <ul className="flex flex-wrap justify-center items-center gap-8 md:gap-16" role="list">
-            {[1, 2, 3].map((num) => (
-              <li key={num} className="flex items-center justify-center">
+            {/* These files are PNG, not SVG. They were previously committed with an
+                .svg extension, so Next.js served them as image/svg+xml and the browser
+                failed to parse PNG bytes as XML, rendering a broken image. */}
+            {BRAND_LOGOS.map((logo) => (
+              <li key={logo.src} className="flex items-center justify-center">
                 <Image
-                  src={`/assets/brands/brand-${num}.svg`}
-                  alt={`Trusted partner brand ${num}`}
-                  width={120}
-                  height={40}
+                  src={logo.src}
+                  alt={logo.alt}
+                  width={logo.width}
+                  height={logo.height}
                   className="h-8 w-auto object-contain grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-300"
                 />
               </li>
