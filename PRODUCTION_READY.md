@@ -643,8 +643,11 @@ and [free](https://render.com/docs/free).
 | V2 | `cannot refer to SECRET_KEY against service primekey-api of type web` | `sync: false` on the worker's `SECRET_KEY` | The same value must be pasted into both services by hand |
 | V3 | Pre-deploy command is **paid-only** (web services, private services, background workers) | `migrate` moved from `preDeployCommand` into `buildCommand` | Migrations now run per deploy against the live schema; revert to `preDeployCommand` when paid |
 
-Also changed for free: gunicorn `--workers 3` → `1` (free is 0.1 CPU) and
-`--graceful-timeout` 120 → 60, still under `maxShutdownDelaySeconds: 120`.
+| V4 | `max shutdown delay is not supported for free tier services` | `maxShutdownDelaySeconds` removed from `primekey-api` | Render's fixed 30s shutdown delay applies; gunicorn `--graceful-timeout` lowered to 20s and `--timeout` to 25s to stay inside it |
+
+Also changed for free: gunicorn `--workers 3` → `1` (free is 0.1 CPU). When the
+web service goes paid, restore `maxShutdownDelaySeconds: 120` and raise
+`--graceful-timeout` back to 60; on a real disk, restore the `disk:` block too.
 
 #### Free-plan limits that are NOT fixed in code
 

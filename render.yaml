@@ -62,23 +62,25 @@ services:
     # 1 worker: the free plan has 0.1 CPU, so 3 processes would thrash. gunicorn
     # still handles concurrent requests, just without parallelism.
     # max-requests recycles the worker so a slow leak cannot grow unbounded.
-    # --graceful-timeout is held below maxShutdownDelaySeconds (120) so a
-    # worker draining a request is not SIGKILLed mid-response.
+    # --graceful-timeout is held below Render's default 30s shutdown delay,
+    # because free services cannot set maxShutdownDelaySeconds
+    # ("max shutdown delay is not supported for free tier services"). Render
+    # SIGKILLs at 30s, so a worker holding it longer loses the response.
     startCommand: >-
       gunicorn core.wsgi:application
       --bind 0.0.0.0:$PORT
       --workers 1
-      --timeout 120
-      --graceful-timeout 60
+      --timeout 25
+      --graceful-timeout 20
       --max-requests 1200
       --max-requests-jitter 100
       --access-logfile -
       --error-logfile -
     healthCheckPath: /api/health/
-    # Only valid without a disk, which is the case now. Keeps the 120s gunicorn
-    # graceful-timeout below honest: Render will not kill a draining worker
-    # before gunicorn's own timer expires.
-    maxShutdownDelaySeconds: 120
+    # No maxShutdownDelaySeconds: rejected on the free tier
+    # ("max shutdown delay is not supported for free tier services"). Render's
+    # fixed 30s default applies, which is why --graceful-timeout is 20 above.
+    # Add it back (120) when the service goes paid.
     autoDeployTrigger: commit
     # No disk. Free instances cannot mount one, and a disk would additionally
     # disable zero-downtime deploys. Uploads are therefore ephemeral; see the
