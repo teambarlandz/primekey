@@ -622,50 +622,73 @@ Regression checks after the changes: `manage.py check` clean,
 
 #### Still open (deliberately, pending the decisions in 7.7)
 
-- **H1/H2 - Redis keyspace.** All three URLs still come from the same
-  `connectionString` (`redis://red-xxx:6379`, no DB index), so they resolve to db
-  0 in production, and `maxmemoryPolicy` is still `allkeys-lru`. Fixing this
-  correctly means deciding whether to split the broker from the cache.
 - **H5** - `django-allauth` and `django-csp` are still installed but unused, so
   **no CSP is enforced**. Note that `django-allauth` drags in `cryptography`,
   `oauthlib`, `python3-openid` and `requests-oauthlib` for nothing.
 - **H6** - `scripts/backup.sh` still needs to run from inside Render's network.
 
-### 7.9 Free-plan constraints applied (2026-10-02)
+### 7.9 Render validation errors and the paid-plan configuration (2026-10-02)
 
-`render blueprints validate` rejected the Blueprint, and the free compute plan
-forced three further changes. Sources: [deploys](https://render.com/docs/deploys)
-and [free](https://render.com/docs/free).
+`render blueprints validate` rejected the Blueprint four times. Each error is
+recorded below with the fix, because three of them are mutually-constraining
+rules rather than typos. Sources: [blueprint-spec](https://render.com/docs/blueprint-spec),
+[deploys](https://render.com/docs/deploys), [free](https://render.com/docs/free),
+[disks](https://render.com/docs/disks), [pricing](https://render.com/pricing).
 
-| # | Render's error / rule | Fix | Consequence |
-|---|---|---|---|
-| V1 | `max shutdown delay is not supported for services with a disk` | Removed the `disk:` block from `primekey-api` | Uploads are now **ephemeral**; see 6.2. Zero-downtime deploys are **restored** as a side effect |
-| V2 | `cannot refer to SECRET_KEY against service primekey-api of type web` | `sync: false` on the worker's `SECRET_KEY` | The same value must be pasted into both services by hand |
-| V3 | Pre-deploy command is **paid-only** (web services, private services, background workers) | `migrate` moved from `preDeployCommand` into `buildCommand` | Migrations now run per deploy against the live schema; revert to `preDeployCommand` when paid |
+| # | Render's error / rule | Fix |
+|---|---|---|
+| V1 | `max shutdown delay is not supported for services with a disk` | `disk:` and `maxShutdownDelaySeconds` are **mutually exclusive**; see the note below |
+| V2 | `cannot refer to SECRET_KEY against service primekey-api of type web` | Worker `SECRET_KEY` is `sync: false`; a `generateValue: true` secret is not an exportable property |
+| V3 | Pre-deploy command is **paid-only** (web services, private services, background workers) | `migrate` belongs in `preDeployCommand`, which is where it now is |
+| V4 | `max shutdown delay is not supported for free tier services` | Resolved by the paid plan (V1 still blocks it) |
 
-| V4 | `max shutdown delay is not supported for free tier services` | `maxShutdownDelaySeconds` removed from `primekey-api` | Render's fixed 30s shutdown delay applies; gunicorn `--graceful-timeout` lowered to 20s and `--timeout` to 25s to stay inside it |
+**V1 is the important one.** Render cannot honour a custom shutdown delay on a
+disk-backed service, and a disk-backed service cannot have zero-downtime deploys.
+These are a fixed pair of trade-offs, not independent settings. The
+configuration below takes the disk, because losing agent resumes and compliance
+uploads on every deploy is worse than a few seconds of downtime per deploy.
 
-Also changed for free: gunicorn `--workers 3` → `1` (free is 0.1 CPU). When the
-web service goes paid, restore `maxShutdownDelaySeconds: 120` and raise
-`--graceful-timeout` back to 60; on a real disk, restore the `disk:` block too.
+#### Production configuration (`plan: 0.5c-512mb`, $7/mo per service)
 
-#### Free-plan limits that are NOT fixed in code
+| Resource | Plan | Cost |
+|---|---|---|
+| `primekey-api` (web) | `0.5c-512mb` + 10 GB disk | $7.00 + $2.50 |
+| `primekey-worker` | `0.5c-512mb` | $7.00 |
+| `primekey-db` (Postgres) | `0.5c-1g`, pg 16 | $19.00 |
+| `primekey-redis` (Key Value) | `256mb`, `noeviction` | $10.00 |
+| **Total** | | **≈ $45.50/mo** |
 
-- Service **spins down after 15 min idle**; the first request afterwards takes
-  roughly a minute and Render shows a loading page. The first curl will look
-  like a timeout.
-- **Uploads are lost** on every deploy, restart, *and* spin-down. This is
-  broader than the earlier disk-based data loss.
-- Free Postgres **expires 30 days after creation** (14-day grace period, then
-  Render deletes the data). `primekey-db` is currently `0.5c-1g`, i.e. paid.
-- Free services **cannot send outbound traffic on ports 25/465/587**, so the
-  Hostinger SMTP contact form cannot work from a free web service. OTP via
-  Resend uses HTTPS 443 and is unaffected.
-- Free web services have **no shell access**, which also blocks
-  `python manage.py createsuperuser` from the Render dashboard. Use a one-off
-  job on a paid plan, or a temporary management command.
-- No persistent disk, no scaling beyond one instance, no edge caching, no
-  managed backups on free Postgres.
+- `disk:` restored on `primekey-api` (`primekey-data`, `/var/data`, 10 GB), with
+  `MEDIA_ROOT=/var/data/media` and `PROTECTED_STORAGE_DIR=/var/data/protected`
+  so uploads persist. Without these two env vars the disk would be mounted but
+  never written to, and `settings.py` would fall back to `BASE_DIR/media` on
+  the ephemeral filesystem.
+- `migrate` moved **back** to `preDeployCommand`. Running it in `buildCommand`
+  was only ever a free-tier workaround and it races the still-serving instance.
+- gunicorn `--workers 2` (the paid plan has 0.5 CPU, not the free 0.1 CPU).
+- `--graceful-timeout 20` / `--timeout 25` stay below Render's fixed 30s
+  shutdown delay, which applies because the disk blocks V1's setting.
+- Key Value moved `free` → `256mb` and `allkeys-lru` → `noeviction`. The free
+  instance is 25 MB and in-memory only, so a restart silently drops the
+  django-q broker; and an LRU policy can evict queued jobs.
+- **H1/H2 fixed in code**: `settings._redis_db()` now forces the three URLs onto
+  separate logical databases, because Render's `connectionString` has no index
+  and would otherwise collapse the cache and the job broker onto db 0. Cache is
+  db 1, django-q broker is db 2, general Redis is db 0.
+
+#### Still open on the paid plan
+
+- **H5 (CSP)** - `django-csp` and `django-allauth` are installed but not in
+  `INSTALLED_APPS`, so nothing is enforced. Decide: enable a policy, or drop
+  both dependencies.
+- `CORS_ALLOWED_ORIGINS` is still the placeholder `https://primekey.vercel.app`
+  (two places in `render.yaml`). Replace with the real Vercel URL, or every
+  browser request fails even though the API is healthy.
+- `EMAIL_HOST_USER` / `EMAIL_HOST_PASSWORD` are still `sync: false`. Without
+  them the contact form falls back to the console backend and silently discards
+  every submission.
+- `RESEND_API_KEY` must be pasted on **both** services, along with the shared
+  `SECRET_KEY` value.
 
 Verification still owed once credentials exist: `render blueprints validate
 render.yaml` against Render's own API, a first real deploy, and a `curl` of

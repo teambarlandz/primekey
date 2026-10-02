@@ -37,39 +37,36 @@ services:
     runtime: python
     rootDir: backend
     region: oregon
-    # Free tier: 0.1 CPU / 512 MB, spins down after ~15 min idle, and Render
-    # gives free web services 750 hours/month. The old `starter` plan id no
-    # longer exists in Render's blueprint schema.
+    # Paid "Individual" tier: 0.5 CPU / 512 MB ($7/mo per render.com/pricing).
+    # The old `starter` plan id no longer exists in Render's blueprint schema.
     #
-    # Free instances cannot mount a persistent disk, so there is no `disk:` block
-    # here. Consequence, tracked in PRODUCTION_READY.md 6.2: MEDIA_ROOT is the
-    # container's ephemeral filesystem, so agent resumes (apps/accounts 78) and
-    # compliance document uploads (apps/compliance 185) are DELETED on every
-    # deploy. Move these to object storage before accepting real uploads.
-    plan: free
+    # This is the cheapest paid plan and it unlocks three things the free tier
+    # refused: a persistent disk, the pre-deploy command, and a configurable
+    # shutdown delay. See PRODUCTION_READY.md 7.9.
+    plan: 0.5c-512mb
+    # A disk cannot be shared between services and cannot be mounted on a
+    # multi-instance service, so this stays pinned to a single instance.
     numInstances: 1
-    # NO preDeployCommand: Render documents the pre-deploy command as available
-    # for "paid web services, private services, and background workers" only
-    # (render.com/docs/deploys#pre-deploy-command). It is silently ignored on
-    # free, which would leave migrations unapplied, so `migrate` runs here
-    # instead. On a paid plan move it back to preDeployCommand: running it in
-    # the build races the still-serving old instance.
     buildCommand: >-
       pip install --upgrade pip &&
       pip install -r requirements.txt &&
-      python manage.py collectstatic --noinput &&
-      python manage.py migrate --noinput
-    # 1 worker: the free plan has 0.1 CPU, so 3 processes would thrash. gunicorn
-    # still handles concurrent requests, just without parallelism.
-    # max-requests recycles the worker so a slow leak cannot grow unbounded.
-    # --graceful-timeout is held below Render's default 30s shutdown delay,
-    # because free services cannot set maxShutdownDelaySeconds
-    # ("max shutdown delay is not supported for free tier services"). Render
-    # SIGKILLs at 30s, so a worker holding it longer loses the response.
+      python manage.py collectstatic --noinput
+    # Migrations live here, NOT in buildCommand, and NOT on the free tier where
+    # pre-deploy commands are unavailable. This is the correct home for them:
+    # it runs once per release, after the build succeeds and before the new
+    # instance serves traffic, so it never races the still-running old one.
+    # The pre-deploy instance cannot see the disk, which is fine - migrate only
+    # touches Postgres.
+    preDeployCommand: python manage.py migrate --noinput
+    # 2 workers fits the plan's 512 MB. Raise with the plan's RAM.
+    # max-requests recycles workers so a slow leak cannot grow unbounded.
+    # --graceful-timeout is 20s because the disk below blocks
+    # maxShutdownDelaySeconds, so Render's fixed 30s shutdown delay applies.
+    # gunicorn must finish draining before Render SIGKILLs at 30s.
     startCommand: >-
       gunicorn core.wsgi:application
       --bind 0.0.0.0:$PORT
-      --workers 1
+      --workers 2
       --timeout 25
       --graceful-timeout 20
       --max-requests 1200
@@ -77,17 +74,31 @@ services:
       --access-logfile -
       --error-logfile -
     healthCheckPath: /api/health/
-    # No maxShutdownDelaySeconds: rejected on the free tier
-    # ("max shutdown delay is not supported for free tier services"). Render's
-    # fixed 30s default applies, which is why --graceful-timeout is 20 above.
-    # Add it back (120) when the service goes paid.
+    # NOT set alongside the disk below: Render rejects
+    # "max shutdown delay is not supported for services with a disk". See the
+    # disk block for why the disk is the more important of the two.
     autoDeployTrigger: commit
-    # No disk. Free instances cannot mount one, and a disk would additionally
-    # disable zero-downtime deploys. Uploads are therefore ephemeral; see the
-    # plan comment above and PRODUCTION_READY.md 6.2.
+    # Uploads must survive redeploys. Without this disk every deploy deletes
+    # landlord documents, agent resumes and photos. Sized at Render's minimum
+    # of 10 GB, which is $2.50/mo at $0.25/GB.
     #
-    # MEDIA_ROOT is left unset so settings.py falls back to BASE_DIR/media,
-    # which is inside the container and is discarded on redeploy.
+    # Two costs of keeping it, both accepted for production:
+    #   1. Zero-downtime deploys are disabled - Render stops the old instance
+    #      before starting the new one, so each deploy has a few seconds of
+    #      downtime. The alternative is losing user data on every deploy.
+    #   2. numInstances must stay 1; a disk cannot be mounted on several
+    #      instances at once.
+    #   3. The disk is not visible during buildCommand or preDeployCommand,
+    #      which run on separate compute. Neither needs it.
+    disk:
+      name: primekey-data
+      mountPath: /var/data
+      sizeGB: 10
+    # MEDIA_ROOT points at the mount path so uploads land on the disk rather
+    # than the ephemeral container filesystem.
+    #
+    # PROTECTED_STORAGE_DIR (resumes, compliance documents) defaults alongside
+    # MEDIA_ROOT in settings.py, so it inherits the same persistence.
     envVars:
       - key: PYTHON_VERSION
         value: "3.13.15"
@@ -112,6 +123,16 @@ services:
       # it, so this redirects plain HTTP without looping behind the proxy.
       - key: SECURE_SSL_REDIRECT
         value: "True"
+      # Point both storage roots at the persistent disk mounted above.
+      # Without these, settings.py falls back to BASE_DIR/media, which lives on
+      # the ephemeral container filesystem and is wiped on every deploy.
+      # PROTECTED_STORAGE_DIR is outside MEDIA_ROOT on purpose: agent resumes
+      # and compliance documents are served only through the authenticated
+      # download endpoint, never by a public static file handler.
+      - key: MEDIA_ROOT
+        value: /var/data/media
+      - key: PROTECTED_STORAGE_DIR
+        value: /var/data/protected
       - key: DATABASE_URL
         fromDatabase:
           name: primekey-db
@@ -215,6 +236,12 @@ services:
         fromDatabase:
           name: primekey-db
           property: connectionString
+      # Render's Key Value connectionString is `redis://red-xxx:6379` with NO
+      # database index, so pointing all three at it directly puts the cache, the
+      # session/axes data and the django-q broker on db 0. The cache's
+      # allkeys-lru eviction can then delete queued jobs and the broker's keys
+      # can be evicted from under the worker. settings.py appends the indices
+      # below, so only the base URL is passed here.
       - key: REDIS_URL
         fromService:
           name: primekey-redis
@@ -241,14 +268,17 @@ services:
   - type: keyvalue
     name: primekey-redis
     region: oregon
-    # free = 25 MB / 50 connections / in-memory only, and this instance carries
-    # the cache, sessions, axes counters and the django-q broker. See
-    # PRODUCTION_READY.md 7.7 before the first deploy.
-    plan: free
+    # 256 MB / 200 connections ($10/mo per render.com/pricing). The free plan is
+    # 25 MB, in-memory only, and Render wipes its data on every restart - which
+    # would silently drop the django-q broker and every rate-limit counter.
+    plan: 256mb
     ipAllowList: []
-    # allkeys-lru is a cache policy, but this instance also holds the django-q
-    # job queue: once memory fills, it can evict queued jobs. See 7.7.
-    maxmemoryPolicy: allkeys-lru
+    # noeviction, not allkeys-lru: this instance is also the django-q job
+    # broker, and an LRU policy can evict queued jobs when memory fills. Failing
+    # the write is visible; losing a compliance export is not. settings.py
+    # still separates the cache (db 1) from the broker (db 2) so cache churn
+    # cannot touch queued jobs.
+    maxmemoryPolicy: noeviction
 
 databases:
   - name: primekey-db

@@ -11,10 +11,12 @@ Covers OWASP Top 10 categories and Phase 7 hardening measures:
 
 import io
 import pytest
+from datetime import timedelta
 from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ImproperlyConfigured
 from django.test import RequestFactory, override_settings
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.dashboard.models import AgentProfile
@@ -37,6 +39,11 @@ from core.config_checks import (
 pytestmark = pytest.mark.django_db
 
 User = get_user_model()
+
+# AppointmentSerializer.validate_preferred_date rejects dates before today, so
+# fixtures must be relative. These tests previously hardcoded "2026-10-01" and
+# began failing the day after that date passed.
+FUTURE_DATE = (timezone.localdate() + timedelta(days=1)).isoformat()
 
 
 # ---------------------------------------------------------------------------
@@ -125,7 +132,7 @@ class TestIDORPrevention:
         landlord = _make_landlord()
         client = _landlord_client(landlord)
         client.post("/api/v1/landlords/appointments/", {
-            "preferred_date": "2026-10-01", "time_slot": "11:00 AM", "tour_type": "virtual",
+            "preferred_date": FUTURE_DATE, "time_slot": "11:00 AM", "tour_type": "virtual",
         }, format="json")
 
         other = _make_landlord(full_name="Other", phone="09988877766", email="other@x.com")
@@ -152,7 +159,7 @@ class TestIDORPrevention:
 
     def test_unauthenticated_appointment_rejected(self, db):
         response = APIClient().post("/api/v1/landlords/appointments/", {
-            "preferred_date": "2026-10-01", "time_slot": "11:00 AM", "tour_type": "virtual",
+            "preferred_date": FUTURE_DATE, "time_slot": "11:00 AM", "tour_type": "virtual",
         }, format="json")
         assert response.status_code == 401
 
@@ -175,7 +182,7 @@ class TestMassAssignmentPrevention:
         landlord = _make_landlord()
         client = _landlord_client(landlord)
         payload = {
-            "preferred_date": "2026-10-01", "time_slot": "11:00 AM",
+            "preferred_date": FUTURE_DATE, "time_slot": "11:00 AM",
             "tour_type": "virtual", "status": "confirmed",
         }
         response = client.post("/api/v1/landlords/appointments/", payload, format="json")
@@ -186,7 +193,7 @@ class TestMassAssignmentPrevention:
         landlord = _make_landlord()
         client = _landlord_client(landlord)
         resp = client.post("/api/v1/landlords/appointments/", {
-            "preferred_date": "2026-10-01", "time_slot": "11:00 AM", "tour_type": "virtual",
+            "preferred_date": FUTURE_DATE, "time_slot": "11:00 AM", "tour_type": "virtual",
         }, format="json")
         appt_id = resp.data["data"]["id"]
 
@@ -201,7 +208,7 @@ class TestMassAssignmentPrevention:
         landlord = _make_landlord()
         client = _landlord_client(landlord)
         resp = client.post("/api/v1/landlords/appointments/", {
-            "preferred_date": "2026-10-01", "time_slot": "11:00 AM", "tour_type": "virtual",
+            "preferred_date": FUTURE_DATE, "time_slot": "11:00 AM", "tour_type": "virtual",
         }, format="json")
         appt_id = resp.data["data"]["id"]
 
@@ -216,7 +223,7 @@ class TestMassAssignmentPrevention:
         landlord = _make_landlord()
         client = _landlord_client(landlord)
         resp = client.post("/api/v1/landlords/appointments/", {
-            "preferred_date": "2026-10-01", "time_slot": "11:00 AM", "tour_type": "virtual",
+            "preferred_date": FUTURE_DATE, "time_slot": "11:00 AM", "tour_type": "virtual",
         }, format="json")
         appt_id = resp.data["data"]["id"]
 
@@ -229,7 +236,7 @@ class TestMassAssignmentPrevention:
 
 
 # ===========================================================================
-# A03: Injection — Upload Validation
+# A03: Injection â€” Upload Validation
 # ===========================================================================
 
 class TestUploadValidation:
@@ -304,7 +311,7 @@ class TestUploadValidation:
 
 
 # ===========================================================================
-# A02: Cryptographic Failures — OTP
+# A02: Cryptographic Failures â€” OTP
 # ===========================================================================
 
 class TestOTPSecurity:
@@ -341,7 +348,7 @@ class TestOTPSecurity:
 
 
 # ===========================================================================
-# A05: Security Misconfiguration — Config Guards
+# A05: Security Misconfiguration â€” Config Guards
 # ===========================================================================
 
 class TestConfigGuards:
@@ -399,7 +406,7 @@ class TestConfigGuards:
 
 
 # ===========================================================================
-# A04: Insecure Design — OTP provider configuration guard
+# A04: Insecure Design â€” OTP provider configuration guard
 # ===========================================================================
 
 class TestOTPProviderGuards:
@@ -447,7 +454,7 @@ class TestOTPProviderGuards:
 
 
 # ===========================================================================
-# A05: Security Misconfiguration — IP Header Spoofing
+# A05: Security Misconfiguration â€” IP Header Spoofing
 # ===========================================================================
 
 class TestIPHeaderSpoofing:
@@ -483,7 +490,7 @@ class TestIPHeaderSpoofing:
 
 
 # ===========================================================================
-# A04: Insecure Design — Dev Code Gate
+# A04: Insecure Design â€” Dev Code Gate
 # ===========================================================================
 
 class TestDevCodeGate:
@@ -507,7 +514,7 @@ class TestDevCodeGate:
 
 
 # ===========================================================================
-# A04: Insecure Design — Owner Transition Restrictions
+# A04: Insecure Design â€” Owner Transition Restrictions
 # ===========================================================================
 
 class TestAppointmentOwnerTransitions:
@@ -515,7 +522,7 @@ class TestAppointmentOwnerTransitions:
         landlord = _make_landlord()
         client = _landlord_client(landlord)
         resp = client.post("/api/v1/landlords/appointments/", {
-            "preferred_date": "2026-10-01", "time_slot": "11:00 AM", "tour_type": "virtual",
+            "preferred_date": FUTURE_DATE, "time_slot": "11:00 AM", "tour_type": "virtual",
         }, format="json")
         appt_id = resp.data["data"]["id"]
         response = client.patch(f"/api/v1/landlords/appointments/{appt_id}/",
@@ -526,7 +533,7 @@ class TestAppointmentOwnerTransitions:
         landlord = _make_landlord()
         client = _landlord_client(landlord)
         resp = client.post("/api/v1/landlords/appointments/", {
-            "preferred_date": "2026-10-01", "time_slot": "11:00 AM", "tour_type": "virtual",
+            "preferred_date": FUTURE_DATE, "time_slot": "11:00 AM", "tour_type": "virtual",
         }, format="json")
         appt_id = resp.data["data"]["id"]
         response = client.patch(f"/api/v1/landlords/appointments/{appt_id}/",
@@ -537,7 +544,7 @@ class TestAppointmentOwnerTransitions:
         landlord = _make_landlord()
         client = _landlord_client(landlord)
         resp = client.post("/api/v1/landlords/appointments/", {
-            "preferred_date": "2026-10-01", "time_slot": "11:00 AM", "tour_type": "virtual",
+            "preferred_date": FUTURE_DATE, "time_slot": "11:00 AM", "tour_type": "virtual",
         }, format="json")
         appt_id = resp.data["data"]["id"]
 

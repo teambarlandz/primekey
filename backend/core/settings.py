@@ -34,6 +34,26 @@ environ.Env.read_env(BASE_DIR / ".env")
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env("SECRET_KEY")
 
+
+def _redis_db(url, db):
+    """
+    Force a specific logical database onto a Redis URL.
+
+    Render Key Value's connectionString is redis://red-xxx:6379 with no
+    database index, so passing it straight through to REDIS_URL,
+    REDIS_CACHE_URL and DJANGO_Q_REDIS_URL collapses all three onto db 0. The
+    cache is an allkeys-lru store, so it can then evict queued django-q jobs,
+    and django-q can evict its own keys under cache pressure.
+
+    A URL that already names a database is left alone, so an explicit local
+    redis://localhost:6379/1 in .env still wins.
+    """
+    scheme, sep, rest = url.partition("://")
+    if not sep:
+        return f"{url}/{db}"
+    host = rest.split("/", 1)[0]
+    return f"{scheme}://{host}/{db}"
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG")
 
@@ -284,8 +304,14 @@ if env.bool("SPECTACULAR_RESTRICT_DOCS", default=False):
 # silently disabling lockouts.
 RATELIMIT_USE_CACHE = "axes"
 
-# Redis Cache Configuration
-REDIS_CACHE_URL = env("REDIS_CACHE_URL")
+# Redis Configuration
+#
+# Logical databases are separated so the allkeys-lru cache cannot evict queued
+# django-q jobs, and so rate-limit counters are not dropped by general caching.
+# See _redis_db above.
+REDIS_URL = _redis_db(env("REDIS_URL"), 0)
+REDIS_CACHE_URL = _redis_db(env("REDIS_CACHE_URL"), 1)
+DJANGO_Q_REDIS_URL = _redis_db(env("DJANGO_Q_REDIS_URL"), 2)
 
 CACHES = {
     "default": {
@@ -348,8 +374,8 @@ AXES_COOLOFF_TIME = timedelta(minutes=15)
 AXES_LOCKOUT_PARAMETERS = ["ip_address"]
 AXES_CACHE = "axes"
 
-# Django Q2 Configuration for background tasks
-DJANGO_Q_REDIS_URL = env("DJANGO_Q_REDIS_URL")
+# Django Q2 Configuration for background tasks.
+# DJANGO_Q_REDIS_URL is set with _redis_db(.., 2) in the Redis block above.
 
 Q_CLUSTER = {
     "name": "primekey",
