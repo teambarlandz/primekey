@@ -94,7 +94,11 @@ export default function SocialProof() {
           <p className="text-xs sm:text-sm font-semibold tracking-widest uppercase font-heading text-[#4a607a] mb-8">
             Trusted by leading brands & featured in
           </p>
-          <ul className="flex flex-wrap justify-center items-center gap-8 md:gap-16" role="list">
+          {/* Standard logo-wall practice is a normalised 24-30px height across
+              6-8 logos. With only three here, that reads as too small, so the
+              height is scaled up to 40/48/56px while still normalising every
+              logo to a common box so none dominates. Gaps grow with the logos. */}
+          <ul className="flex flex-wrap justify-center items-center gap-x-10 gap-y-8 sm:gap-x-14 lg:gap-x-20" role="list">
             {/* These files are PNG, not SVG. They were previously committed with an
                 .svg extension, so Next.js served them as image/svg+xml and the browser
                 failed to parse PNG bytes as XML, rendering a broken image. */}
@@ -105,7 +109,7 @@ export default function SocialProof() {
                   alt={logo.alt}
                   width={logo.width}
                   height={logo.height}
-                  className="h-8 w-auto object-contain grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-300"
+                  className="h-10 sm:h-12 lg:h-14 w-auto max-w-[45vw] object-contain grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all duration-300"
                 />
               </li>
             ))}
@@ -125,7 +129,7 @@ export default function SocialProof() {
             <p className="text-sm md:text-base text-[#4a607a] font-body">Cities covered</p>
           </div>
           <div className="text-center">
-            <p className="text-4xl md:text-5xl font-bold font-heading mb-1" style={{ color: BRAND_COLOR }}>$1B+</p>
+            <p className="text-3xl md:text-4xl lg:text-5xl font-bold font-heading mb-1" style={{ color: BRAND_COLOR }}>₦2B+</p>
             <p className="text-sm md:text-base text-[#4a607a] font-body">Transacted value</p>
           </div>
           <div className="text-center">

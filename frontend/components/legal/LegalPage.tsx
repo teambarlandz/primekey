@@ -168,12 +168,16 @@ export default function LegalPage({
                 Our Data Protection Officer and support team are happy to help. Reach out through any of the channels below.
               </p>
               <div className="relative flex flex-col sm:flex-row gap-3 justify-center">
+                {/* The email address is a single unbroken token, so each button is
+                    allowed to shrink and wrap it. Without `min-w-0` on the flex
+                    child the anchor refuses to shrink below its content width and
+                    overflows the navy panel on narrow screens. */}
                 <a
                   href="mailto:hello@primekeyhomesandpropertiesltd.com"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#f3f0ff] text-[#04164a] font-semibold font-heading text-sm hover:bg-purple-100 transition-colors"
+                  className="inline-flex min-w-0 max-w-full items-center justify-center gap-2 px-5 sm:px-6 py-3 rounded-full bg-[#f3f0ff] text-[#04164a] font-semibold font-heading text-sm hover:bg-purple-100 transition-colors"
                 >
-                  <Mail className="w-4 h-4" />
-                  hello@primekeyhomesandpropertiesltd.com
+                  <Mail className="w-4 h-4 shrink-0" />
+                  <span className="min-w-0 break-all">hello@primekeyhomesandpropertiesltd.com</span>
                 </a>
                 <a
                   href="tel:+2349017368499"

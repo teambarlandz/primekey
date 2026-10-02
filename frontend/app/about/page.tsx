@@ -22,7 +22,7 @@ interface Stat {
 const stats: Stat[] = [
   { value: '300+', label: 'Happy customers' },
   { value: '42', label: 'Cities covered' },
-  { value: '$1B+', label: 'Transacted value' },
+  { value: '₦2B+', label: 'Transacted value' },
   { value: '14 days', label: 'Average time-to-close' },
 ];
 
