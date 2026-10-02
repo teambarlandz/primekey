@@ -17,9 +17,13 @@
 #     blueprint key: that key is not in the blueprint spec, so it was silently
 #     ignored and the service would have run Render's default (currently 3.14.3)
 #     while CI verifies 3.13. PYTHON_VERSION must be fully qualified.
-#   * Migrations run in preDeployCommand (paid plan) so they happen once per
-#     release instead of racing on every container boot.
-#   * preDeployCommand and collectstatic both import settings, so the
+#   * Migrations run in the build command, NOT preDeployCommand: Render
+#     documents the pre-deploy command as paid-only
+#     (https://render.com/docs/deploys#pre-deploy-command), so on the free plan
+#     it is silently ignored and the schema would never advance. Move it back to
+#     preDeployCommand when the web service goes paid, so migrations stop racing
+#     the still-serving old instance.
+#   * buildCommand and collectstatic both import settings, so the
 #     RESEND_API_KEY guard in core/config_checks.py fails the build loudly rather
 #     than booting a service that cannot deliver OTPs.
 #
@@ -33,42 +37,55 @@ services:
     runtime: python
     rootDir: backend
     region: oregon
-    # 512 MB / 0.5 CPU. The old `starter` plan id no longer exists in Render's
-    # blueprint schema.
-    plan: 0.5c-512mb
-    # A persistent disk cannot be shared between services and cannot be mounted
-    # on a multi-instance service, so this stays pinned to a single instance.
+    # Free tier: 0.1 CPU / 512 MB, spins down after ~15 min idle, and Render
+    # gives free web services 750 hours/month. The old `starter` plan id no
+    # longer exists in Render's blueprint schema.
+    #
+    # Free instances cannot mount a persistent disk, so there is no `disk:` block
+    # here. Consequence, tracked in PRODUCTION_READY.md 6.2: MEDIA_ROOT is the
+    # container's ephemeral filesystem, so agent resumes (apps/accounts 78) and
+    # compliance document uploads (apps/compliance 185) are DELETED on every
+    # deploy. Move these to object storage before accepting real uploads.
+    plan: free
     numInstances: 1
+    # NO preDeployCommand: Render documents the pre-deploy command as available
+    # for "paid web services, private services, and background workers" only
+    # (render.com/docs/deploys#pre-deploy-command). It is silently ignored on
+    # free, which would leave migrations unapplied, so `migrate` runs here
+    # instead. On a paid plan move it back to preDeployCommand: running it in
+    # the build races the still-serving old instance.
     buildCommand: >-
       pip install --upgrade pip &&
       pip install -r requirements.txt &&
-      python manage.py collectstatic --noinput
-    preDeployCommand: python manage.py migrate --noinput
-    # 3 workers fits the plan's 512 MB. Raise with the plan's RAM.
-    # max-requests recycles workers so a slow leak cannot grow unbounded.
-    # graceful-timeout matches maxShutdownDelaySeconds so a worker still draining
-    # requests is not killed by Render's shutdown timer.
+      python manage.py collectstatic --noinput &&
+      python manage.py migrate --noinput
+    # 1 worker: the free plan has 0.1 CPU, so 3 processes would thrash. gunicorn
+    # still handles concurrent requests, just without parallelism.
+    # max-requests recycles the worker so a slow leak cannot grow unbounded.
+    # --graceful-timeout is held below maxShutdownDelaySeconds (120) so a
+    # worker draining a request is not SIGKILLed mid-response.
     startCommand: >-
       gunicorn core.wsgi:application
       --bind 0.0.0.0:$PORT
-      --workers 3
+      --workers 1
       --timeout 120
-      --graceful-timeout 120
+      --graceful-timeout 60
       --max-requests 1200
       --max-requests-jitter 100
       --access-logfile -
       --error-logfile -
     healthCheckPath: /api/health/
-    # A disk disables zero-downtime deploys: Render stops the old instance before
-    # starting the new one, so every deploy has a short window of downtime.
+    # Only valid without a disk, which is the case now. Keeps the 120s gunicorn
+    # graceful-timeout below honest: Render will not kill a draining worker
+    # before gunicorn's own timer expires.
     maxShutdownDelaySeconds: 120
     autoDeployTrigger: commit
-    # Uploads must survive redeploys. Without this disk every deploy deletes
-    # landlord documents, resumes and photos. Sized at Render's 10 GB minimum.
-    disk:
-      name: primekey-data
-      mountPath: /var/data
-      sizeGB: 10
+    # No disk. Free instances cannot mount one, and a disk would additionally
+    # disable zero-downtime deploys. Uploads are therefore ephemeral; see the
+    # plan comment above and PRODUCTION_READY.md 6.2.
+    #
+    # MEDIA_ROOT is left unset so settings.py falls back to BASE_DIR/media,
+    # which is inside the container and is discarded on redeploy.
     envVars:
       - key: PYTHON_VERSION
         value: "3.13.15"
@@ -175,11 +192,15 @@ services:
         value: "False"
       # The worker boots Django settings too, so it must pass the same
       # production guard as the web service (ALLOWED_HOSTS is not optional).
+      #
+      # sync: false, not fromService. Render rejects
+      # `fromService.property: SECRET_KEY` ("cannot refer to SECRET_KEY against
+      # service primekey-api of type web") because a `generateValue: true` secret
+      # is not an exportable property. Paste the SAME value used on primekey-api
+      # in the dashboard: the two services share signed cookies and session
+      # state, and a mismatch shows up as intermittent auth failures.
       - key: SECRET_KEY
-        fromService:
-          name: primekey-api
-          type: web
-          property: SECRET_KEY
+        sync: false
       - key: ALLOWED_HOSTS
         value: primekey-api.onrender.com
       - key: CORS_ALLOWED_ORIGINS

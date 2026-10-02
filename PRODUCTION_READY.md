@@ -626,12 +626,43 @@ Regression checks after the changes: `manage.py check` clean,
   `connectionString` (`redis://red-xxx:6379`, no DB index), so they resolve to db
   0 in production, and `maxmemoryPolicy` is still `allkeys-lru`. Fixing this
   correctly means deciding whether to split the broker from the cache.
-- **H3** - the disk still costs zero-downtime deploys. Kept deliberately.
-- **H4** - Redis is still on the 25 MB `free` plan.
 - **H5** - `django-allauth` and `django-csp` are still installed but unused, so
   **no CSP is enforced**. Note that `django-allauth` drags in `cryptography`,
   `oauthlib`, `python3-openid` and `requests-oauthlib` for nothing.
 - **H6** - `scripts/backup.sh` still needs to run from inside Render's network.
+
+### 7.9 Free-plan constraints applied (2026-10-02)
+
+`render blueprints validate` rejected the Blueprint, and the free compute plan
+forced three further changes. Sources: [deploys](https://render.com/docs/deploys)
+and [free](https://render.com/docs/free).
+
+| # | Render's error / rule | Fix | Consequence |
+|---|---|---|---|
+| V1 | `max shutdown delay is not supported for services with a disk` | Removed the `disk:` block from `primekey-api` | Uploads are now **ephemeral**; see 6.2. Zero-downtime deploys are **restored** as a side effect |
+| V2 | `cannot refer to SECRET_KEY against service primekey-api of type web` | `sync: false` on the worker's `SECRET_KEY` | The same value must be pasted into both services by hand |
+| V3 | Pre-deploy command is **paid-only** (web services, private services, background workers) | `migrate` moved from `preDeployCommand` into `buildCommand` | Migrations now run per deploy against the live schema; revert to `preDeployCommand` when paid |
+
+Also changed for free: gunicorn `--workers 3` → `1` (free is 0.1 CPU) and
+`--graceful-timeout` 120 → 60, still under `maxShutdownDelaySeconds: 120`.
+
+#### Free-plan limits that are NOT fixed in code
+
+- Service **spins down after 15 min idle**; the first request afterwards takes
+  roughly a minute and Render shows a loading page. The first curl will look
+  like a timeout.
+- **Uploads are lost** on every deploy, restart, *and* spin-down. This is
+  broader than the earlier disk-based data loss.
+- Free Postgres **expires 30 days after creation** (14-day grace period, then
+  Render deletes the data). `primekey-db` is currently `0.5c-1g`, i.e. paid.
+- Free services **cannot send outbound traffic on ports 25/465/587**, so the
+  Hostinger SMTP contact form cannot work from a free web service. OTP via
+  Resend uses HTTPS 443 and is unaffected.
+- Free web services have **no shell access**, which also blocks
+  `python manage.py createsuperuser` from the Render dashboard. Use a one-off
+  job on a paid plan, or a temporary management command.
+- No persistent disk, no scaling beyond one instance, no edge caching, no
+  managed backups on free Postgres.
 
 Verification still owed once credentials exist: `render blueprints validate
 render.yaml` against Render's own API, a first real deploy, and a `curl` of
